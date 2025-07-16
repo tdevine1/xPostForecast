@@ -1,4 +1,5 @@
-# WV Historical Temperature Viewer (Teaching Demo)
+# ExPostForecast
+
 
 This repository contains a staged, instructional full-stack web application that demonstrates how to build, deploy, and secure a cloud-connected weather visualization app using **React**, **Node.js**, **MySQL**, and **Azure**.
 
@@ -10,15 +11,18 @@ The app displays **historical monthly average temperatures** across West Virgini
 
 ## 🎓 Purpose
 
-This repo is designed to **teach full-stack web app development** in an undergraduate course setting. Students progress through three versions of the application, each aligned with a two-week development sprint:
+This repo is designed to **teach full-stack web app development** in an undergraduate course setting using a sprint-based structure. Students implement a new set of features during each two-week sprint.
 
-### 🔁 Versions
+---
 
-| Version | Description |
-|---------|-------------|
-| **v1-login-only** | Local frontend with basic login; connects to Azure-hosted MySQL database |
-| **v2-registration-db** | Adds registration and user validation; refactors backend |
-| **v3-full-stack** | Deploys frontend to Azure Static Web App and backend to Azure App Service; consumes NOAA data |
+## 🚦 Sprint Overview
+
+| Sprint | Description |
+|--------|-------------|
+| **Sprint 1** | Local setup of frontend using React; prepares for secure login |
+| **Sprint 2** | Adds local backend using Node.js for login; connects to Azure MySQL |
+| **Sprint 3** | Deploys frontend as an Azure Static Web App using GitHub Actions |
+| **Sprint 4** | Deploys backend to Azure App Service with cloud-based API endpoints |
 
 ---
 
@@ -41,38 +45,19 @@ This repo is designed to **teach full-stack web app development** in an undergra
 
 ---
 
-## 🚀 Getting Started
-
-Each version lives in its own subdirectory. To start with version 1:
-
-```bash
-cd version1-login-only
-cd frontend && npm install && npm start
-cd ../backend && npm install && node app.js
-```
-
-Be sure to configure the `.env` files in both frontend and backend folders.
-
----
-
 ## 📁 Repo Structure
 
 ```
 wv-temperature-map-demo/
-├── version1-login-only/
-├── version2-registration-db/
-├── version3-full-stack/
+├── sprint1-frontend-setup/
+├── sprint2-login-backend/
+├── sprint3-deploy-frontend/
+├── sprint4-deploy-backend/
 ├── shared/                # Common docs, assets, or config templates
 ├── .github/               # CI/CD workflows
 ├── screenshot1.png
 └── README.md
 ```
-
----
-
-## 🔐 Auth Workflow
-
-Users must log in to view the temperature map. Credentials are validated against the `users` table in a secure MySQL database. JWTs are used for session management, and all secrets are managed via environment variables or Azure App Service config.
 
 ---
 
@@ -84,7 +69,7 @@ Data is derived from NOAA's **nClimGrid** collection via Microsoft's Planetary C
 
 ## 🧑‍🏫 For Instructors
 
-This project is built to align with sprint-based teaching. You can assign one version per sprint and use it to teach:
+This project is built to align with sprint-based teaching. You can assign one sprint at a time and use it to teach:
 
 - GitHub project setup & version control
 - CI/CD with GitHub Actions
