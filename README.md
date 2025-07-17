@@ -1,4 +1,4 @@
-# ExPostForecast
+# xPostForecast
 
 
 This repository contains a staged, instructional full-stack web application that demonstrates how to build, deploy, and secure a cloud-connected weather visualization app using **React**, **Node.js**, **MySQL**, and **Azure**.
