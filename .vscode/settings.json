@@ -1,0 +1,21 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Enabled",
+                "ssl": {
+                    "ca": "C:\\Users\\phlos\\git\\xPostForecast\\xPostForecast\\sprint2-login-backend\\backend\\config\\BaltimoreCyberTrustRoot.crt.pem"
+                }
+            },
+            "previewLimit": 50,
+            "server": "xpostforecast-authdb.database.windows.net",
+            "port": 1433,
+            "driver": "MySQL",
+            "name": "authdb",
+            "database": "authbd",
+            "username": "cs330-2025-05-demo-admin",
+            "password": "Intro2SE!"
+        }
+    ]
+}
