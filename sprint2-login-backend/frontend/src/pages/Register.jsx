@@ -16,7 +16,7 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const API_URL = process.env.REACT_APP_API_URL || ''; // Fallback for local development
+  const API_URL = import.meta.env.VITE_API_URL || ''; // Fallback for local development
   /**
    * Handles form submission by sending registration details to the backend.
    * @param {Object} e - Event object from the form submission.

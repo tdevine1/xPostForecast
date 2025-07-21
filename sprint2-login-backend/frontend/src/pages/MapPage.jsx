@@ -62,13 +62,15 @@ function MapPage({ setAuthenticated }) {
   };
   
   /**
-   * handleLogout (stub)
+   * handleLogout
    * 
-   * Placeholder function for logout behavior.
-   * In future sprints, this will clear authentication state and redirect the user.
+   * Logs out the user by clearing authentication state and local storage,
+   * then navigating to the login page.
    */
   const handleLogout = () => {
-    console.log("Logout clicked (stub)");
+    setAuthenticated(false);  
+    localStorage.removeItem('authenticated');  
+    navigate('/');  
   };
 
 return (
