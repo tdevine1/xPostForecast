@@ -5,6 +5,10 @@
 **/.env
 **/.env.*
 
+# Certs
+*.pemgit rm --cached **/*.pem
+
+
 # Build output
 **/dist/
 **/build/
