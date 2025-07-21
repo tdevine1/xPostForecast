@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
 import DateSelector from '../components/DateSelector';
 import { ClipLoader } from 'react-spinners';
-import axios from 'axios';
+
 
 /**
  * MapPage component that displays the map and handles temperature data fetching.
@@ -60,8 +60,18 @@ function MapPage({ setAuthenticated }) {
 
     setIsLoading(false);
   };
+  
+  /**
+   * handleLogout (stub)
+   * 
+   * Placeholder function for logout behavior.
+   * In future sprints, this will clear authentication state and redirect the user.
+   */
+  const handleLogout = () => {
+    console.log("Logout clicked (stub)");
+  };
 
-  return (
+return (
     <div>
       <h1>ExPostForecast: Historical Monthly Average Temperatures</h1>
       
