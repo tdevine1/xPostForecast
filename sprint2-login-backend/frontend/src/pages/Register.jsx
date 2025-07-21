@@ -26,7 +26,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(
-        API_URL + '/auth/register',
+        API_URL + '/register',
         { username, password },
         { withCredentials: true }
       );
@@ -36,7 +36,7 @@ const Register = () => {
         navigate('/'); // Navigate to login page after registration
       }
     } catch (error) {
-      console.log('Attempting to post to ${API_URL}/auth/register');
+      console.log('Attempting to post to ', API_URL, '/aregister');
       console.error('Registration failed:', error);
       alert('Error registering user');
     }
