@@ -89,7 +89,7 @@ When you edit a file, the page updates instantly without reloading. This is Vite
 
 Here’s a sample screenshot of the app at the end of Sprint 1:
 
-![Sprint 1 UI](screenshot.png)
+![Sprint 1 UI](./screenshot-sprint1.png)
 
 - Map is visible using Leaflet
 - Month/year dropdowns shown
@@ -118,3 +118,21 @@ Here’s a sample screenshot of the app at the end of Sprint 1:
 In **Sprint 2**, we’ll add a backend connection and a database for login functionality.
 
 Happy coding!
+
+
+---
+
+## 🛑 Don't Forget: Add a `.gitignore`
+
+Before committing your project to GitHub, make sure your `frontend/` folder includes a `.gitignore` file to exclude temporary, build, and sensitive files:
+
+```bash
+# .gitignore
+node_modules/
+dist/
+.env
+.vite/
+.vscode/
+```
+
+This keeps your repository clean and secure. You can [download a ready-made .gitignore file here](../.gitignore).
