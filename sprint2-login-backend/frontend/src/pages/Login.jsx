@@ -3,6 +3,11 @@
  * 
  * This component provides a login form that authenticates the user.
  * Upon successful login, it updates the authentication state and navigates to the map page.
+ *
+ * NOTE:
+ * - Backend issues an HTTP-only cookie on successful login.
+ * - We must send requests with `withCredentials: true` so the browser accepts the cookie.
+ * - The backend routes are mounted at `/auth/*`, so use `/auth/login` here.
  */
 
 import React, { useState } from 'react';
@@ -15,11 +20,16 @@ import { useNavigate, Link } from 'react-router-dom';
  * @returns {JSX.Element} The login form.
  */
 const Login = ({ setAuthenticated }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const navigate = useNavigate();
+  const [username, setUsername]   = useState('');
+  const [password, setPassword]   = useState('');
+  const navigate                  = useNavigate();
+
+  // Base API URL for the backend (e.g., http://localhost:5175)
   const API_URL = import.meta.env.VITE_API_URL || '';
-  console.log("Sending Login Request to: " + API_URL)
+  const LOGIN_URL = `${API_URL}/auth/login`;
+
+  console.log('Sending Login Request to:', LOGIN_URL);
+
   /**
    * handleSubmit
    * 
@@ -35,20 +45,31 @@ const Login = ({ setAuthenticated }) => {
 
     try {
       const response = await axios.post(
-        API_URL + '/login',
+        LOGIN_URL,
         { username, password },
-        { withCredentials: true }
+        {
+          // Required so the browser will accept the HTTP-only cookie set by the backend
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' },
+        }
       );
 
-      if (response.data.message === 'Login successful') {
+      // Backend returns 200 + { message: 'Login successful' } on success
+      if (response.status === 200) {
         setAuthenticated(true);
-        navigate('/'); // Redirect to main page
+        // Redirect to the app’s main page (Map). Use `/map` to skip extra redirect hops.
+        navigate('/map', { replace: true });
       } else {
         alert('Login failed. Please check your credentials.');
       }
     } catch (error) {
+      // Common causes:
+      // - 401 Invalid credentials
+      // - CORS / cookie not accepted (check FRONTEND_URL, credentials:true on server, withCredentials here)
+      // - Backend not running or wrong URL
       console.error('Login failed:', error);
-      alert('Invalid credentials');
+      alert('Invalid credentials or unable to reach the server.');
+      setAuthenticated(false);
     }
   };
 
@@ -61,12 +82,14 @@ const Login = ({ setAuthenticated }) => {
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
         />
         <button type="submit">Login</button>
       </form>

@@ -1,8 +1,11 @@
 /**
  * App.js
- * 
- * Main entry point of the application with persistent authentication using local storage.
+ *
+ * Main entry point of the application with persistent authentication.
  * It sets up routing for the login, register, and map pages, and manages authentication state.
+ *
+ * NOTE: Authentication persistence is now handled by an HTTP-only cookie set by the backend.
+ * We verify that cookie on app load by calling /auth/test instead of using localStorage.
  */
 
 import { useEffect, useState } from 'react';
@@ -18,11 +21,24 @@ import Register from './pages/Register';
  */
 function App() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true); // helps avoid flicker while we verify the cookie
 
-  // Load auth state from localStorage when app initializes
+  // Verify auth state with the server when the app initializes
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setAuthenticated(!!token); // true if token exists
+    async function verifyAuth() {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/test`, {
+          method: 'GET',
+          credentials: 'include', // send/receive the HTTP-only cookie
+        });
+        setAuthenticated(res.ok); // true if cookie/JWT is valid
+      } catch {
+        setAuthenticated(false);
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+    verifyAuth();
   }, []);
 
   return (
@@ -41,6 +57,8 @@ function App() {
             authenticated ? (
               <Navigate to="/map" replace />
             ) : (
+              // Login should call the backend (/auth/login) with `credentials: 'include'`
+              // and then call setAuthenticated(true) on success.
               <Login setAuthenticated={setAuthenticated} />
             )
           }
@@ -63,6 +81,8 @@ function App() {
           path="/map"
           element={
             authenticated ? (
+              // MapPage can also handle logout by calling /auth/logout (credentials: 'include')
+              // and then setAuthenticated(false).
               <MapPage setAuthenticated={setAuthenticated} />
             ) : (
               <Navigate to="/login" replace />

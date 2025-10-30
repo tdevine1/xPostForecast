@@ -1,10 +1,31 @@
-# backend/config — Configuration
+# Config README
 
-Contains configuration for database and TLS.
+## Purpose
+The `config/` directory contains the database connection and SSL configuration used to connect securely to Azure MySQL.
 
-- `database.js` — Creates a MySQL connection pool using `mysql2/promise`. Reads env vars, enables SSL with DigiCertGlobalRootG2 cert.
-- `DigiCertGlobalRootG2.crt.pem` — Azure’s public root certificate for TLS.
+## File: `database.js`
+- Uses `mysql2/promise` for async/await support
+- Loads SSL certificate (`DigiCertGlobalRootG2.crt.pem`)
+- Reads environment variables for credentials
 
-**Best practices**
-- Never disable TLS verification in production.
-- Ensure file paths match between code and filesystem.
+Example connection setup:
+```js
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: Number(process.env.DB_PORT),
+  ssl: {
+    ca: fs.readFileSync(path.join(__dirname, 'DigiCertGlobalRootG2.crt.pem')),
+    rejectUnauthorized: true
+  }
+});
+```
+
+## Expected Console Output
+```
+Loaded CA cert from: backend/config/DigiCertGlobalRootG2.crt.pem
+Connecting to Azure MySQL...
+Successfully connected to MySQL
+```
