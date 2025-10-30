@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = dirname(__filename);
 
 // Path to your bundled CA cert
-const caPath = path.join(__dirname, 'DigiCertGlobalRootCA.crt.pem');
+const caPath = path.join(__dirname, 'DigiCertGlobalRootG2.crt.pem');
 
 // Read it once at startup
 const caCert = fs.readFileSync(caPath);
