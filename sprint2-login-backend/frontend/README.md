@@ -1,19 +1,22 @@
-# Sprint 2 Frontend: Authentication Integration Guide
+# Sprint 2 Frontend: Authentication & Integration Guide
 
-In **Sprint 2**, we enhance our Vite + React frontend from Sprint 1 by connecting it to a real backend for user authentication. You’ll build login and registration pages, manage auth state, and secure your `/map` route.
+In **Sprint 2**, the React (Vite) frontend integrates with the backend using **cookie‑based JWT authentication**. 
+The frontend no longer stores tokens in `localStorage`. Instead, the backend sets an **HTTP‑only cookie** on login, and the frontend verifies the session via `/auth/test`.
+
+> This README applies to the `sprint2-login-backend/frontend` folder.
 
 ---
 
-## 🎯 What’s New in the Frontend
+## 🖼️ Visual Overview
 
-| Area                  | Sprint 1      | Sprint 2                                                  |
-| --------------------- | ------------- | --------------------------------------------------------- |
-| Pages                 | MapPage only  | Added `Login.jsx` and `Register.jsx`                      |
-| Routing               | Single `/map` | New routes: `/login`, `/register`, plus `/map` protection |
-| App.jsx               | No auth state | Tracks `authenticated` with `useState` & `useEffect`      |
-| API Calls             | Stubbed fetch | Real `axios.post` to backend endpoints                    |
-| Environment Variables | None          | Uses `VITE_API_URL` to point at backend                   |
-| CORS & Cookies        | N/A           | Configured to send/receive HTTP-only cookies from backend |
+> If screenshots aren’t showing, make sure these images exist in your repo (suggested paths):
+>
+> - `docs/img/sprint2-frontend-architecture.png`
+> - `docs/img/frontend-login-form.png`
+> - `docs/img/frontend-protected-route.png`
+
+![Frontend Architecture](docs/img/sprint2-frontend-architecture.png)
+*Flow: User → React (Vite) → `/auth/*` endpoints with `withCredentials` → Cookie set by backend → `/auth/test` verification*
 
 ---
 
@@ -22,103 +25,145 @@ In **Sprint 2**, we enhance our Vite + React frontend from Sprint 1 by connecti
 ```bash
 frontend/
 ├── src/
-│   ├── pages/
-│   │   ├── Login.jsx       # New: login form and handler
-│   │   ├── Register.jsx    # New: registration form and handler
-│   │   └── MapPage.jsx     # Protected map view
 │   ├── components/
-│   │   ├── DateSelector.jsx
-│   │   └── MapComponent.jsx
-│   ├── App.jsx            # Updated routing & auth state logic
-│   └── main.jsx           # Entry point
-├── .env                   # New: contains VITE_API_URL
-├── package.json
-└── vite.config.js
+│   │   ├── MapComponent.jsx
+│   │   └── DateSelector.jsx
+│   │
+│   ├── pages/
+│   │   ├── Login.jsx           # POST /auth/login (withCredentials)
+│   │   ├── Register.jsx        # POST /auth/register (email, username, password)
+│   │   └── MapPage.jsx         # Protected page + /auth/logout
+│   │
+│   ├── App.jsx                 # Checks /auth/test on load
+│   └── main.jsx                # Vite bootstrap
+│
+├── .env.example                # sample frontend env
+└── index.html
+```
+> Actual filenames may vary slightly; this reflects the Sprint 2 reference implementation.
+
+---
+
+## 🛠 Prerequisites
+
+- **Node.js** 20.19+
+- **Vite** (bundled via npm scripts)
+- Running backend at `http://localhost:5175` (or update URL below)
+
+---
+
+## 1) Clone & Install
+
+```bash
+cd sprint2-login-backend/frontend
+npm install
 ```
 
 ---
 
-## 🧩 Step-by-Step Setup
+## 2) Configure Environment Variables
 
-1. **Clone & Navigate**
+Create a `.env` in the frontend folder and point it to your backend:
 
-   ```bash
-   git clone https://github.com/tdevine1/xPostForecast.git
-   cd xPostForecast/sprint2-login-backend/frontend
-   ```
+```ini
+VITE_API_URL=http://localhost:5175
+```
 
-2. **Environment Variable**
-
-   - Create a file named `.env` in the `frontend/` folder:
-     ```env
-     VITE_API_URL=http://localhost:3001
-     ```
-   - This points your frontend at the local backend server.
-
-3. **Install Dependencies**
-
-   ```bash
-   npm install
-   ```
-
-4. **Run Dev Server**
-
-   ```bash
-   npm run dev
-   ```
-
-   - Open your browser at `http://localhost:5173`.
+> The frontend uses this base URL for all auth calls (e.g., `${VITE_API_URL}/auth/login`).
 
 ---
 
-## 🆕 Key Code Changes
+## 3) Cookie‑Based Authentication (How it works)
 
-### 1. App.jsx
-
-- **Auth State**:
-  ```js
-  const [authenticated, setAuthenticated] = useState(false);
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setAuthenticated(!!token);
-  }, []);
-  ```
-- **Routes**:
-  ```jsx
-  <Route path="/login" element={authenticated ? <Navigate to="/map" replace /> : <Login setAuthenticated={setAuthenticated} />} />
-  <Route path="/register" element={authenticated ? <Navigate to="/map" replace /> : <Register />} />
-  <Route path="/map" element={authenticated ? <MapPage /> : <Navigate to="/login" replace />} />
-  ```
-
-### 2. Login.jsx & Register.jsx
-
-- **Forms** send POST requests via `axios`:
-  ```js
-  const { data } = await axios.post(
-    import.meta.env.VITE_API_URL + '/auth/login',
-    { username, password },
-    { withCredentials: true }
-  );
-  localStorage.setItem('token', data.token);
-  setAuthenticated(true);
-  ```
-- **Error Handling** displays alerts on failure.
-
-### 3. DateSelector & MapComponent
-
-- **Unchanged** from Sprint 1: still render date dropdowns and map markers.
+- On **Login**, the backend sets a **JWT cookie** with `httpOnly: true` (unreadable by JS).
+- On page load (or route change), the frontend calls **`GET /auth/test`** to check whether a valid cookie is present.
+- The frontend **must send credentials** with each request so the browser includes the cookie:
+  - Axios: `{ withCredentials: true }`
+  - fetch: `{ credentials: 'include' }`
+- On **Logout**, the frontend calls **`POST /auth/logout`**, and the backend clears the cookie.
 
 ---
 
-## 🧠 Mini‑Lessons & Resources
+## 4) Component Responsibilities
 
-- **React Router Guards**: protect routes with `<Navigate />` — [Docs](https://reactrouter.com/docs/en/v6/getting-started/overview)
-- **Environment Variables in Vite**: use `import.meta.env.VITE_*` — [Guide](https://vitejs.dev/guide/env-and-mode.html)
-- **HTTP-only Cookies**: secure tokens against XSS — [MDN](https://developer.mozilla.org/docs/Web/HTTP/Cookies)
-- **Axios with Credentials**: `axios.defaults.withCredentials = true` or pass `{ withCredentials: true }`
-- **useEffect**: loads auth state on mount — [React Hooks](https://reactjs.org/docs/hooks-effect.html)
+| Component | Responsibilities |
+|----------|-------------------|
+| `App.jsx` | On mount, calls `/auth/test` with `credentials` to set `authenticated`. Routes `/`, `/login`, `/register`, `/map`. |
+| `pages/Login.jsx` | Sends `POST /auth/login` with `{ username, password }`, using `withCredentials: true`. On success, navigate to `/map`. |
+| `pages/Register.jsx` | Sends `POST /auth/register` with `{ email, username, password }`. On success, navigate to `/login`. |
+| `pages/MapPage.jsx` | Protected page. Example protected fetch pattern included. Provides a **Logout** button that calls `POST /auth/logout`. |
+| `components/DateSelector.jsx` | UI for selecting the target month (YYYY-MM). Calls a passed `fetchTemperatureData` handler. |
+| `components/MapComponent.jsx` | Renders map and temperature overlays (stub in Sprint 2). |
 
 ---
 
-You’ve now integrated real authentication into your frontend! In **Sprint 3**, we’ll deploy this to Azure Static Web Apps and polish the user experience.
+## 5) Auth Call Patterns (Examples)
 
+**Axios Login (cookie‑based):**
+```js
+await axios.post(
+  `${import.meta.env.VITE_API_URL}/auth/login`,
+  { username, password },
+  { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+);
+```
+
+**Session Verify in `App.jsx`:**
+```js
+await fetch(`${import.meta.env.VITE_API_URL}/auth/test`, {
+  method: 'GET',
+  credentials: 'include'
+});
+```
+
+**Logout in `MapPage.jsx`:**
+```js
+await axios.post(`${import.meta.env.VITE_API_URL}/auth/logout`, null, {
+  withCredentials: true
+});
+```
+
+**Protected Fetch Pattern (e.g., later Sprint endpoints):**
+```js
+try {
+  const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/protected`, { withCredentials: true });
+  // handle res.data
+} catch (err) {
+  if (err?.response?.status === 401 || err?.response?.status === 403) {
+    // session expired → redirect to /login
+  }
+}
+```
+
+---
+
+## 6) Run the Frontend
+
+```bash
+npm run dev
+```
+Vite default: `http://localhost:5173`
+
+> Ensure the backend’s `.env` has `FRONTEND_URL=http://localhost:5173` and CORS is enabled with `credentials: true`.
+
+---
+
+## 7) Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---|---|---|
+| `403 /auth/test` on reload | No cookie yet | Normal before login; log in first |
+| Login returns 200 but still “not logged in” | Cookies not accepted | Add `withCredentials: true` (Axios) / `credentials: 'include'` (fetch); check backend CORS |
+| `TypeError: Failed to fetch` | Wrong `VITE_API_URL` or backend down | Start backend and verify URL |
+| Redirect loops to `/login` | `/auth/test` failing | Check JWT secret, cookie name `token`, and CORS setup |
+| Registration 500 w/ `ER_NO_DEFAULT_FOR_FIELD 'email'` | Backend requires email | Ensure `Register.jsx` sends `{ email, username, password }` and DB has `email` column |
+
+---
+
+## 📚 References
+
+- React Router: https://reactrouter.com/
+- Axios: https://axios-http.com/
+- Vite: https://vitejs.dev/
+- MDN CORS: https://developer.mozilla.org/docs/Web/HTTP/CORS
+- Cookie Basics (MDN): https://developer.mozilla.org/docs/Web/HTTP/Cookies
