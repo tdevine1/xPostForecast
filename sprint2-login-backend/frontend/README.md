@@ -7,19 +7,6 @@ The frontend no longer stores tokens in `localStorage`. Instead, the backend set
 
 ---
 
-## 🖼️ Visual Overview
-
-> If screenshots aren’t showing, make sure these images exist in your repo (suggested paths):
->
-> - `docs/img/sprint2-frontend-architecture.png`
-> - `docs/img/frontend-login-form.png`
-> - `docs/img/frontend-protected-route.png`
-
-![Frontend Architecture](docs/img/sprint2-frontend-architecture.png)
-*Flow: User → React (Vite) → `/auth/*` endpoints with `withCredentials` → Cookie set by backend → `/auth/test` verification*
-
----
-
 ## 📂 Frontend Folder Structure
 
 ```bash
