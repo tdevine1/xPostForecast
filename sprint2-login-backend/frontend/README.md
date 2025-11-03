@@ -1,7 +1,7 @@
 # Sprint 2 Frontend: Authentication & Integration Guide
 
 In **Sprint 2**, the React (Vite) frontend integrates with the backend using **cookie‑based JWT authentication**. 
-The frontend no longer stores tokens in `localStorage`. Instead, the backend sets an **HTTP‑only cookie** on login, and the frontend verifies the session via `/auth/test`.
+Instead of using `localStorage`, the backend sets an **HTTP‑only cookie** on login, and the frontend verifies the session via `/auth/test`.
 
 > This README applies to the `sprint2-login-backend/frontend` folder.
 

@@ -112,11 +112,11 @@ mv ~/Downloads/DigiCertGlobalRootG2.crt.pem sprint2-login-backend/backend/config
 
 ## 4) Connect with VS Code
 
-You can validate connectivity and run SQL using VS Code’s MySQL extension (or SQLTools).
+You can validate connectivity and run SQL using VS Code’s MySQL extension (or SQLTools). Since you haven't created the authdb database yet, you should first login to the mysql database, which is created automatically. Then you can create the authdb database and users table, as well as any other dbs and tables you need for storing persistent information.
 
 - **Host**: `<your-server>.mysql.database.azure.com`
 - **Port**: `3306`
-- **Database**: `authdb`
+- **Database**: `mysql`
 - **User**: your admin user
 - **Password**: your password
 - **SSL**: enabled; CA file: `backend/config/DigiCertGlobalRootG2.crt.pem`
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 ```
 
-> Registration now requires **email + username + password**.
+> Registration requires **email + username + password**.
 
 ---
 
