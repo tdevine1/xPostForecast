@@ -30,10 +30,8 @@ function MapPage({ setAuthenticated }) {
   const navigate = useNavigate();
 
   // Base API URL for the backend (e.g., http://localhost:5175)
-  const API_URL = import.meta.env.VITE_API_URL || '';
+  const API_URL = import.meta.env.BACKEND_API_URL || '';
   const LOGOUT_URL = `${API_URL}/auth/logout`;
-  // Example protected data endpoint (replace with your actual route later)
-  // const TEMPS_URL = `${API_URL}/api/temperatures?month=${date}`;
 
   /**
    * Handles the selected date change from DateSelector component.
