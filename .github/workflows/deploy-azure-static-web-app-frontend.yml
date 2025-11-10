@@ -14,7 +14,7 @@ jobs:
 
     # Environment variables available during the build step
     env:
-      VITE_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}  # Inject backend URL at build time
+      VITE_BACKEND_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}  # Inject backend URL at build time
 
     steps:
       # Step 1: Check out the repo without trying to fetch any submodules
