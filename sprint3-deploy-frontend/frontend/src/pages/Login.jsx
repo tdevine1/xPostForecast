@@ -11,8 +11,8 @@
  */
 
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../api';
 
 /**
  * Login component allows users to enter credentials to access the app.
@@ -24,9 +24,8 @@ const Login = ({ setAuthenticated }) => {
   const [password, setPassword]   = useState('');
   const navigate                  = useNavigate();
 
+  console.log('API URL:', import.meta.env.VITE_API_URL);
   // Base API URL for the backend (e.g., http://localhost:5175)
-  const API_URL = import.meta.env.VITE_API_URL || '';
-  const LOGIN_URL = `${API_URL}/auth/login`;
 
   console.log('Sending Login Request to:', LOGIN_URL);
 
@@ -44,16 +43,7 @@ const Login = ({ setAuthenticated }) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        LOGIN_URL,
-        { username, password },
-        {
-          // Required so the browser will accept the HTTP-only cookie set by the backend
-          withCredentials: true,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
+      const res = await api.post('/auth/login', { username, password });
       // Backend returns 200 + { message: 'Login successful' } on success
       if (response.status === 200) {
         setAuthenticated(true);
