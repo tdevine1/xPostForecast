@@ -30,7 +30,7 @@ function MapPage({ setAuthenticated }) {
   const navigate = useNavigate();
 
   // Base API URL for the backend (e.g., http://localhost:5175)
-  const API_URL = import.meta.env.BACKEND_API_URL || '';
+  const API_URL = import.meta.env.VITE_BACKEND_API_URL || '';
   const LOGOUT_URL = `${API_URL}/auth/logout`;
 
   /**
