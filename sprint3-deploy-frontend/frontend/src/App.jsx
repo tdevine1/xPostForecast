@@ -14,6 +14,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MapPage from './pages/MapPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import api from './api'; 
 
 /**
  * Main application component that manages authentication and routing.
@@ -27,10 +28,7 @@ function App() {
   useEffect(() => {
     async function verifyAuth() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/test`, {
-          method: 'GET',
-          credentials: 'include', // send/receive the HTTP-only cookie
-        });
+        const res = await api.get('/auth/test');
         setAuthenticated(res.ok); // true if cookie/JWT is valid
       } catch {
         setAuthenticated(false);

@@ -10,8 +10,8 @@
  */
 
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
 /**
  * Register component allows new users to create an account.
@@ -23,11 +23,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  // Base API URL for the backend (e.g., http://localhost:5175)
-  const API_URL = import.meta.env.VITE_API_URL || ''; // Fallback for local development
-  const REGISTER_URL = `${API_URL}/auth/register`;
-
-  /**
+   /**
    * Handles form submission by sending registration details to the backend.
    * @param {Object} e - Event object from the form submission.
    */
@@ -42,15 +38,7 @@ const Register = () => {
 
     try {
       console.log('Attempting to post to', REGISTER_URL);
-      const response = await axios.post(
-        REGISTER_URL,
-        { email, username, password },
-        {
-          withCredentials: true, // not strictly required for register, but harmless/consistent
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
+      const res = await api.post('/auth/register', { email, username, password });    
       // Backend typically responds with 201 + { message: 'User registered successfully' }
       if (response.status === 201) {
         alert('Registration successful. Please log in.');
