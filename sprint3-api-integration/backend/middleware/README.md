@@ -1,33 +1,20 @@
-# Middleware README
+# middleware/ Directory Documentation
 
-## Purpose
-Middleware provides **JWT verification** for protected routes using cookies. 
-It ensures that only authenticated users can access specific endpoints.
+The middleware directory holds shared Express middleware used by all backend routes.
 
-## File: `authMiddleware.js`
-### Responsibilities
-- Extract JWT token from cookies
-- Verify it using `process.env.JWT_SECRET`
-- Attach decoded user info to `req.user`
-- Return `401` or `403` for unauthorized access
+## 1. `authMiddleware.js`
+A JWT authentication guard that:
+- Reads the JWT from the HTTP-only cookie  
+- Verifies it with the backend’s `JWT_SECRET`  
+- Attaches decoded user info to `req.user`  
+- Returns `401` or `403` for unauthorized access
 
-Example:
-```js
-const token = req.cookies.token;
-if (!token) return res.status(403).json({ error: 'Access denied' });
+**Tools & Techniques**
+- JSON Web Tokens (JWT)  
+- Cookie-based authentication  
+- Stateless, middleware-controlled route security  
+- Error-first Express flow control  
 
-try {
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  req.user = decoded;
-  next();
-} catch {
-  res.status(401).json({ error: 'Invalid token' });
-}
-```
-
-## Requirements
-- `cookie-parser` middleware must be applied before this in `server.js`
-```js
-import cookieParser from 'cookie-parser';
-app.use(cookieParser());
-```
+**References**
+- JWT Official Standard: https://jwt.io/introduction  
+- Express Middleware Guide: https://expressjs.com/en/guide/using-middleware.html

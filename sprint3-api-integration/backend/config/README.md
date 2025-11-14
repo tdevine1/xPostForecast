@@ -1,31 +1,32 @@
-# Config README
+# config/ Directory Documentation
 
-## Purpose
-The `config/` directory contains the database connection and SSL configuration used to connect securely to Azure MySQL.
+This directory contains configuration utilities for the **backend API** of xPostForecast.
 
-## File: `database.js`
-- Uses `mysql2/promise` for async/await support
-- Loads SSL certificate (`DigiCertGlobalRootG2.crt.pem`)
-- Reads environment variables for credentials
+## Contents
 
-Example connection setup:
-```js
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT),
-  ssl: {
-    ca: fs.readFileSync(path.join(__dirname, 'DigiCertGlobalRootG2.crt.pem')),
-    rejectUnauthorized: true
-  }
-});
-```
+### 1. `database.js`
+Responsible for establishing a **secure MySQL connection pool** using:
+- `mysql2/promise` – modern async/await database driver  
+- TLS/SSL encryption using the DigiCert root CA  
+- Environment variables for credentials
 
-## Expected Console Output
-```
-Loaded CA cert from: backend/config/DigiCertGlobalRootG2.crt.pem
-Connecting to Azure MySQL...
-Successfully connected to MySQL
-```
+Includes:
+- Structured pool creation  
+- SSL certificate loading  
+- Initial connection test for debugging
+
+**Techniques Used**
+- SSL-based database authentication  
+- Connection pooling for efficient query handling  
+- Dynamic environment variable loading
+
+### 2. `DigiCertGlobalRootG2.crt.pem`
+Root certificate required for Azure Database for MySQL.
+
+**Reference**
+- Azure MySQL SSL Requirements:  
+  https://learn.microsoft.com/azure/mysql/single-server/how-to-configure-ssl
+
+---
+
+This directory ensures **secure, encrypted database communication** between Node.js and Azure Database for MySQL.
