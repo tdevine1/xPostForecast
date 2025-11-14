@@ -34,6 +34,7 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
   const { email, username, password } = req.body;
   if (!email || !username || !password) return res.status(400).json({ error: 'email, username, and password are required' });
+
   try {
     // 1) Hash the user's password with a reasonable work factor
     const hashedPassword = await bcrypt.hash(password, 10);

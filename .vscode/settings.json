@@ -5,17 +5,18 @@
                 "authProtocol": "default",
                 "enableSsl": "Enabled",
                 "ssl": {
-                    "ca": "C:\\Users\\phlos\\git\\xPostForecast\\xPostForecast\\sprint2-login-backend\\backend\\config\\DigiCertGlobalRootCA.crt.pem"
+                    "ca": "C:\\Users\\phlos\\git\\xPostForecast\\xPostForecast\\sprint3-api-integration\\backend\\config\\DigiCertGlobalRootG2.crt.pem"
                 }
             },
+            "ssh": "Disabled",
             "previewLimit": 50,
-            "server": "2025-cs330-701-51704-demo01-database.mysql.database.azure.com",
+            "server": "xpostforecast-db.mysql.database.azure.com",
             "port": 3306,
             "driver": "MySQL",
-            "name": "authdb",
+            "name": "xPostForecast_DB",
             "database": "authdb",
-            "username": "cs330202505demoadmin",
-            "password": "Intro2SE!"
+            "username": "mysqladmin",
+            "password": "EatShitPitt2025!"
         }
     ]
 }
