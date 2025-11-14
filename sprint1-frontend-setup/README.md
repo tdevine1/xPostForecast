@@ -17,7 +17,7 @@ By the end of Sprint 1, students will have:
 
 The application at the end of Sprint 1 should look like this:
 
-![Sprint 1 Completed UI](./screenshot-sprint1.png)
+![Sprint 1 Completed UI](.images/screenshot-sprint1.png)
 
 ## 📂 Folder Structure
 
