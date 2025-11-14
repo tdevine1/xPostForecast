@@ -25,7 +25,6 @@ By the end of this sprint, students should be able to:
 3. Acquire and authorize COG (Cloud Optimized GeoTIFF) assets using **SAS signing**  
 4. Parse geospatial rasters using:
    - `georaster`
-   - `geoblaze`
 5. Convert raster cells into mappable point data  
 6. Build frontend interfaces to:
    - Select dates
