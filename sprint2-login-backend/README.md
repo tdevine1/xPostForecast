@@ -84,16 +84,16 @@ These guides cover installation, environment variables, dependency setup, and ru
 **Login Failure**\
 Attempting to log in with an invalid user yields an error:
 
-![Login Error](./screenshot-baduser.png)
+![Login Error](./images/screenshot-baduser.png)
 
 **Registration Success**\
 When a new username is provided and the form is submitted, students should see a confirmation alert:
 
-![Registration Success](./screenshot-gooduser.png)
+![Registration Success](./images/screenshot-gooduser.png)
 
 **Logging In**\
 On the Login page, entering valid credentials redirects to the protected map view:
-![Login Success](./screenshot-sprint2.png)
+![Login Success](./images/screenshot-sprint2.png)
 Note the login should be persisted if you close the window and try again. To clear the state, use the Logout button!
 
 ## 📚 Further Resources
