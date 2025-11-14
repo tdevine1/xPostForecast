@@ -31,14 +31,12 @@ Process:
 2. Retrieve monthly NOAA nClimGrid COG  
 3. Use SAS signing endpoint to authorize asset access  
 4. Load raster using `georaster`  
-5. Sample WV bounding box using `geoblaze`  
-6. Convert Celsius → Fahrenheit  
-7. Return array of `{ lat, lon, tavg }`
+5. Convert Celsius → Fahrenheit  
+6. Return array of `{ lat, lon, tavg }`
 
 **Tools**
 - `node-fetch`  
-- `georaster`  
-- `geoblaze`  
+- `georaster`
 - Microsoft STAC API  
 - Signed SAS URLs  
 
