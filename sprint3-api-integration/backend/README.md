@@ -19,7 +19,7 @@ This service is intended to be deployed as an Azure App Service and consumed by 
 - **HTTP helpers**: `cookie-parser`, `cors`
 - **Climate data**: Microsoft Planetary Computer STAC API  
   - `node-fetch` for HTTP requests  
-  - `georaster` and `geoblaze` to read/sample COG rasters
+  - `georaster` to read/sample COG rasters
 - **TLS**: Root CA cert (`config/DigiCertGlobalRootG2.crt.pem`) for MySQL SSL
 
 ---
