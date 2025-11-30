@@ -18,10 +18,9 @@
 //     VITE_BACKEND_API_URL = http://localhost:5175
 //
 // During GitHub Actions CI/CD:
-//     VITE_BACKEND_API_URL is injected through a GitHub secret.
-//
-// This lets each student deploy their own backend independently
-// while keeping one shared code base.
+//     VITE_BACKEND_API_URL is injected through a GitHub secret
+
+import axios from 'axios';
 
 // Log the API base URL so we can confirm the value during local dev
 // AND after production deployments. If this prints "undefined", then
