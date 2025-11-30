@@ -34,42 +34,14 @@ if (process.env.NODE_ENV === 'production') {
 
 /**
  * CORS
- * Allow the Vite dev server (local) and the deployed SWA frontend.
- * We log origins for debugging and use a whitelist.
+ * Allow the Vite dev server (or your deployed frontend) to send cookies.
+ * - origin: FRONTEND_URL (e.g., http://localhost:5173)
+ * - credentials: true to allow cookie-based auth
+ *
+ * NOTE: Place CORS before your routes.
  */
-const allowedOrigins = [
-  process.env.FRONTEND_URL,      // Deployed SWA URL in Azure
-  'http://localhost:5173',       // Local dev frontend
-];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    console.log('CORS origin check:', origin);
-
-    // Allow non-browser tools (like curl, Postman) with no origin
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.warn('CORS blocked origin:', origin);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-}));
-
-// Handle preflight requests for all routes
-app.options('*', cors({
-  origin: (origin, callback) => {
-    console.log('CORS preflight origin check:', origin);
-
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-
-    console.warn('CORS preflight blocked origin:', origin);
-    return callback(new Error('Not allowed by CORS'));
-  },
+  origin: process.env.FRONTEND_URL,
   credentials: true,
 }));
 
