@@ -23,14 +23,10 @@ You have:
 The instructor will provide:
 
 - The **App Service name**  
-- The **App Service URL** (e.g., `https://xpostforecast-api-team3.azurewebsites.net`)  
+- The **App Service URL** (e.g., `https://xpostforecast-api.azurewebsites.net`)  
 - The **MySQL host** and **database name** (already used in Sprints 2 & 3)  
 
 You do **not** create or delete App Services or MySQL servers in this sprint.
-
-Screenshot reference:
-
-![App Service Overview](../images/appservice-overview.png)
 
 ---
 
@@ -284,6 +280,9 @@ If there are errors:
 ---
 
 ## 7. Summary of Backend Tasks
+
+![Backend Success!](../images/browser-backend-success.png)
+browser-backend-success.png
 
 By following this README, your team will:
 
