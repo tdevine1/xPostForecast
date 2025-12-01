@@ -12,32 +12,6 @@ The instructor acts as the Cloud Administrator (creating the resources); your te
 
 ---
 
-## 📁 Sprint 4 Folder Layout
-
-This folder contains all Sprint 4-specific code and documentation:
-
-```text
-sprint4-cloud-deployment/
-│
-├── README.md                 ← Overview (this file)
-│
-├── frontend/
-│   └── README.md             ← Static Web App (SWA) configuration & deployment
-│
-├── backend/
-│   └── README.md             ← App Service configuration & deployment
-│
-└── images/                   ← Screenshots used in these READMEs
-```
-
-You will place screenshots (taken from *your* group’s Azure resources and GitHub repo) into the `images/` directory and they will be referenced from these READMEs.
-
-Example (top-level) screenshot reference:
-
-![Resource Group Overview](./images/resource-group-overview.png)
-
----
-
 ## 🧑‍🏫 What the Instructor Has Already Created (Per Group)
 
 For each group, the instructor has **already** created and wired up:
@@ -93,8 +67,6 @@ Your group’s responsibilities now are:
    - Confirm that the deployed frontend and backend work together using the existing database  
    - Use browser dev tools and the Azure Log Stream to investigate any issues
 
-There are **no grading criteria or LMS instructions in this README**; refer to your course LMS for Sprint 4 deliverables and rubric.
-
 ---
 
 ## 🆕 Conceptual Changes from Sprint 3 → Sprint 4
@@ -133,5 +105,3 @@ There are **no grading criteria or LMS instructions in this README**; refer to y
   - App Service environment variables
   - Backend GitHub Actions workflow
   - Health checks and diagnostics
-
-Consult your LMS assignment in parallel to know what you are expected to demonstrate for Sprint 4.
