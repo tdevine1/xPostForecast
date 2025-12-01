@@ -171,6 +171,32 @@ Adjust the `app-name` to match the actual name of your App Service.
 3. **Node Version Alignment**  
    Ensure `node-version` in the workflow matches the Node version configured on App Service (e.g., Node 20 LTS).
 
+---
+
+### 3.3 How the Backend Port Works on Azure App Service
+
+Azure App Service does **not** allow Node.js applications to choose their own port.
+Instead, the platform assigns a port dynamically at runtime and exposes it through an environment variable named:
+
+PORT
+
+Your backend **must** listen on this assigned port. If it attempts to bind to any other port (such as 5175), the application will fail to start on Azure.
+
+Example code used in the backend:
+
+    const PORT = Number(process.env.PORT) || 5175;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+
+Explanation:
+
+- When running **locally**, process.env.PORT is usually undefined, so the backend defaults to port 5175.
+- When running **on Azure App Service**, the platform injects a required port value (commonly 8080).
+- Your application must listen on that Azure-provided port or it will not boot.
+
+This is why the backend code uses process.env.PORT instead of hard-coding any port number.
+
 Screenshot reference:
 
 ![Backend Actions Success](../images/github-actions-backend-success.png)
