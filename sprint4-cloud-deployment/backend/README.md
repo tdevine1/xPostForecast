@@ -1,281 +1,296 @@
-# Backend API (Node.js / Express)
+# Sprint 4 – Backend Deployment (Azure App Service)
+### Instructor-provisioned App Service – students configure, deploy, and verify
 
-This folder contains the Node.js/Express backend for **xPostForecast**. It provides:
+Your group’s **Azure App Service (Web App for Linux)** for the backend has already been created by the instructor.
 
-- User registration, login, and logout using JWT in HTTP-only cookies.
-- Secure MySQL access (Azure Database for MySQL) via a connection pool.
-- STAC-backed temperature data endpoints that query NOAA nClimGrid data from Microsoft Planetary Computer and return point-based temperatures over West Virginia.
+It is your team’s responsibility to:
 
-This service is intended to be deployed as an Azure App Service and consumed by the React frontend.
-
----
-
-## Tech Stack
-
-- **Runtime**: Node.js (ES modules)
-- **Framework**: Express
-- **Database**: Azure Database for MySQL (`mysql2/promise`)
-- **Auth**: JSON Web Tokens (JWT) in HTTP-only cookies
-- **HTTP helpers**: `cookie-parser`, `cors`
-- **Climate data**: Microsoft Planetary Computer STAC API  
-  - `node-fetch` for HTTP requests  
-  - `georaster` to read/sample COG rasters
-- **TLS**: Root CA cert (`config/DigiCertGlobalRootG2.crt.pem`) for MySQL SSL
+- Configure the App Service’s **Application Settings** (environment variables)  
+- Connect it to your existing **Azure MySQL database** from Sprint 2  
+- Set up **GitHub Actions** with a publish profile  
+- Verify the deployment and health status  
 
 ---
 
-## Folder Structure
+## 1. Prerequisites and Context
+
+You have:
+
+- A Node.js backend in `sprint4-cloud-deployment/backend`  
+- A working database on Azure MySQL (same host / DB / user as earlier sprints)  
+- A corresponding App Service created for your group  
+
+The instructor will provide:
+
+- The **App Service name**  
+- The **App Service URL** (e.g., `https://xpostforecast-api-team3.azurewebsites.net`)  
+- The **MySQL host** and **database name** (already used in Sprints 2 & 3)  
+
+You do **not** create or delete App Services or MySQL servers in this sprint.
+
+Screenshot reference:
+
+![App Service Overview](../images/appservice-overview.png)
+
+---
+
+## 2. Download the Publish Profile and Add as GitHub Secret
+
+GitHub Actions uses the App Service **publish profile** to authenticate deployments.
+
+### 2.1 Download the Publish Profile
+
+1. Open Azure Portal.  
+2. Navigate to **App Services → [your group’s App Service]**.  
+3. In the left menu, find **Deployment Center** (or “Get publish profile”).  
+4. Click **Download publish profile**.
+
+This downloads an XML file (e.g., `yourappname.PublishSettings`).
+
+Screenshot reference:
+
+![App Service Publish Profile](../images/appservice-publish-profile.png)
+
+---
+
+### 2.2 Add the Publish Profile as a GitHub Secret
+
+1. Go to your GitHub repository.  
+2. Click **Settings → Secrets and variables → Actions**.  
+3. Click **New repository secret**.  
+4. Add:
 
 ```text
-backend/
-├── .env                         # Environment variables (not committed)
-├── config/
-│   ├── DigiCertGlobalRootG2.crt.pem
-│   ├── README.md
-│   └── database.js              # MySQL connection pool + SSL CA
-├── middleware/
-│   ├── README.md
-│   └── authMiddleware.js        # JWT cookie verification
-├── routes/
-│   ├── README.md
-│   ├── auth.js                  # /auth/* routes for login/register/logout
-│   └── stac.js                  # STAC / temperature data endpoints
-├── sign/
-│   └── sign.js                  # Helper to sign Planetary Computer URLs
-└── server.js                    # Express app entry point
+Name:  APP_SERVICE_PUBLISH_PROFILE
+Value: (paste the entire XML file contents)
 ```
 
+Click **Add secret**.
+
+Screenshot reference:
+
+![GitHub Secrets](../images/github-secrets.png)
+
 ---
 
-## Environment Variables
+## 3. Inspect and Fix the Backend GitHub Actions Workflow
 
-Create a `.env` file in the `backend/` folder. Typical configuration:
+Azure may have generated an App Service workflow or you may create one yourself, typically in:
 
-```ini
-# Backend server
-BACKEND_PORT=5175
-FRONTEND_URL=http://localhost:5173
-NODE_ENV=development
-
-# JWT
-JWT_SECRET=replace_this_with_a_strong_secret
-
-# Azure Database for MySQL
-DB_HOST=your-mysql-host.mysql.database.azure.com
-DB_USER=your-mysql-username
-DB_PASSWORD=your-mysql-password
-DB_DATABASE=your-database-name
-DB_PORT=3306
+```text
+.github/workflows/backend-appservice.yml
 ```
 
-> The database connection uses SSL and the bundled CA certificate at `config/DigiCertGlobalRootG2.crt.pem`.
+Your goal is to ensure that:
 
----
+- It builds from `sprint4-cloud-deployment/backend`  
+- It deploys that folder to App Service  
+- It uses the `APP_SERVICE_PUBLISH_PROFILE` secret  
 
-## server.js – Express App and Wiring
+### 3.1 Example Backend Workflow Skeleton
 
-`server.js` is the main entry point. It:
+A typical structure might look like:
 
-1. Loads `.env` using `dotenv/config`.
-2. Creates an Express app.
-3. Applies middleware:
-   - `express.json()` for JSON request bodies.
-   - `cookieParser()` for cookie parsing.
-   - `cors()` configured to allow the frontend origin and credentials.
-4. Mounts routers:
-   - Authentication router under `/auth`.
-   - STAC/temperature router under its API prefix (see `routes/stac.js`).
-5. Installs a basic error handler that returns a JSON error object.
-6. Starts listening on `BACKEND_PORT`.
+```yaml
+name: Build and deploy Node.js app to Azure Web App - xPostForecast-api
 
-CORS is configured to allow `credentials: true` and the exact `FRONTEND_URL`, so the frontend can send/receive the auth cookie.
+on:
+  push:
+    branches:
+      - main
 
----
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-## Database Connection (`config/database.js`)
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
 
-`config/database.js`:
+      - name: npm install, build, and test (backend only)
+        working-directory: sprint4-cloud-deployment/backend
+        run: |
+          npm install
+          npm run build --if-present
+          # Optional: comment out if you have no tests
+          # npm run test --if-present
 
-- Uses `mysql2/promise` to create a connection pool.
-- Reads credentials from environment variables.
-- Loads the DigiCert root CA for TLS:
+      - name: Upload backend artifact for deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-app
+          path: sprint4-cloud-deployment/backend
 
-```js
-import mysql from "mysql2/promise";
-import fs from "fs";
-import path from "path";
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-app
+          path: sprint4-cloud-deployment/backend
 
-const caPath = path.join(process.cwd(), "config", "DigiCertGlobalRootG2.crt.pem");
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  port: Number(process.env.DB_PORT || 3306),
-  ssl: {
-    ca: fs.readFileSync(caPath),
-    rejectUnauthorized: true,
-  },
-});
-
-export default pool;
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "<your-appservice-name>"
+          slot-name: "Production"
+          package: sprint4-cloud-deployment/backend
+          publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}
 ```
 
-All DB queries elsewhere in the backend use this pool. The module logs connection issues at startup so that database problems surface early.
+Adjust the `app-name` to match the actual name of your App Service.
 
 ---
 
-## Authentication
+### 3.2 Common Fixes You May Need
 
-### Routes (`routes/auth.js`)
+1. **Working Directory / Paths**  
+   If the workflow originally assumed `./backend`, change it to:
 
-The `auth.js` router defines authentication endpoints, mounted under `/auth` in `server.js`. Typical routes:
+   - `working-directory: sprint4-cloud-deployment/backend`
+   - `path: sprint4-cloud-deployment/backend`
+   - `package: sprint4-cloud-deployment/backend`
 
-- `POST /auth/register`  
-  Accepts username/email/password, hashes the password with bcrypt, and inserts a new user record into MySQL.
+   Otherwise, the workflow may fail with errors like:
 
-- `POST /auth/login`  
-  Verifies the supplied credentials. On success, issues a signed JWT and sets it as an HTTP-only cookie (for example, `token`). Returns a simple JSON success payload.
+   > “No such file or directory, working directory './backend'”
 
-- `POST /auth/logout`  
-  Clears the auth cookie and returns a JSON success payload.
+2. **Test Command Failures**  
+   If your `package.json` includes:
 
-- `GET /auth/test` (or similar)  
-  Reads the JWT from the cookie, verifies it, and returns basic user/session info. The frontend uses this to verify that a session is still active when the app loads.
+   ```json
+   "test": "echo \"Error: no test specified\" && exit 1"
+   ```
 
-All responses are JSON and are designed to be consumed by the React frontend.
+   then `npm test` will cause the workflow to fail. You can either:
 
-### Middleware (`middleware/authMiddleware.js`)
+   - Comment out the `npm run test --if-present` line in the workflow, or  
+   - Temporarily change the `test` script in `backend/package.json` to something that exits successfully.
 
-`authMiddleware.js` provides a reusable JWT guard to protect routes that require authentication:
+3. **Node Version Alignment**  
+   Ensure `node-version` in the workflow matches the Node version configured on App Service (e.g., Node 20 LTS).
 
-```js
-import jwt from "jsonwebtoken";
+Screenshot reference:
 
-const authMiddleware = (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(403).json({ error: "Access denied" });
-  }
+![Backend Actions Success](../images/github-actions-backend-success.png)
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: "Invalid token" });
-  }
-};
+---
 
-export default authMiddleware;
+## 4. Configure App Service Application Settings (Environment Variables)
+
+Now configure how the backend connects to the database and interacts with the frontend.
+
+### 4.1 Open Application Settings
+
+1. In Azure Portal, open your group’s App Service.  
+2. In the left menu, click **Configuration → Application settings**.
+
+Screenshot reference:
+
+![App Service Env Vars](../images/appservice-envvars.png)
+
+### 4.2 Required Settings
+
+Add or verify the following keys (exact names may be instructor-specified):
+
+| Name          | Description                                                     |
+|---------------|-----------------------------------------------------------------|
+| `DB_HOST`     | Your MySQL host (`<server>.mysql.database.azure.com`)           |
+| `DB_USER`     | Database username (same used locally in Sprint 2/3)             |
+| `DB_PASS`     | Database password                                               |
+| `DB_NAME`     | Database name for your team                                     |
+| `FRONTEND_URL`| Your SWA URL (`https://<your-swa>.azurestaticapps.net`)         |
+| `JWT_SECRET`  | A long random string used for signing JWTs                      |
+| `NODE_ENV`    | `production`                                                   |
+
+Click **Save**, then **Restart** the App Service.
+
+---
+
+## 5. Database Connectivity Notes
+
+- The Azure MySQL server and database were created and configured during Sprint 2.  
+- You do **not** modify MySQL firewall rules in this sprint unless instructed otherwise.  
+- If the backend logs show `Error: connect ETIMEDOUT` when connecting to MySQL, inform your instructor (this usually indicates a network or firewall issue at the server level).
+
+From your code’s perspective, the critical items are:
+
+- Correct `DB_HOST` value  
+- Valid username / password  
+- Correct `DB_NAME`  
+
+---
+
+## 6. Verify Backend Health
+
+After deploying and configuring environment settings, verify that your backend is running correctly.
+
+### 6.1 Use the `/health` Endpoint
+
+In a browser or tool like `curl`, visit:
+
+```text
+https://<your-backend>.azurewebsites.net/health
 ```
 
-Apply this middleware to any route that should only be accessible to logged-in users.
+A healthy server will respond with JSON similar to:
 
----
-
-## STAC / Temperature Data Endpoint (`routes/stac.js`)
-
-This router is responsible for querying NOAA nClimGrid data from Microsoft Planetary Computer, sampling it over West Virginia, and returning temperature points for the map.
-
-### Constants and Helpers
-
-Inside `routes/stac.js` you will see constants such as:
-
-```js
-const STAC_SEARCH = "https://planetarycomputer.microsoft.com/api/stac/v1/search";
-const SIGN_URL = "https://planetarycomputer.microsoft.com/api/sas/v1/sign";
-
-// Bounding box [west, south, east, north] for West Virginia
-const BBOX = [-82.644739, 37.201483, -77.719519, 40.638801];
-
-const MAX_POINTS = 10000;
-
-function c2f(c) {
-  return c * 9 / 5 + 32;
+```json
+{
+  "ok": true,
+  "env": "production"
 }
 ```
 
-These configure the STAC search endpoint, the signing endpoint, the WV bounding box, and a helper to convert Celsius to Fahrenheit.
+Screenshot reference:
 
-### Main Flow
-
-For a given request from the frontend (e.g., with year/month params), the STAC route:
-
-1. **Builds a STAC search request** to `STAC_SEARCH`:
-   - Filters by the `nclimgrid-monthly` collection.
-   - Restricts to the WV bounding box.
-   - Uses a `datetime` range based on the requested year/month.
-
-2. **Finds the relevant asset** in the STAC search response (a COG representing gridded data for the chosen month).
-
-3. **Signs the asset URL** using `sign/sign.js`:
-   - Calls the Planetary Computer signing endpoint (`SIGN_URL`) with the asset href.
-   - Receives a signed URL that can be safely fetched.
-
-4. **Fetches and parses the raster**:
-   - Downloads the COG from the signed URL using `node-fetch`.
-   - Converts the response buffer into a georaster object via `parseGeoraster`.
-
-5. **Samples grid cells over West Virginia**:
-   - Iterates over raster indices, converting each cell center into latitude/longitude.
-   - Checks that the point lies inside the WV bounding box.
-   - Reads the temperature value (in Celsius) and converts to Fahrenheit with `c2f`.
-   - Pushes records into an array of:
-
-     ```js
-     {
-       lat,
-       lon,
-       tavg: c2fValue,
-     }
-     ```
-
-   - Stops when `MAX_POINTS` is reached to keep the response manageable.
-
-6. **Returns JSON** back to the client:
-
-   ```json
-   [
-     { "lat": 39.1234, "lon": -79.5678, "tavg": 54.3 },
-     { "lat": 38.9012, "lon": -80.1234, "tavg": 55.7 }
-   ]
-   ```
-
-The frontend uses this array to draw colored markers on the Leaflet map.
+![Browser Health Check](../images/browser-health-check.png)
 
 ---
 
-## Running the Backend Locally
+### 6.2 Check Log Stream During Startup
 
-1. Install dependencies:
+For deeper debugging:
 
-   ```bash
-   cd backend
-   npm install
-   ```
+1. Go to your App Service in Azure Portal.  
+2. Navigate to **Log stream**.  
+3. Restart the App Service and watch the logs.
 
-2. Create `.env` with the variables listed in the **Environment Variables** section.
+You should see messages along the lines of:
 
-3. Start the server:
+```text
+Loaded CA cert from: /home/site/wwwroot/config/DigiCertGlobalRootG2.crt.pem
+Connecting to xpostforecast-db.mysql.database.azure.com:3306
+Configured FRONTEND_URL = https://<your-swa>.azurestaticapps.net
+NODE_ENV = production
+Server is running on 8080
+```
 
-   ```bash
-   npm run dev     # or npm start / node server.js depending on package.json
-   ```
+Screenshot reference:
 
-4. Ensure the frontend’s `VITE_BACKEND_API_URL` points to this backend, e.g.:
+![App Service Logs Startup](../images/appservice-logs-startup.png)
 
-   ```ini
-   VITE_BACKEND_API_URL=http://localhost:5175
-   ```
+If there are errors:
+
+- Check env var names and values  
+- Confirm database host/user/password  
+- Confirm your publish profile secret is valid and up to date  
 
 ---
 
-## Deployment Notes
+## 7. Summary of Backend Tasks
 
-- The backend is designed for deployment to **Azure App Service**.
-- Configure environment variables in the App Service settings.
-- Ensure the MySQL firewall allows connections from the App Service.
-- CORS must allow your production frontend origin with `credentials: true`.
-- In production, cookies should be set with `secure: true` when served over HTTPS.
+By following this README, your team will:
+
+- Download and use the App Service **publish profile** to authenticate deployments via GitHub Actions  
+- Fix and confirm a backend workflow that builds from `sprint4-cloud-deployment/backend`  
+- Configure **Application Settings** for database connection and frontend URL  
+- Confirm the backend is up and healthy at `/health`  
+- Use the Azure Log Stream to debug real startup / connection issues  
+
+When combined with the SWA instructions in `../frontend/README.md`, your group will have a complete cloud-hosted application for xPostForecast running on Azure.

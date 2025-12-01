@@ -1,254 +1,229 @@
-# Frontend (React / Vite)
+# Sprint 4 – Frontend Deployment (Azure Static Web Apps)
+### Instructor-provisioned SWA – students configure, deploy, and verify
 
-This folder contains the React frontend for **xPostForecast**. It provides:
+Your group’s **Static Web App (SWA)** has already been created by the instructor and linked to your GitHub repository.
 
-- A login and registration flow using an HTTP-only cookie for auth.
-- A map-based UI (Leaflet) that visualizes historical monthly average temperatures over West Virginia.
-- A date selector that drives calls to the backend STAC temperature endpoint.
-- A consolidated Axios instance in `src/api.js` that centralizes the backend base URL and cookie handling.
+Your job in this sprint is to:
 
----
-
-## Tech Stack
-
-- **Framework**: React (Vite)
-- **Routing**: React Router
-- **HTTP client**: Axios (shared instance in `src/api.js`)
-- **Mapping**: Leaflet + React-Leaflet
-- **Color scales**: `chroma-js`
-- **Loading indicators**: `react-spinners` (e.g., `ClipLoader`)
+- Configure the **backend API URL** as a GitHub Actions secret  
+- Confirm and, if necessary, fix the **SWA GitHub Actions workflow**  
+- Trigger deployments via pushes to `main`  
+- Verify that the deployed frontend talks to your cloud backend
 
 ---
 
-## Folder Structure
+## 1. Prerequisites and Context
+
+You should already have:
+
+- A working React frontend from earlier sprints
+- A backend API being deployed to Azure App Service (see `../backend/README.md`)
+- An existing MySQL database that your backend can reach from the cloud
+
+Your instructor will provide per-group:
+
+- The SWA **Name**  
+- The SWA **URL** (e.g., `https://group3-swa.azurestaticapps.net`)  
+
+You do **not** create or delete SWA resources in this sprint.
+
+Screenshot reference:
+
+![SWA Overview](../images/swa-overview.png)
+
+---
+
+## 2. Inspect the SWA GitHub Actions Workflow
+
+When the instructor first created and linked the SWA, Azure created a workflow file in your repo, similar to:
 
 ```text
-frontend_src/
-└── src/
-    ├── App.css
-    ├── App.jsx            # Top-level router & auth gate
-    ├── api.js             # Shared Axios instance
-    ├── assets/
-    │   └── react.svg
-    ├── components/
-    │   ├── DateSelector.jsx
-    │   └── MapComponent.jsx
-    ├── index.css
-    ├── main.jsx           # React entry point
-    └── pages/
-        ├── Login.jsx
-        ├── Register.jsx
-        └── MapPage.jsx
+.github/workflows/azure-static-web-apps.yml
 ```
 
-You will also typically have a `.env` file at the frontend project root:
+Open this file and locate the main deploy job where `Azure/static-web-apps-deploy@v1` is used.
 
-```ini
-VITE_BACKEND_API_URL=http://localhost:5175
+### 2.1 Verify `app_location` and `output_location`
+
+Ensure these match the Sprint 4 frontend layout:
+
+```yaml
+with:
+  app_location: "sprint4-cloud-deployment/frontend"
+  api_location: ""
+  output_location: "dist"
 ```
 
+- `app_location` should point to the **frontend** code folder for Sprint 4.
+- `output_location` is where Vite places the built files (`dist` by default).
+- `api_location` is not used in this project (we are using a separate App Service for the backend), so it is left empty.
+
+If these paths are incorrect, update them and commit to `main`.
+
+Screenshot reference:
+
+![SWA Build Config](../images/swa-build-config.png)
+
 ---
 
-## Shared HTTP Client (`src/api.js`)
+### 2.2 Fix the “Close Pull Request” Job (If Needed)
 
-All backend calls should go through the shared Axios instance `src/api.js`:
+Some auto-generated SWA workflows include a job like:
 
-```js
-// src/api.js
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_API_URL, // e.g., http://localhost:5175 or deployed API
-  withCredentials: true,                         // send/receive HTTP-only auth cookie
-});
-
-export default api;
+```yaml
+close_pull_request_job:
+  if: github.event_name == 'pull_request' && github.event.action == 'closed'
+  runs-on: ubuntu-latest
+  steps:
+    - name: Close Pull Request
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_* }}
+        action: "close"
 ```
 
-Key points:
+VS Code or GitHub Actions may complain that `app_location` is missing here. If that happens, add the same `app_location` used in your main job:
 
-- The `baseURL` is controlled entirely by `VITE_BACKEND_API_URL`.
-- `withCredentials: true` ensures the browser sends/receives the auth cookie on every request.
-- If you add Axios interceptors (for logging, automatic 401 handling, etc.), do it here so all requests share the same behavior.
+```yaml
+with:
+  azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_* }}
+  app_location: "sprint4-cloud-deployment/frontend"
+  action: "close"
+```
 
-Components and pages (e.g., `Login.jsx`, `Register.jsx`, `MapPage.jsx`) should import this `api` instance instead of using `axios` directly.
-
----
-
-## App-Level Routing and Auth (`src/App.jsx`)
-
-`App.jsx`:
-
-- Defines the client-side routes using React Router:
-  - `/login` – Login page.
-  - `/register` – Registration page.
-  - `/` (or `/map`) – Main map page, behind an auth gate.
-- Manages an `authenticated` state used to protect routes.
-- On initial load, calls a backend endpoint (such as `/auth/test`) using `api.get(...)` to determine whether the current cookie represents a valid session.
-
-High-level logic:
-
-1. On mount, call the backend test endpoint:
-   - If the call succeeds, set `authenticated = true` and allow access to protected routes.
-   - If it fails with 401/403, redirect the user to `/login`.
-
-2. When the user logs in successfully:
-   - Set `authenticated = true` and navigate to the map page.
-
-3. When the user logs out:
-   - Call the backend logout endpoint.
-   - Set `authenticated = false` and navigate to `/login`.
+This keeps the workflow consistent and avoids YAML validation errors.
 
 ---
 
-## Login Page (`src/pages/Login.jsx`)
+## 3. Add the Backend URL Secret (`VITE_BACKEND_API_URL`)
 
-`Login.jsx`:
+The frontend uses Axios and Vite, with the backend API URL coming from `import.meta.env.VITE_BACKEND_API_URL` at build time.
 
-- Renders a username/email and password form.
-- On submit:
-  - Sends a POST request to `/auth/login` via `api.post(...)`.
-  - Expects the backend to set an HTTP-only cookie.
-  - On success, updates `authenticated` state and navigates to the map.
+You’ll set this via a GitHub Actions secret.
 
-It also shows validation or error messages when login fails and provides a link to the registration page for new users.
+### 3.1 Create the Secret in GitHub
 
----
+1. Go to your repo on GitHub.  
+2. Click **Settings → Secrets and variables → Actions**.  
+3. Click **New repository secret**.  
+4. Add:
 
-## Register Page (`src/pages/Register.jsx`)
+```text
+Name:  VITE_BACKEND_API_URL
+Value: https://<your-appservice>.azurewebsites.net
+```
 
-`Register.jsx`:
+> Make sure there is **no trailing slash** at the end of the URL.  
+> The frontend will append routes like `/auth/login` to this base.
 
-- Presents a form for creating a new account (e.g., email/username + password).
-- On submit:
-  - Sends a POST request to `/auth/register` via `api.post(...)`.
-  - On success, redirects to `/login` so the user can log in with the new credentials.
+Screenshot reference:
 
-Using the shared `api` instance keeps configuration (base URL, credentials) consistent.
-
----
-
-## Map Page (`src/pages/MapPage.jsx`)
-
-`MapPage.jsx` is the main application view:
-
-- Displays the `DateSelector` component for choosing the year/month.
-- Provides a button to fetch temperature data for the selected date.
-- Manages loading state and error messages.
-- Renders the `MapComponent` with the data returned from the backend.
-- Includes a logout button that calls the backend’s logout endpoint and sends the user back to `/login`.
-
-Typical state in `MapPage`:
-
-- `selectedYear` and `selectedMonth` (or a combined `selectedDate`).
-- `temperatureData`: an array of `{ lat, lon, tavg }` objects.
-- `isLoading`: a boolean used to toggle the loading indicator.
-- `error`: a string to display when something goes wrong.
-
-Typical flow:
-
-1. User selects a year and month in `DateSelector`.
-2. User clicks “Fetch Data” (or similar).
-3. `MapPage` calls a backend STAC route using `api.get(...)` or `api.post(...)`, passing the selected date.
-4. On success, `temperatureData` is set with the returned array.
-5. `MapComponent` receives `temperatureData` as a prop and renders it on the map.
-6. On failure:
-   - 401/403 responses are treated as session expiration, and the user is redirected to `/login`.
-   - Other errors show a generic error message.
+![GitHub Secrets](../images/github-secrets.png)
 
 ---
 
-## Date Selection (`src/components/DateSelector.jsx`)
+### 3.2 Wire the Secret into the SWA Workflow (if needed)
 
-`DateSelector.jsx`:
+Depending on how Azure generated your workflow, you may need to explicitly pass the secret into the job environment:
 
-- Encapsulates the UI for selecting a year and month.
-- Accepts props for the current selection and an `onChange` callback.
-- When the user changes the year or month, calls `onChange` with the new values so `MapPage` can update its state.
+Inside the deploy job (usually under `jobs: build_and_deploy_job`), add:
 
-This separation makes it easy to change the date UI without touching the map or backend logic.
+```yaml
+env:
+  VITE_BACKEND_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}
+```
 
----
-
-## Map Visualization (`src/components/MapComponent.jsx`)
-
-`MapComponent.jsx` uses React-Leaflet to render a Leaflet map:
-
-- Imports `MapContainer`, `TileLayer`, and `CircleMarker` from `react-leaflet`.
-- Expects a prop such as `data` or `temperatures` containing an array of:
-
-  ```ts
-  {
-    lat: number;
-    lon: number;
-    tavg: number; // Fahrenheit
-  }
-  ```
-
-- Uses `chroma-js` to turn `tavg` values into colors (for example, cool blues for lower temps and warmer reds for higher temps).
-- For each point, renders a `CircleMarker` with:
-  - A radius (fixed or scaled with temperature).
-  - A fill color derived from `tavg`.
-  - A popup showing the latitude, longitude, and temperature (e.g., `"54.3 °F"`).
-
-Because the backend already converts Celsius to Fahrenheit, the frontend can treat `tavg` as display-ready.
+This ensures that when Vite runs the build, `process.env.VITE_BACKEND_API_URL` / `import.meta.env.VITE_BACKEND_API_URL` is set correctly.
 
 ---
 
-## Data Flow: Date → STAC API → Map
+## 4. Local Frontend Sanity Check (Optional but Recommended)
 
-End-to-end data flow:
+Before relying on Azure, confirm your frontend still runs locally.
 
-1. User selects a date in `DateSelector`.
-2. `MapPage` updates its state with the selected date.
-3. User triggers a fetch (e.g., clicks a button).
-4. `MapPage` sends a request to the backend STAC endpoint using `api` and includes the selected date in the request.
-5. Backend `routes/stac.js`:
-   - Calls the Planetary Computer STAC API.
-   - Signs and fetches the relevant nClimGrid COG.
-   - Samples a grid of points over West Virginia.
-   - Returns an array of `{ lat, lon, tavg }` values.
-6. `MapPage` sets `temperatureData` based on the response.
-7. `MapComponent` receives `temperatureData` as a prop and renders markers on the map.
-
----
-
-## Running the Frontend Locally
-
-1. Install dependencies:
-
-   ```bash
-   cd frontend_src
-   npm install
-   ```
-
-2. Create a `.env` file in the frontend project root:
-
-   ```ini
-   VITE_BACKEND_API_URL=http://localhost:5175
-   ```
-
-3. Start the Vite dev server:
-
-   ```bash
-   npm run dev
-   ```
-
-4. Open the printed URL (usually `http://localhost:5173`) in your browser.
-
----
-
-## Build and Deployment
-
-To build the static frontend:
+From the repo root:
 
 ```bash
-npm run build
+cd sprint4-cloud-deployment/frontend
+npm install
+npm run dev
 ```
 
-This creates a production-ready bundle in `dist/`. For deployment:
+You should see something like this logged in your browser console or terminal:
 
-- Deploy `dist/` to Azure Static Web Apps or another static hosting provider.
-- Configure the environment so that `VITE_BACKEND_API_URL` points to the deployed backend API (for example, your Azure App Service URL).
+```text
+Frontend API Base URL: http://localhost:5175
+```
 
-Because all HTTP calls go through `src/api.js`, updating this one environment variable is enough to point the frontend at a different backend.
+This indicates that locally your Vite dev server is pointing to your **local** backend (not the cloud backend). That’s fine; for Azure, the build process uses the `VITE_BACKEND_API_URL` secret instead.
+
+---
+
+## 5. Trigger a SWA Deployment via GitHub Actions
+
+Once you have:
+
+- Confirmed `app_location` and `output_location`
+- Added `VITE_BACKEND_API_URL` as a secret
+- (If needed) Added the `env` mapping in the workflow
+
+You can trigger a deployment by pushing a commit to the branch that SWA is following (usually `main`):
+
+```bash
+git add .
+git commit -m "Sprint 4: configure SWA workflow and backend URL"
+git push
+```
+
+Then go to your repo’s **Actions** tab and watch the `Azure Static Web Apps CI/CD` workflow.
+
+Screenshot reference:
+
+![Frontend Actions Success](../images/github-actions-frontend-success.png)
+
+When it is green, your static site has been deployed.
+
+---
+
+## 6. Verify the Deployed Frontend
+
+Visit your SWA URL:
+
+```text
+https://<your-swa>.azurestaticapps.net
+```
+
+Check that:
+
+- The site loads without JS build errors in the console.
+- The login page renders.
+- When you attempt to log in:
+  - The browser sends requests to `https://<your-appservice>.azurewebsites.net/auth/...`
+  - The responses are not blocked by CORS or mixed-origin errors.
+
+Use the **Network** panel in your browser dev tools to inspect requests.
+
+Screenshot references:
+
+![Browser Login Success](../images/browser-login-success.png)
+![SWA Overview](../images/swa-overview.png)
+
+If something isn’t working, you may need to:
+
+- Verify that the backend App Service is correctly configured and healthy (see `../backend/README.md`)
+- Double-check that `VITE_BACKEND_API_URL` has the right value and no trailing slash
+- Confirm that the SWA workflow passed the secret through via `env`
+
+---
+
+## 7. Summary of Frontend Tasks
+
+By following this README, your team will:
+
+- Use an SWA created by the instructor  
+- Configure the SWA GitHub Actions workflow to point at `sprint4-cloud-deployment/frontend`  
+- Provide the backend URL via `VITE_BACKEND_API_URL` in GitHub secrets  
+- Deploy the React app using GitHub Actions  
+- Verify that the deployed frontend can reach the cloud backend on App Service  
+
+Refer back to this document whenever you need to re-check SWA-related configuration in Sprint 4.
