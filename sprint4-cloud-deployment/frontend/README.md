@@ -27,10 +27,6 @@ Your instructor will provide per-group:
 
 You do **not** create or delete SWA resources in this sprint.
 
-Screenshot reference:
-
-![SWA Overview](../images/swa-overview.png)
-
 ---
 
 ## 2. Inspect the SWA GitHub Actions Workflow
@@ -42,6 +38,10 @@ When the instructor first created and linked the SWA, Azure created a workflow f
 ```
 
 Open this file and locate the main deploy job where `Azure/static-web-apps-deploy@v1` is used.
+
+Screenshot reference:
+
+![GitHub Actions yaml File](../images/frontend-yaml.png)
 
 ### 2.1 Verify `app_location` and `output_location`
 
@@ -206,7 +206,6 @@ Use the **Network** panel in your browser dev tools to inspect requests.
 Screenshot references:
 
 ![Browser Login Success](../images/browser-login-success.png)
-![SWA Overview](../images/swa-overview.png)
 
 If something isn’t working, you may need to:
 
