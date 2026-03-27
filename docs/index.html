@@ -1,17 +1,277 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="West Virginia University cloud deployment documentation for faculty and staff." />
+  <title>WVU Cloud Deployment Docs</title>
   <style>
-    html, body {
+    :root {
+      --wvu-blue: #002855;
+      --wvu-gold: #EAAA00;
+      --white: #ffffff;
+      --light: #f7f8fa;
+      --border: #d8dee6;
+      --text: #1f2933;
+      --muted: #5b6770;
+      --max-width: 1100px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
       margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--white);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    a {
+      color: var(--wvu-blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .topbar {
+      background: var(--wvu-blue);
+      border-bottom: 5px solid var(--wvu-gold);
+      color: var(--white);
+      padding: 1rem 0;
+    }
+
+    .topbar .container {
       width: 100%;
-      height: 100%;
-      background: #fff;
+      max-width: none;
+      margin: 0;
+      padding-left: 0.75rem;
+      padding-right: 1.25rem;
+    }
+
+    .container {
+      width: min(100% - 2rem, var(--max-width));
+      margin: 0 auto;
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .topbar-inner img {
+      width: 95px;
+      height: auto;
+      flex-shrink: 0;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+
+    .topbar p {
+      margin: 0.2rem 0 0;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 2rem;
+      padding: 2rem 0 3rem;
+      flex: 1;
+    }
+
+    .sidebar {
+      background: var(--light);
+      border: 1px solid var(--border);
+            padding: 1.25rem;
+      border-radius: 10px;
+      height: fit-content;
+    }
+
+    .sidebar h2 {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      font-size: 1.1rem;
+      color: var(--wvu-blue);
+    }
+
+    .sidebar ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+
+    .sidebar li {
+      margin-bottom: 0.7rem;
+    }
+
+    .main {
+      padding-top: 0.25rem;
+      min-width: 0;
+    }
+
+    .hero {
+      border: 1px solid var(--border);
+      border-top: 6px solid var(--wvu-gold);
+      border-radius: 10px;
+      padding: 2rem;
+      background: var(--white);
+    }
+
+    .hero .logo-wrap {
+      margin-bottom: 1rem;
+    }
+
+    .hero .logo-wrap img {
+      width: 110px;
+      height: auto;
+    }
+
+    .hero h2 {
+      margin: 0 0 0.75rem;
+      color: var(--wvu-blue);
+      font-size: 2rem;
+    }
+
+    .hero p {
+      margin: 0 0 1rem;
+      max-width: 700px;
+      color: var(--muted);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .button {
+      display: inline-block;
+      background: var(--wvu-blue);
+      color: var(--white);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .button.gold {
+      background: var(--wvu-gold);
+      color: var(--wvu-blue);
+    }
+
+    .section {
+      margin-top: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      background: var(--light);
+    }
+
+    .section h3 {
+      margin-top: 0;
+      color: var(--wvu-blue);
+    }
+
+    .section ul {
+      margin-bottom: 0;
+    }
+
+    footer {
+      background: var(--wvu-blue);
+      color: var(--white);
+      border-top: 5px solid var(--wvu-gold);
+      padding: 1rem 0;
+      margin-top: auto;
+    }
+
+    footer p {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        order: 2;
+      }
+
+      .main {
+        order: 1;
+      }
     }
   </style>
 </head>
-<body></body>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>WVU Cloud Deployment Documentation</h1>
+        <p>Simple guides for GitHub, Azure, and static website deployment.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Documentation Pages</h2>
+      <ul>
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="github-setup.html">GitHub Setup</a></li>
+        <li><a href="azure-basics.html">Azure Basics</a></li>
+        <li><a href="deployment-steps.html">Deployment Steps</a></li>
+        <li><a href="troubleshooting.html">Troubleshooting</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">        <h2>Welcome</h2>
+        <p>
+          This site gives West Virginia University faculty and staff a xyz put information here
+        </p>
+        <p>
+          Use the navigation on the left to move through each guide 
+        </p>
+        <div class="button-row">
+          <a class="button gold" href="getting-started.html">Start Here</a>
+          <a class="button" href="github-setup.html">View GitHub Guide</a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>This site covers:</h3>
+        <ul>
+          <li>Bullet point 1</li>
+          <li>Bullet point 2</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University cloud deployment documentation</p>
+    </div>
+  </footer>
+</body>
 </html>
