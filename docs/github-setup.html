@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="GitHub setup and actions guide for WVU cloud deployment documentation." />
+  <title>GitHub Setup | WVU Cloud Deployment Docs</title>
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>WVU Cloud Deployment Documentation</h1>
+        <p>Repository setup, required secrets, and workflow validation.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Guide Navigation</h2>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="getting-started.html">1. Getting Started</a></li>
+        <li><a class="active-link" aria-current="page" href="github-setup.html">2. GitHub Setup</a></li>
+        <li><a href="azure-basics.html">3. Azure Basics</a></li>
+        <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
+        <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>GitHub Setup</h2>
+        <p>
+          This page combines all repository, secrets, and GitHub Actions requirements from the Sprint 2 and Sprint 4
+          readmes so faculty and staff can verify the CI/CD pipeline configuration in one place.
+        </p>
+        <div class="button-row">
+          <a class="button gold" href="azure-basics.html">Next: Azure Basics</a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Repository Baseline</h3>
+        <p>
+          Start by confirming how your team will track changes. If you are using the reference project, keep your
+          local copy synchronized with the upstream repository so deployment docs and code stay aligned.
+        </p>
+        <ol class="step-list">
+          <li>Confirm instructors, staff, and project teams all have the correct repo permissions.</li>
+          <li>Use <code>main</code> as deployment branch unless course instructions say otherwise.</li>
+          <li>Ensure a valid <code>.gitignore</code> excludes <code>.env</code>, <code>node_modules</code>, and <code>dist</code>.</li>
+          <li>Use pull requests for major deployment changes when possible.</li>
+        </ol>
+        <pre><code># Clone the reference project
+git clone https://github.com/tdevine1/xPostForecast.git
+cd xPostForecast
+git checkout main
+git pull origin main
+
+# If using a fork, sync with upstream before deployment work
+git remote add upstream https://github.com/tdevine1/xPostForecast.git
+git fetch upstream
+git merge upstream/main
+git push origin main
+
+# Standard update cycle
+git status
+git add .
+git commit -m "Update deployment configuration"
+git push origin main</code></pre>
+      </section>
+
+      <section class="section">
+        <h3>Required GitHub Secrets</h3>
+        <p>
+          Secrets are required because Azure deployments need credentials and environment values that should never be
+          committed to source control.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Secret Name</th>
+              <th>Used By</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>APP_SERVICE_PUBLISH_PROFILE</code></td>
+              <td>Backend App Service workflow</td>
+              <td>Full XML contents of App Service publish profile</td>
+            </tr>
+            <tr>
+              <td><code>VITE_BACKEND_API_URL</code></td>
+              <td>Frontend SWA workflow build environment</td>
+              <td><code>https://&lt;backend-app&gt;.azurewebsites.net</code> (no trailing slash)</td>
+            </tr>
+            <tr>
+              <td><code>AZURE_STATIC_WEB_APPS_API_TOKEN_*</code></td>
+              <td>Auto-generated SWA deployment token</td>
+              <td>Created by Azure when SWA is linked to GitHub</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h3>Backend Workflow Checks</h3>
+        <p>
+          For backend deployment workflow (for example <code>.github/workflows/backend-appservice.yml</code>), verify
+          the build and deploy paths match your backend folder exactly.
+        </p>
+        <ul>
+          <li><code>working-directory</code> points to <code>sprint4-cloud-deployment/backend</code>.</li>
+          <li>Artifact upload path and deploy package path use <code>sprint4-cloud-deployment/backend</code>.</li>
+          <li>Deployment action uses secret <code>APP_SERVICE_PUBLISH_PROFILE</code>.</li>
+          <li>Node version aligns with App Service runtime (typically Node 20).</li>
+          <li>If no tests exist, remove or disable failing <code>npm test</code> steps.</li>
+        </ul>
+        <pre><code>- name: npm install, build, and test (backend only)
+  working-directory: sprint4-cloud-deployment/backend
+  run: |
+    npm install
+    npm run build --if-present
+
+- name: Deploy to Azure Web App
+  uses: azure/webapps-deploy@v3
+  with:
+    app-name: "&lt;your-appservice-name&gt;"
+    package: sprint4-cloud-deployment/backend
+    publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}</code></pre>
+      </section>
+
+      <section class="section">
+        <h3>Frontend SWA Workflow Checks</h3>
+        <p>
+          For workflow such as <code>.github/workflows/azure-static-web-apps.yml</code>, check that the build points
+          at the correct frontend directory and receives the backend URL secret at build time.
+        </p>
+        <ul>
+          <li><code>app_location: "sprint4-cloud-deployment/frontend"</code></li>
+          <li><code>output_location: "dist"</code></li>
+          <li><code>api_location: ""</code> because backend is separate App Service</li>
+          <li>Deploy job environment includes <code>VITE_BACKEND_API_URL</code> secret mapping when needed</li>
+          <li><code>close_pull_request_job</code> includes the same <code>app_location</code> if YAML validation requires it</li>
+        </ul>
+        <pre><code>env:
+  VITE_BACKEND_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}
+
+with:
+  app_location: "sprint4-cloud-deployment/frontend"
+  api_location: ""
+  output_location: "dist"</code></pre>
+      </section>
+
+      <section class="section">
+        <h3>Deployment Trigger and Monitoring</h3>
+        <p>
+          After pushing changes, use GitHub Actions as your first diagnostics layer. A green workflow usually means the
+          problem is in runtime configuration, while a red workflow usually means path, script, or secret issues.
+        </p>
+        <ol class="step-list">
+          <li>Push a commit to deployment branch (<code>main</code> by default).</li>
+          <li>Open GitHub Actions and watch backend and frontend workflows.</li>
+          <li>Confirm build, artifact upload, and deploy steps are green.</li>
+          <li>If failed, open logs and use the troubleshooting page in this site.</li>
+        </ol>
+        <div class="danger-note">
+          <strong>Security reminder:</strong> Never commit publish profiles, API tokens, or any <code>.env</code> file to the repository.
+        </div>
+        <div class="button-row">
+          <a class="button gold" href="azure-basics.html">Continue to Azure Basics</a>
+          <a class="button" href="deployment-steps.html">Open End-to-End Steps</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>WVU Cloud Deployment Docs | GitHub workflow controls and secrets.</p>
+    </div>
+  </footer>
+</body>
+</html>

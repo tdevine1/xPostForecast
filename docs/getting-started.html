@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="WVU cloud deployment getting started guide." />
+  <title>Getting Started | WVU Cloud Deployment Docs</title>
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>WVU Cloud Deployment Documentation</h1>
+        <p>Start here to set up tools, access, and local project environments.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Guide Navigation</h2>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a class="active-link" aria-current="page" href="getting-started.html">1. Getting Started</a></li>
+        <li><a href="github-setup.html">2. GitHub Setup</a></li>
+        <li><a href="azure-basics.html">3. Azure Basics</a></li>
+        <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
+        <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Getting Started</h2>
+        <p>
+          This page is the starting point for WVU professors and staff. It combines Sprint 1 through Sprint 3 setup
+          details into one clear foundation before cloud deployment.
+        </p>
+        <div class="notice">
+          <strong>WVU resource group process:</strong> At WVU, project teams request Azure resource group setup through
+          <strong>Statler ITS</strong>. Do this first so deployment resources are available.
+        </div>
+        <div class="button-row">
+          <a class="button gold" href="github-setup.html">Next: GitHub Setup</a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Prerequisites</h3>
+        <p>
+          Before you begin, make sure each person supporting the course has both local developer tooling and the
+          correct cloud/repository access. Most deployment blockers come from missing permissions.
+        </p>
+        <ul>
+          <li>Node.js 20.19+ and npm</li>
+          <li>Git</li>
+          <li>VS Code</li>
+          <li>GitHub repository access for your course project</li>
+          <li>Azure access details from instructor or WVU support staff</li>
+        </ul>
+        <p>Recommended VS Code tooling from the READMEs: MySQL extension by Microsoft or SQLTools with MySQL driver.</p>
+      </section>
+
+      <section class="section">
+        <h3>Choose Your Starting Path</h3>
+        <p>
+          You can either clone the course reference repository directly or follow the same documentation for your own
+          project repository. Both paths work, but cloning the reference project is the fastest way for new staff to
+          practice the full deployment sequence.
+        </p>
+        <div class="stacked-cards">
+          <div class="card">
+            <h4>Option A: Clone xPostForecast (recommended)</h4>
+            <p>Use this if you want the exact reference structure used in class documentation.</p>
+            <pre><code>git clone https://github.com/tdevine1/xPostForecast.git
+cd xPostForecast
+git checkout main
+git pull origin main</code></pre>
+            <p>If you forked first, keep your fork updated:</p>
+            <pre><code>git remote add upstream https://github.com/tdevine1/xPostForecast.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main</code></pre>
+          </div>
+          <div class="card">
+            <h4>Option B: Use your own project</h4>
+            <p>
+              Use this if your class team already has a separate repo. Keep the same architecture pattern:
+              React frontend, Node/Express backend, MySQL database, and Azure deployment targets.
+            </p>
+            <p>
+              You can still follow every page in this guide; just adapt folder paths and environment variable names to
+              your repository layout.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Reference Architecture</h3>
+        <p>
+          The project is intentionally split so each layer can be tested independently. Frontend issues, backend
+          issues, and database issues can be isolated quickly when this structure is preserved.
+        </p>
+        <div class="grid-two">
+          <div class="card">
+            <h4>Frontend</h4>
+            <ul>
+              <li>React + Vite app</li>
+              <li>Login/register pages and map page</li>
+              <li>Axios client in <code>src/api.js</code></li>
+              <li>Leaflet map for WV temperature points</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Backend and Data</h4>
+            <ul>
+              <li>Node.js + Express backend</li>
+              <li>JWT auth in HTTP-only cookies</li>
+              <li>Azure Database for MySQL with SSL cert</li>
+              <li>STAC data pipeline from Planetary Computer</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Initial Local Setup</h3>
+        <p>
+          The sequence below assumes you are validating that the app works locally before cloud deployment. Completing
+          this successfully prevents most CI/CD failures later.
+        </p>
+        <ol class="step-list">
+          <li>Clone the project repository and open it in VS Code.</li>
+          <li>Install frontend dependencies and run Vite locally.</li>
+          <li>Install backend dependencies and configure backend <code>.env</code>.</li>
+          <li>Download Azure MySQL SSL certificate and place it in backend config.</li>
+          <li>Create database and users table, then run backend.</li>
+          <li>Configure frontend <code>.env</code> with backend URL and test login flow.</li>
+        </ol>
+        <pre><code># Example using the reference repository
+git clone https://github.com/tdevine1/xPostForecast.git
+cd xPostForecast
+
+# frontend
+cd sprint2-login-backend/frontend
+npm install
+npm run dev
+
+# backend (in another terminal)
+cd sprint2-login-backend/backend
+npm install
+node server.js</code></pre>
+      </section>
+
+      <section class="section">
+        <h3>Backend Environment Variables (Local)</h3>
+        <p>
+          Use the exact variable names from your project branch <code>.env.example</code>. Small naming differences
+          (for example <code>DB_PASS</code> vs <code>DB_PASSWORD</code>) are a common source of configuration bugs.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>DB_HOST</code></td>
+              <td>Azure MySQL host, usually <code>&lt;server&gt;.mysql.database.azure.com</code></td>
+            </tr>
+            <tr>
+              <td><code>DB_USER</code>, <code>DB_PASSWORD</code> or <code>DB_PASS</code></td>
+              <td>Database credentials</td>
+            </tr>
+            <tr>
+              <td><code>DB_NAME</code> or <code>DB_DATABASE</code></td>
+              <td>Database name for your class team</td>
+            </tr>
+            <tr>
+              <td><code>DB_PORT</code></td>
+              <td>Typically <code>3306</code></td>
+            </tr>
+            <tr>
+              <td><code>FRONTEND_URL</code></td>
+              <td>Local frontend origin, usually <code>http://localhost:5173</code></td>
+            </tr>
+            <tr>
+              <td><code>JWT_SECRET</code></td>
+              <td>JWT signing secret</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h3>Database Bootstrap SQL</h3>
+        <p>From the Sprint 2 backend guide, run this against Azure MySQL to prepare authentication:</p>
+        <pre><code>CREATE DATABASE IF NOT EXISTS authdb;
+USE authdb;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+      </section>
+
+      <section class="section">
+        <h3>Minimum Validation Before Cloud Work</h3>
+        <p>
+          Treat this as a gate: if any item below fails locally, pause and fix it before moving to GitHub Actions or
+          Azure deployment. This saves significant debugging time in production.
+        </p>
+        <ul class="checklist">
+          <li>Frontend loads on <code>http://localhost:5173</code>.</li>
+          <li>Backend starts with no database connection errors.</li>
+          <li><code>/auth/register</code>, <code>/auth/login</code>, and <code>/auth/test</code> are working.</li>
+          <li>Map page and date selector render after login.</li>
+        </ul>
+        <div class="button-row">
+          <a class="button gold" href="github-setup.html">Continue to GitHub Setup</a>
+          <a class="button" href="deployment-steps.html">Jump to Full Runbook</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>WVU Cloud Deployment Docs | Step 1 complete.</p>
+    </div>
+  </footer>
+</body>
+</html>
