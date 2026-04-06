@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Azure service setup and configuration guide for WVU cloud deployment." />
+  <title>Azure Basics | WVU Cloud Deployment Docs</title>
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>WVU Cloud Deployment Documentation</h1>
+        <p>Azure resources, configuration settings, and health validation.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Guide Navigation</h2>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="getting-started.html">1. Getting Started</a></li>
+        <li><a href="github-setup.html">2. GitHub Setup</a></li>
+        <li><a class="active-link" aria-current="page" href="azure-basics.html">3. Azure Basics</a></li>
+        <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
+        <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Azure Basics</h2>
+        <p>
+          This page consolidates how the course project uses Azure App Service, Azure Static Web Apps, and Azure
+          MySQL so support staff can verify each service configuration quickly.
+        </p>
+        <div class="notice">
+          <strong>WVU policy reminder:</strong> For course projects, request Azure resource groups through
+          <strong>Statler ITS</strong> instead of creating them directly.
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Azure Service Roles in This Project</h3>
+        <p>
+          Each Azure service has a specific responsibility. Keeping these responsibilities separate makes it easier to
+          locate issues quickly when a deployment partially works.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Azure Service</th>
+              <th>Purpose</th>
+              <th>Typical Ownership</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Resource Group</td>
+              <td>Container for all class-team cloud resources</td>
+              <td>Provisioned through Statler ITS</td>
+            </tr>
+            <tr>
+              <td>Static Web App (SWA)</td>
+              <td>Hosts built React frontend from GitHub Actions</td>
+              <td>Instructor-provisioned, team-configured</td>
+            </tr>
+            <tr>
+              <td>App Service (Linux)</td>
+              <td>Runs Node.js backend API</td>
+              <td>Instructor-provisioned, team-configured</td>
+            </tr>
+            <tr>
+              <td>Azure Database for MySQL Flexible Server</td>
+              <td>Stores users and backend data</td>
+              <td>Provisioned earlier, reused in deployment</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h3>MySQL and SSL Requirements</h3>
+        <p>
+          The backend depends on a secure TLS connection to Azure MySQL. If SSL setup is incomplete, authentication and
+          data routes can fail even when the app itself starts.
+        </p>
+        <ol class="step-list">
+          <li>In Azure Portal, open your MySQL Flexible Server networking page.</li>
+          <li>Ensure firewall rules allow required client IP or cloud path per class setup.</li>
+          <li>Download the SSL certificate from Azure portal.</li>
+          <li>Place certificate at backend path <code>config/DigiCertGlobalRootG2.crt.pem</code>.</li>
+          <li>Verify backend reads this CA cert for secure TLS connection.</li>
+        </ol>
+        <pre><code>const caPath = path.join(process.cwd(), "config", "DigiCertGlobalRootG2.crt.pem");
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  port: Number(process.env.DB_PORT || 3306),
+  ssl: { ca: fs.readFileSync(caPath), rejectUnauthorized: true }
+});</code></pre>
+      </section>
+
+      <section class="section">
+        <h3>App Service Application Settings</h3>
+        <p>In App Service go to <code>Configuration &gt; Application settings</code> and verify:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Expected value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>DB_HOST</code></td>
+              <td><code>&lt;server&gt;.mysql.database.azure.com</code></td>
+            </tr>
+            <tr>
+              <td><code>DB_USER</code></td>
+              <td>Project database user</td>
+            </tr>
+            <tr>
+              <td><code>DB_PASS</code> or <code>DB_PASSWORD</code></td>
+              <td>Project database password</td>
+            </tr>
+            <tr>
+              <td><code>DB_NAME</code> or <code>DB_DATABASE</code></td>
+              <td>Project database name</td>
+            </tr>
+            <tr>
+              <td><code>FRONTEND_URL</code></td>
+              <td><code>https://&lt;your-swa&gt;.azurestaticapps.net</code></td>
+            </tr>
+            <tr>
+              <td><code>JWT_SECRET</code></td>
+              <td>Long random secret value</td>
+            </tr>
+            <tr>
+              <td><code>NODE_ENV</code></td>
+              <td><code>production</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p>After changes, save and restart the App Service.</p>
+      </section>
+
+      <section class="section">
+        <h3>App Service Runtime and Health</h3>
+        <p>
+          App Service controls runtime networking. Your Node app must respect Azure runtime values instead of local
+          defaults to boot correctly in production.
+        </p>
+        <ul>
+          <li>Backend must use Azure assigned port: <code>const PORT = Number(process.env.PORT) || 5175;</code></li>
+          <li>Do not hard-code production port values.</li>
+          <li>Validate health endpoint after deploy: <code>https://&lt;backend&gt;.azurewebsites.net/health</code></li>
+          <li>Use App Service Log Stream for startup and database error analysis.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Static Web App Deployment Basics</h3>
+        <p>
+          The SWA build process compiles frontend code at deployment time. That means environment values must be
+          available in GitHub Actions before deployment starts.
+        </p>
+        <ul>
+          <li>Azure-generated workflow should target <code>sprint4-cloud-deployment/frontend</code>.</li>
+          <li>Build output must be <code>dist</code> for Vite projects.</li>
+          <li>Provide backend URL through secret <code>VITE_BACKEND_API_URL</code>.</li>
+          <li>Confirm deployed frontend sends requests to <code>https://&lt;appservice&gt;.azurewebsites.net/auth/...</code>.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Operational Checklist for Staff</h3>
+        <ul class="checklist">
+          <li>Resource group exists and is mapped to correct course team.</li>
+          <li>App Service can start and return successful health check.</li>
+          <li>SWA deployment is green in GitHub Actions.</li>
+          <li>CORS is configured so SWA origin can call backend with credentials.</li>
+          <li>Backend can connect to MySQL without timeout or SSL errors.</li>
+        </ul>
+        <div class="button-row">
+          <a class="button gold" href="deployment-steps.html">Continue to Deployment Steps</a>
+          <a class="button" href="troubleshooting.html">Open Troubleshooting</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>WVU Cloud Deployment Docs | Azure reference and validation.</p>
+    </div>
+  </footer>
+</body>
+</html>
