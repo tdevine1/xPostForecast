@@ -54,4 +54,4 @@ jobs:
           app-name: 'xPostForecast-api'              # your Web App name
           slot-name: 'Production'
           package: ./sprint4-cloud-deployment/backend
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_XPOSTFORECAST_API }}
+          publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}
