@@ -51,7 +51,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'xPostForecast-api'              # your Web App name
+          app-name: '202601-CS330-001-15266-DEMO-backend'              # your Web App name
           slot-name: 'Production'
           package: ./sprint4-cloud-deployment/backend
           publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}
