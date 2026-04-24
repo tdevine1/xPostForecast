@@ -17,6 +17,24 @@
             "database": "authdb",
             "username": "mysqladmin",
             "password": "EatShitPitt2025!"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Enabled",
+                "ssl": {
+                    "ca": "C:\\Users\\phlos\\git\\xPostForecast\\sprint2-login-backend\\backend\\config\\DigiCertGlobalRootG2.crt.pem"
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "202601-cs330-001-15266-demo-mysql-db1.mysql.database.azure.com",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "xPostForecast_DB_2026.01",
+            "username": "mysqladmin",
+            "password": "EatShitPitt!2026.01",
+            "database": "authdb"
         }
     ]
 }
