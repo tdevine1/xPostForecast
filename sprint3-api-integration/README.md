@@ -156,22 +156,6 @@ Color scaling uses **chroma.js**.
 
 ---
 
-# What Students Must Implement
-
-### Backend
-- Construct proper STAC search body  
-- Call signing endpoint correctly  
-- Parse signed COG  
-- Extract and return WV climate point data  
-
-### Frontend
-- Trigger STAC data request  
-- Handle loading & errors gracefully  
-- Render data on Leaflet map  
-- Adjust marker sizing/thresholding if needed  
-
----
-
 # Tools and References
 
 ### STAC Specification  
