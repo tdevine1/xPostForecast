@@ -36,5 +36,9 @@
             "password": "EatShitPitt!2026.01",
             "database": "authdb"
         }
-    ]
+    ],
+    "sonarlint.connectedMode.project": {
+        "connectionId": "tdevine1",
+        "projectKey": "tdevine1_xPostForecast"
+    }
 }
