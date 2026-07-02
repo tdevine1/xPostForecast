@@ -3,7 +3,7 @@
 In **Sprint 2**, the React (Vite) frontend integrates with the backend using **cookie‑based JWT authentication**. 
 Instead of using `localStorage`, the backend sets an **HTTP‑only cookie** on login, and the frontend verifies the session via `/auth/test`.
 
-> This README applies to the `sprint2-login-backend/frontend` folder.
+> This README applies to the `sprint2-login-backend/frontend` folder — the **reference implementation**. Keep building in the `frontend/` you created in Sprint 1; don't clone or fork this one.
 
 ---
 
@@ -50,13 +50,18 @@ npm install
 
 ## 2) Configure Environment Variables
 
-Create a `.env` in the frontend folder and point it to your backend:
+Copy the sample and point it to your backend:
+
+```bash
+cp .env.example .env
+```
 
 ```ini
 VITE_API_URL=http://localhost:5175
 ```
 
 > The frontend uses this base URL for all auth calls (e.g., `${VITE_API_URL}/auth/login`).
+> **Do not commit** `.env` (already in `.gitignore`).
 
 ---
 

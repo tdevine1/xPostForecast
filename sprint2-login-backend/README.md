@@ -1,5 +1,7 @@
 # Sprint 2: Authentication & Backend Integration for xPostForecast
 
+**This `sprint2-login-backend/` folder is xPostForecast's own reference implementation**, not something you clone or fork. Continue working in the repo you created in Sprint 1 — add a `backend/` folder alongside your `frontend/` and build the equivalent auth flow for your own topic, using this folder as your worked example.
+
 In **Sprint 2**, we build upon Sprint 1’s frontend by adding a secure backend and authentication flow. Students will learn how to connect a React/Vite front end to an Express/MySQL backend deployed on Azure, implement login & registration, and protect routes with JWT stored in HTTP-only cookies.
 
 ---
@@ -36,14 +38,14 @@ In **Sprint 2**, we build upon Sprint 1’s frontend by adding a secure backend 
 sprint2-login-backend/
 ├── backend/                      # Express & MySQL backend
 │   ├── config/
-│   │   └── database.js           # MySQL pool + SSL setup
-│   ├── controllers/
-│   │   └── authController.js     # register & login logic
+│   │   ├── database.js           # MySQL pool + SSL setup
+│   │   └── DigiCertGlobalRootG2.crt.pem  # Azure SSL CA cert
 │   ├── routes/
-│   │   └── auth.js               # Express routes for auth
-│   ├── middleware/               # (future JWT-protection)
+│   │   └── auth.js               # register, login, test, logout routes
+│   ├── middleware/
+│   │   └── authMiddleware.js     # JWT cookie verification
 │   ├── .env.example              # sample env vars for DB & JWT
-│   └── index.js                  # server entry point
+│   └── server.js                 # server entry point
 │
 ├── frontend/                     # Vite + React frontend
 │   ├── src/
@@ -53,9 +55,10 @@ sprint2-login-backend/
 │   │   │   └── MapPage.jsx       # Protected map view
 │   │   ├── components/
 │   │   │   ├── DateSelector.jsx  # Date dropdowns
-│   │   │   └── MapComponent.jsx  # Leaflet map
+│   │   │   └── MapComponent.jsx  # Leaflet map (stub)
 │   │   ├── App.jsx               # Routing & auth state
 │   │   └── main.jsx              # Vite entry point
+│   ├── .env.example              # sample env vars for API URL
 │   ├── package.json              # scripts & dependencies
 │   └── vite.config.js            # dev server config
 └── README.md                     # (this overview)
