@@ -37,8 +37,8 @@ const Register = () => {
     }
 
     try {      
-      console.log('Sending Registration Request to:',`${api.defaults.baseURL}/auth/register`);
-      const res = await api.post(`${api.defaults.baseURL}/auth/register`, { email, username, password });    
+      console.log('Sending Registration Request to:', `${api.defaults.baseURL}/auth/register`);
+      const res = await api.post('/auth/register', { email, username, password });
       // Backend typically responds with 201 + { message: 'User registered successfully' }
       if (res.status === 201) {
         alert('Registration successful. Please log in.');
