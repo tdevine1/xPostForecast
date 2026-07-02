@@ -114,6 +114,8 @@ Before wiring up your codebase, confirm you can actually reach the database from
 | macOS | `brew install mysql-client` then add it to your PATH (`brew info mysql-client` shows the exact path) |
 | Linux (Debian/Ubuntu) | `sudo apt install mysql-client` |
 
+> **Windows note:** `winget install Oracle.MySQL` adds `mysql` to your system PATH, but the terminal you installed it from won't pick up that change. **Fully close and reopen VS Code** (closing just the terminal panel isn't enough — restart the whole app) before trying `mysql --version`. If it still isn't found after restarting, open a new Command Prompt and confirm `mysql` runs there first — if it doesn't, the install added it to PATH for new sessions only, so you may need to log out/back in, or manually add the MySQL `bin` folder (typically `C:\Program Files\MySQL\MySQL Server 9.x\bin`) to your PATH.
+
 Verify it installed:
 
 ```bash
@@ -239,7 +241,8 @@ axios.get(`${VITE_API_URL}/auth/test`, { withCredentials: true });
 | CORS error / cookie not set | Missing `credentials: true` or wrong `FRONTEND_URL` | Set both on server and client |
 | `ER_NO_DEFAULT_FOR_FIELD 'email'` | Table requires email but request didn’t send it | Add email to frontend + INSERT |
 | SSL errors | Wrong CA path | Ensure `config/DigiCertGlobalRootG2.crt.pem` path |
-| `mysql: command not found` | Client not installed or not on PATH | Reinstall using the table in Step 4, restart your terminal |
+| `mysql: command not found` (right after installing) | PATH updated, but current terminal/VS Code session hasn't picked it up | **Fully restart VS Code** (not just the terminal panel), or open a fresh Command Prompt window |
+| `mysql: command not found` (still, after restart) | Client not installed, or install didn't update PATH | Reinstall using the table in Step 4; verify manually in a new Command Prompt before retrying in VS Code |
 | `ERROR 2002` / connection timed out | Firewall rule missing or wrong host | Add your IP in Azure → Networking; double-check `DB_HOST` |
 | `Access denied for user` | Wrong username/password | Azure admin usernames sometimes need `@<server-name>` suffix on older server versions — check the **Connect** page in the Azure Portal for your exact format |
 | `ERROR 2026 (HY000): TLS/SSL error` | Wrong or missing `--ssl-ca` path | Confirm the path passed to `--ssl-ca` matches where you saved `DigiCertGlobalRootG2.crt.pem` |

@@ -1,5 +1,7 @@
 # Backend API (Node.js / Express)
 
+> This is the **reference implementation** for Sprint 3's backend. Build the equivalent data-fetching pipeline in your own project's `backend/`; don't clone or fork this one.
+
 This folder contains the Node.js/Express backend for **xPostForecast**. It provides:
 
 - User registration, login, and logout using JWT in HTTP-only cookies.
@@ -49,7 +51,11 @@ backend/
 
 ## Environment Variables
 
-Create a `.env` file in the `backend/` folder. Typical configuration:
+Copy `.env.example` and fill in your own values:
+
+```bash
+cp .env.example .env
+```
 
 ```ini
 # Backend server
@@ -64,7 +70,7 @@ JWT_SECRET=replace_this_with_a_strong_secret
 DB_HOST=your-mysql-host.mysql.database.azure.com
 DB_USER=your-mysql-username
 DB_PASSWORD=your-mysql-password
-DB_DATABASE=your-database-name
+DB_NAME=your-database-name
 DB_PORT=3306
 ```
 
@@ -84,7 +90,7 @@ DB_PORT=3306
    - `cors()` configured to allow the frontend origin and credentials.
 4. Mounts routers:
    - Authentication router under `/auth`.
-   - STAC/temperature router under its API prefix (see `routes/stac.js`).
+   - STAC/temperature router (`routes/stac.js`) under `/temperature` — e.g., `GET /temperature/:date`.
 5. Installs a basic error handler that returns a JSON error object.
 6. Starts listening on `BACKEND_PORT`.
 
@@ -101,26 +107,33 @@ CORS is configured to allow `credentials: true` and the exact `FRONTEND_URL`, so
 - Loads the DigiCert root CA for TLS:
 
 ```js
-import mysql from "mysql2/promise";
-import fs from "fs";
-import path from "path";
+import mysql from 'mysql2/promise';
+import fs    from 'fs';
+import path  from 'path';
+import { fileURLToPath } from 'url';
+import { dirname }       from 'path';
 
-const caPath = path.join(process.cwd(), "config", "DigiCertGlobalRootG2.crt.pem");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = dirname(__filename);
+const caPath = path.join(__dirname, 'DigiCertGlobalRootG2.crt.pem');
+const caCert = fs.readFileSync(caPath);
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
+  host:     process.env.DB_HOST,
+  user:     process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  port: Number(process.env.DB_PORT || 3306),
+  database: process.env.DB_NAME,
+  port:     Number(process.env.DB_PORT),
   ssl: {
-    ca: fs.readFileSync(caPath),
+    ca: caCert,
     rejectUnauthorized: true,
   },
 });
 
 export default pool;
 ```
+
+> **Note:** `DB_PORT` has no fallback default — make sure it's always set in `.env`, or the connection port will be `NaN`.
 
 All DB queries elsewhere in the backend use this pool. The module logs connection issues at startup so that database problems surface early.
 
