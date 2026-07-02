@@ -2,20 +2,12 @@
 
 In **Sprint 2**, you build your first backend: an Express.js server that handles user authentication and connects securely to an **Azure MySQL** database over **TLS/SSL**. This guide reflects the **current repo** (ESM modules, `mysql2/promise`, **cookie‑based JWT auth**, and **email on registration**).
 
-> This README applies to the `sprint2-login-backend/backend` folder.
+> This README applies to the `sprint2-login-backend/backend` folder — the **reference implementation**. Build the equivalent `backend/` in your own project repo; don't clone or fork this one.
 
 ---
 
 ## 🖼️ Visual Overview
 
-> If screenshots aren’t showing, make sure these images exist in your repo (suggested paths):
->
-> - `docs/img/sprint2-backend-architecture.png`
-> - `docs/img/azure-networking-firewall.png`
-> - `docs/img/azure-download-ssl.png`
-> - `docs/img/vscode-mysql-connection.png`
-
-![Architecture](docs/img/sprint2-backend-architecture.png)
 *High‑level flow: React (Vite) ⇄ Cookie‑based auth ⇄ Express ⇄ Azure MySQL (TLS)*
 
 ---
@@ -40,7 +32,7 @@ backend/
 ## 🛠 Prerequisites
 
 - **Node.js** 20.19+
-- **VS Code** (MySQL extension by Microsoft or SQLTools + MySQL driver)
+- **`mysql` command-line client** (see Step 4 below for install instructions — no VS Code extension needed)
 - **Azure Database for MySQL – Flexible Server**
 - Your public IP allowed in **Azure → Networking → Firewall rules**
 
@@ -110,24 +102,48 @@ mv ~/Downloads/DigiCertGlobalRootG2.crt.pem sprint2-login-backend/backend/config
 
 ---
 
-## 4) Connect with VS Code
+## 4) Connect and Verify (`mysql` CLI)
 
-You can validate connectivity and run SQL using VS Code’s MySQL extension (or SQLTools). Since you haven't created the authdb database yet, you should first login to the mysql database, which is created automatically. Then you can create the authdb database and users table, as well as any other dbs and tables you need for storing persistent information.
+Before wiring up your codebase, confirm you can actually reach the database from the command line. VS Code's integrated terminal works fine for this — you don't need a database extension. Since you haven't created the `authdb` database yet, connect to the default `mysql` database first; you'll create `authdb` and the `users` table from there.
 
-- **Host**: `<your-server>.mysql.database.azure.com`
-- **Port**: `3306`
-- **Database**: `mysql`
-- **User**: your admin user
-- **Password**: your password
-- **SSL**: enabled; CA file: `backend/config/DigiCertGlobalRootG2.crt.pem`
+**Install the `mysql` client, if you don't already have it:**
 
-![VS Code MySQL Connection](docs/img/vscode-mysql-connection.png)
+| OS | Command |
+|---|---|
+| Windows | `winget install Oracle.MySQL` (or download the "MySQL Command Line Client" from [dev.mysql.com](https://dev.mysql.com/downloads/mysql/)) |
+| macOS | `brew install mysql-client` then add it to your PATH (`brew info mysql-client` shows the exact path) |
+| Linux (Debian/Ubuntu) | `sudo apt install mysql-client` |
+
+Verify it installed:
+
+```bash
+mysql --version
+```
+
+**Connect to your Azure server:**
+
+```bash
+mysql -h <your-server>.mysql.database.azure.com \
+  -u <your-admin-user> -p \
+  --ssl-ca=sprint2-login-backend/backend/config/DigiCertGlobalRootG2.crt.pem
+```
+
+You'll be prompted for your password. These are the same `DB_HOST` / `DB_USER` / `DB_PASSWORD` values you put in `.env` — if this connects, your app's connection will work too.
+
+**Once connected, verify with a few basic commands:**
+
+```sql
+SHOW DATABASES;
+SELECT CURRENT_USER();
+```
+
+Type `exit` or press `Ctrl+D` to leave the `mysql` shell.
 
 ---
 
 ## 5) Create the `users` Table (with email)
 
-Run this SQL in your Azure DB (VS Code or CLI):
+Still connected via the `mysql` CLI, run:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS authdb;
@@ -223,6 +239,10 @@ axios.get(`${VITE_API_URL}/auth/test`, { withCredentials: true });
 | CORS error / cookie not set | Missing `credentials: true` or wrong `FRONTEND_URL` | Set both on server and client |
 | `ER_NO_DEFAULT_FOR_FIELD 'email'` | Table requires email but request didn’t send it | Add email to frontend + INSERT |
 | SSL errors | Wrong CA path | Ensure `config/DigiCertGlobalRootG2.crt.pem` path |
+| `mysql: command not found` | Client not installed or not on PATH | Reinstall using the table in Step 4, restart your terminal |
+| `ERROR 2002` / connection timed out | Firewall rule missing or wrong host | Add your IP in Azure → Networking; double-check `DB_HOST` |
+| `Access denied for user` | Wrong username/password | Azure admin usernames sometimes need `@<server-name>` suffix on older server versions — check the **Connect** page in the Azure Portal for your exact format |
+| `ERROR 2026 (HY000): TLS/SSL error` | Wrong or missing `--ssl-ca` path | Confirm the path passed to `--ssl-ca` matches where you saved `DigiCertGlobalRootG2.crt.pem` |
 
 ---
 
