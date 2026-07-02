@@ -38,7 +38,7 @@ Handles:
 Workflow:
 1. User selects date  
 2. Clicks "Fetch"  
-3. Axios → backend `/stac` route  
+3. Axios → backend `/temperature` route  
 4. Backend returns array of `{ lat, lon, tavg }`  
 5. MapComponent renders markers  
 

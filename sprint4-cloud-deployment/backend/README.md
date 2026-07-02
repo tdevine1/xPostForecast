@@ -1,6 +1,8 @@
 # Sprint 4 – Backend Deployment (Azure App Service)
 ### Instructor-provisioned App Service – students configure, deploy, and verify
 
+> This is the **reference implementation** for Sprint 4's backend deployment. Deploy your own group's `backend/` (from Sprints 1–3) using this as your worked example; don't clone or fork this one.
+
 Your group’s **Azure App Service (Web App for Linux)** for the backend has already been created by the instructor.
 
 It is your team’s responsibility to:
@@ -76,6 +78,10 @@ Azure may have generated an App Service workflow or you may create one yourself,
 ```text
 .github/workflows/backend-appservice.yml
 ```
+
+Screenshot reference:
+
+![Backend GitHub Actions yaml File](../images/backend-yaml.png)
 
 Your goal is to ensure that:
 
@@ -224,8 +230,9 @@ Add or verify the following keys (exact names may be instructor-specified):
 |---------------|-----------------------------------------------------------------|
 | `DB_HOST`     | Your MySQL host (`<server>.mysql.database.azure.com`)           |
 | `DB_USER`     | Database username (same used locally in Sprint 2/3)             |
-| `DB_PASS`     | Database password                                               |
+| `DB_PASSWORD` | Database password — **must be named exactly this**; the code reads `process.env.DB_PASSWORD`, not `DB_PASS` |
 | `DB_NAME`     | Database name for your team                                     |
+| `DB_PORT`     | `3306` — required; the code has no fallback, so leaving this unset breaks the connection |
 | `FRONTEND_URL`| Your SWA URL (`https://<your-swa>.azurestaticapps.net`)         |
 | `JWT_SECRET`  | A long random string used for signing JWTs                      |
 | `NODE_ENV`    | `production`                                                   |
@@ -308,7 +315,6 @@ If there are errors:
 ## 7. Summary of Backend Tasks
 
 ![Backend Success!](../images/browser-backend-success.png)
-browser-backend-success.png
 
 By following this README, your team will:
 

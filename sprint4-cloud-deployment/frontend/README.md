@@ -1,6 +1,8 @@
 # Sprint 4 – Frontend Deployment (Azure Static Web Apps)
 ### Instructor-provisioned SWA – students configure, deploy, and verify
 
+> This is the **reference implementation** for Sprint 4's frontend deployment. Deploy your own group's `frontend/` (from Sprints 1–3) using this as your worked example; don't clone or fork this one.
+
 Your group’s **Static Web App (SWA)** has already been created by the instructor and linked to your GitHub repository.
 
 Your job in this sprint is to:

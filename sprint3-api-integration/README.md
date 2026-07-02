@@ -1,5 +1,7 @@
 # Sprint 3 – API Integration & STAC-Based Data Pipeline
 
+**This `sprint3-api-integration/` folder is xPostForecast's own reference implementation**, not something you clone or fork. Keep building in your own project repo — add the equivalent data-fetching pipeline for your own topic's data source, using this folder as your worked example.
+
 Sprint 3 focuses on transforming the xPostForecast project from a simple authenticated frontend/backend system into a **fully data-driven climate application**. This sprint introduces end-to-end integration with the **Microsoft Planetary Computer STAC API**, enabling the app to fetch and visualize real NOAA climate data over West Virginia.
 
 This sprint occurs after:
@@ -42,7 +44,7 @@ By the end of this sprint, students should be able to:
  │                        │
  │  DateSelector.jsx      │
  │       │                │
- │ MapPage.jsx  ──────────────► Calls backend `/stac` endpoint
+ │ MapPage.jsx  ──────────────► Calls backend `/temperature` endpoint
  │       │                │
  │ MapComponent.jsx       │
  └──────────▲────────────┘
@@ -72,6 +74,8 @@ Located in:
 ```
 backend/routes/stac.js
 ```
+
+Mounted at `/temperature` in `server.js` (e.g., `GET /temperature/:date`) — despite the file being named `stac.js`, the URL path students actually call is `/temperature`, not `/stac`.
 
 This route:
 

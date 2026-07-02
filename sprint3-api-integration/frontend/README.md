@@ -1,5 +1,7 @@
 # Frontend (React / Vite)
 
+> This is the **reference implementation** for Sprint 3's frontend. Keep building in the `frontend/` you created in earlier sprints; don't clone or fork this one.
+
 This folder contains the React frontend for **xPostForecast**. It provides:
 
 - A login and registration flow using an HTTP-only cookie for auth.
@@ -23,7 +25,7 @@ This folder contains the React frontend for **xPostForecast**. It provides:
 ## Folder Structure
 
 ```text
-frontend_src/
+frontend/
 └── src/
     ├── App.css
     ├── App.jsx            # Top-level router & auth gate
@@ -41,7 +43,7 @@ frontend_src/
         └── MapPage.jsx
 ```
 
-You will also typically have a `.env` file at the frontend project root:
+You will also typically have a `.env` file at the frontend project root (copy `.env.example`):
 
 ```ini
 VITE_BACKEND_API_URL=http://localhost:5175
@@ -202,8 +204,8 @@ End-to-end data flow:
 1. User selects a date in `DateSelector`.
 2. `MapPage` updates its state with the selected date.
 3. User triggers a fetch (e.g., clicks a button).
-4. `MapPage` sends a request to the backend STAC endpoint using `api` and includes the selected date in the request.
-5. Backend `routes/stac.js`:
+4. `MapPage` sends a request to the backend's `/temperature/:date` endpoint using `api` and includes the selected date in the request.
+5. Backend `routes/stac.js` (mounted at `/temperature` — despite the filename, the URL path is `/temperature`, not `/stac`):
    - Calls the Planetary Computer STAC API.
    - Signs and fetches the relevant nClimGrid COG.
    - Samples a grid of points over West Virginia.
@@ -218,11 +220,15 @@ End-to-end data flow:
 1. Install dependencies:
 
    ```bash
-   cd frontend_src
+   cd sprint3-api-integration/frontend
    npm install
    ```
 
-2. Create a `.env` file in the frontend project root:
+2. Copy `.env.example` and point it at your backend:
+
+   ```bash
+   cp .env.example .env
+   ```
 
    ```ini
    VITE_BACKEND_API_URL=http://localhost:5175

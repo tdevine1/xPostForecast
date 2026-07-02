@@ -1,5 +1,7 @@
 # Sprint 4 – Cloud Deployment (Instructor-Provisioned Resources)
 
+> This `sprint4-cloud-deployment/` folder is xPostForecast's own **reference implementation**, not something you clone or fork. Deploy your own group's repo (from Sprints 1–3) to the Azure resources your instructor provisioned for your group, using this folder as your worked example for the GitHub Actions workflows and App Service/SWA configuration.
+
 In Sprint 4, your team will deploy the xPostForecast full-stack application to the Microsoft Azure cloud **using cloud resources already created for your group by the instructor**.
 
 You have been working with your group’s **Azure MySQL database since Sprint 2**, and in this sprint you will connect your **cloud backend** and **cloud frontend** to that same database through:
@@ -75,7 +77,7 @@ Your group’s responsibilities now are:
 - Moves from local Node.js server to Azure App Service
 - Uses `PORT = process.env.PORT || 5175` to adapt to cloud
 - Uses App Service **Application Settings** instead of a local `.env` for:
-  - `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`
+  - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`
   - `FRONTEND_URL`
   - `JWT_SECRET`
   - `NODE_ENV`
