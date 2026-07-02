@@ -1,13 +1,15 @@
 
-# Sprint 1: Frontend Setup Guide for xPostForecast
+# Sprint 1: Frontend Setup Guide
 
-Welcome to Sprint 1 of the **xPostForecast** project! In this phase, you'll build a basic React front end using [Vite](https://vitejs.dev/), connect VS Code to GitHub, and preview a Leaflet map with a date selector UI. This sprint focuses on learning how front-end development is structured and how modern dev tools help streamline the process.
+Welcome to Sprint 1! **This `frontend/` folder is xPostForecast's own reference implementation** — a finished example you can read, run, and compare against. You will **not** clone or fork it. Instead, you'll create your own GitHub repository and build your own app, on your own topic, using the same tools and steps shown here.
+
+In this phase, you'll scaffold a React front end using [Vite](https://vitejs.dev/), connect it to your own GitHub repo, and build out an interactive UI. This sprint focuses on learning how front-end development is structured and how modern dev tools help streamline the process.
 
 ---
 
 ## 🧰 What You’ll Learn
 
-- How to clone and set up a Vite-powered React project
+- How to scaffold and set up a Vite-powered React project from scratch
 - Understanding the frontend folder and component structure
 - How routing works using React Router
 - How to run the local development server with hot reloading
@@ -25,33 +27,74 @@ Make sure the following are installed:
 
 ---
 
-## 2. 🍴 Get Your Own Copy of the Repo
+## 2. 📖 Look at the Reference Example First
 
-You'll work from your own copy of the class repo, not the shared one directly.
+Before building your own app, skim this repo's `frontend/` folder on GitHub (or open it locally if your instructor shared it) to see a complete Sprint 1 solution:
 
-1. Go to the class repo on GitHub (your instructor will give you the link).
-2. Click **Fork** (top right) to create a copy under your own GitHub account. Keep the repository name as `xPostForecast`.
-3. You now have your own repo at `https://github.com/<your-username>/xPostForecast` — use this URL in the next step, not the original.
+- `src/components/` – reusable UI pieces (`MapComponent.jsx`, `DateSelector.jsx`)
+- `src/pages/` – full screens that compose components (`MapPage.jsx`)
+- `src/App.jsx` / `src/main.jsx` – routing and entry point
 
----
-
-## 3. 📂 Cloning the Repository
-
-1. Open **VS Code**
-2. Open the Command Palette: `Ctrl+Shift+P`
-3. Type `Git: Clone` and hit Enter
-4. Paste **your fork's** URL (e.g., `https://github.com/your-username/xPostForecast`)
-5. Open the folder: `sprint1-frontend-setup/frontend`
+You're not copying this code — you're building the *equivalent* structure for your own topic. Come back to this repo any time as a reference while you work.
 
 ---
 
-## 4. 🧠 Understanding the Project Structure
+## 3. 🆕 Create Your Own GitHub Repository
+
+1. Go to [github.com/new](https://github.com/new) and create a new **empty** repository (choose your own name, e.g. `my-project-name`). Don't initialize it with a README, license, or `.gitignore` yet — you'll add those from your local project in a later step.
+2. Open **VS Code** and open a terminal (`` Ctrl+` ``).
+3. Clone your new (currently empty) repo:
+
+   ```bash
+   git clone https://github.com/<your-username>/<your-repo-name>.git
+   cd <your-repo-name>
+   ```
+
+---
+
+## 4. 🏗️ Scaffold Your Project with Vite
+
+From inside your cloned repo folder, run:
+
+```bash
+npm create vite@latest frontend -- --template react
+cd frontend
+```
+
+This generates a new Vite + React project in a `frontend/` subfolder — mirroring how this reference repo separates `frontend/` from `backend/` (added in Sprint 2). Vite also generates a starter `.gitignore` for you inside `frontend/` covering `node_modules/`, `dist/`, and build artifacts.
+
+**Mini-Lesson: Why keep frontend and backend in separate folders?**  
+Later sprints add a Node.js backend alongside your React frontend. Separating them from the start keeps dependencies, configs, and deployment concerns cleanly split.
+
+---
+
+## 5. 📦 Installing Dependencies
+
+Still inside `frontend/`, install the packages you'll need. At minimum, for routing:
+
+```bash
+npm install react-router-dom
+```
+
+If your topic includes a map (like this example does, using [Leaflet](https://leafletjs.com/)), also install:
+
+```bash
+npm install leaflet react-leaflet
+```
+
+Pick libraries that fit *your* topic — a chart library (e.g. `chart.js`), a calendar picker, etc. are all reasonable substitutes depending on what your app needs to display.
+
+---
+
+## 6. 🧠 Structuring Your Project
+
+Organize your `src/` folder the same way this reference example does:
 
 ```bash
 frontend/
 └── src/
-    ├── components/     # Reusable pieces like MapComponent and DateSelector
-    ├── pages/          # Pages tied to routes (e.g., MapPage.jsx)
+    ├── components/     # Reusable pieces (your equivalents of MapComponent, DateSelector)
+    ├── pages/          # Full screens tied to routes
     ├── App.jsx         # Main app routing component
     ├── main.jsx        # Entry point for rendering App
     └── index.css       # Global styles
@@ -63,19 +106,7 @@ frontend/
 
 ---
 
-## 5. 📦 Installing Dependencies
-
-Open your VS Code terminal (`Ctrl+\``) and run:
-
-```bash
-npm install
-```
-
-This installs the project dependencies defined in `package.json`.
-
----
-
-## 6. 🚀 Running the Development Server
+## 7. 🚀 Running the Development Server
 
 In the terminal:
 
@@ -96,29 +127,30 @@ When you edit a file, the page updates instantly without reloading. This is Vite
 
 ---
 
-## 7. 🧪 What Should It Look Like?
+## 8. 🧪 What the Reference Example Looks Like
 
-Here’s a sample screenshot of the app at the end of Sprint 1:
+Here's a screenshot of *this reference app* at the end of Sprint 1 — yours will look different since it's your own topic, but should hit the same milestones:
 
 ![Sprint 1 UI](../images/screenshot-sprint1.png)
 
-- Map is visible using Leaflet
-- Month/year dropdowns shown
-- “Fetch Data” and “Logout” buttons are present
-- No real data fetch or login logic yet
+By the end of Sprint 1, your own app should have:
+
+- A working interactive UI element relevant to your topic (this example uses a Leaflet map)
+- A selector/input UI for choosing what data to view (this example uses month/year dropdowns)
+- Placeholder "Fetch Data" and "Logout" buttons — no real data fetch or login logic yet, that comes in later sprints
 
 ---
 
-## 8. 🛠️ Troubleshooting
+## 9. 🛠️ Troubleshooting
 
-- **`npm install` fails or hangs** — delete `node_modules/` and `package-lock.json`, then re-run `npm install`. Make sure you're inside `sprint1-frontend-setup/frontend` when you run it.
+- **`npm install` fails or hangs** — delete `node_modules/` and `package-lock.json`, then re-run `npm install`. Make sure you're inside your `frontend/` folder when you run it.
 - **`npm` or `node` not recognized** — Node.js isn't installed or isn't on your PATH. Reinstall Node.js and restart VS Code.
 - **`Port 5173 is already in use`** — another instance of the dev server is already running. Stop it (`Ctrl+C` in that terminal) or close other terminal tabs running `npm run dev`.
-- **Map doesn't render / blank page** — open your browser's developer console (`F12`) and check for errors; a common cause is a typo in an import path under `src/components/`.
+- **Blank page / component doesn't render** — open your browser's developer console (`F12`) and check for errors; a common cause is a typo in an import path under `src/components/`.
 
 ---
 
-## 9. 💡 Explore More (Optional Learning)
+## 10. 💡 Explore More (Optional Learning)
 
 | Topic | Resource |
 |-------|----------|
@@ -130,20 +162,25 @@ Here’s a sample screenshot of the app at the end of Sprint 1:
 
 ## ✅ You Now Have
 
-- Cloned the repo and opened it in VS Code
-- Installed dependencies
-- Explored the folder structure
-- Previewed the frontend in your browser
+- Created your own GitHub repository and cloned it locally
+- Scaffolded a Vite React app of your own from scratch
+- Installed dependencies and structured your project
+- Built and previewed an interactive frontend for your own topic
 
 In **Sprint 2**, we’ll add a backend connection and a database for login functionality.
 
 Happy coding!
 
-
 ---
 
-## 🛑 Don't Forget: Check Your `.gitignore`
+## 🛑 Don't Forget: Commit Your Work
 
-Because you forked the full `xPostForecast` repo, you already have a `.gitignore` at the repo root (`xPostForecast/.gitignore`) that excludes `node_modules/`, `.env`, `dist/`, and other files you never want committed — you don't need to create a new one in `frontend/`.
+Vite's scaffold generates a `.gitignore` in `frontend/` covering `node_modules/` and `dist/`, but **it does not exclude `.env` by default** — double-check it does, or add `.env` to it yourself before you ever create one (you'll need one starting in Sprint 2 for secrets like database credentials).
 
-Before you run `git add`, it's still worth double-checking with `git status` that nothing like `node_modules/` or a `.env` file is about to be committed. If it is, verify the root `.gitignore` covers it rather than adding a second `.gitignore` file.
+Before you `git add`, run `git status` and confirm nothing like `node_modules/` or a `.env` file is about to be committed.
+
+```bash
+git add .
+git commit -m "Sprint 1: frontend setup"
+git push
+```
