@@ -108,76 +108,84 @@ router.get('/:date', async (req, res) => {
     return res.status(400).json({ error: 'Invalid date format' });
   }
 
-  /**
-   * Build STAC search payload
-   * The datetime uses "<year>-<month>-15T00:00:00Z" because the nClimGrid-monthly
-   * product is monthly and the 15th ensures we fall within the correct item’s range.
-   */
-  const payload = {
-    collections: ['noaa-nclimgrid-monthly'],
-    bbox: BBOX,
-    datetime: `${date.split('-').slice(0, 2).join('-')}-15T00:00:00Z`
-  };
+  try {
+    /**
+     * Build STAC search payload
+     * The datetime uses "<year>-<month>-15T00:00:00Z" because the nClimGrid-monthly
+     * product is monthly and the 15th ensures we fall within the correct item’s range.
+     */
+    const payload = {
+      collections: ['noaa-nclimgrid-monthly'],
+      bbox: BBOX,
+      datetime: `${date.split('-').slice(0, 2).join('-')}-15T00:00:00Z`
+    };
 
-  // --- STAC Search ---
-  const stacRes = await fetch(STAC_SEARCH, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+    // --- STAC Search ---
+    const stacRes = await fetch(STAC_SEARCH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-  const stacJson = await stacRes.json();
-  if (!stacRes.ok || !stacJson.features?.length) {
-    return res.status(stacRes.status || 404).json({ error: 'No data' });
-  }
-
-  // --- Select first returned item + sign its second asset ---
-  const item = stacJson.features[0];
-  const assetKey = Object.keys(item.assets)[1]; // often tavg band, depending on STAC metadata
-  const href = item.assets[assetKey].href;
-  const signed = await signHref(href);
-
-  // --- Load GeoTIFF via georaster ---
-  const arrayBuffer = await (await fetch(signed)).arrayBuffer();
-  const georaster = await parseGeoraster(arrayBuffer);
-
-  // --- Determine pixel window for WV bounding box ---
-  const [west, south, east, north] = BBOX;
-  const { xmin, ymax, pixelWidth, pixelHeight, width, height } = georaster;
-
-  const ixStart = Math.max(0, Math.floor((west - xmin) / pixelWidth));
-  const ixEnd   = Math.min(width - 1, Math.ceil((east - xmin) / pixelWidth));
-
-  const iyStart = Math.max(0, Math.floor((ymax - north) / pixelHeight));
-  const iyEnd   = Math.min(height - 1, Math.ceil((ymax - south) / pixelHeight));
-
-  // --- Sample point grid ---
-  const points = [];
-  let count = 0;
-
-  for (let ix = ixStart; ix <= ixEnd && count < MAX_POINTS; ix++) {
-    for (let iy = iyStart; iy <= iyEnd && count < MAX_POINTS; iy++) {
-
-      // Temperature raster value (Celsius)
-      const cval = georaster.values[0][iy][ix];  // [band][row][col]
-      if (cval == null || Number.isNaN(cval)) continue;
-
-      // Convert pixel index to geographic coordinates
-      const lon = xmin + ix * pixelWidth;
-      const lat = ymax - iy * pixelHeight;
-
-      points.push({
-        lat,
-        lon,
-        tavg: c2f(cval)
-      });
-
-      count++;
+    const stacJson = await stacRes.json();
+    if (!stacRes.ok || !stacJson.features?.length) {
+      return res.status(stacRes.status || 404).json({ error: 'No data' });
     }
-  }
 
-  // Final JSON output
-  res.json(points);
+    // --- Select first returned item + sign its second asset ---
+    const item = stacJson.features[0];
+    const assetKey = Object.keys(item.assets)[1]; // often tavg band, depending on STAC metadata
+    const href = item.assets[assetKey].href;
+    const signed = await signHref(href);
+
+    // --- Load GeoTIFF via georaster ---
+    const arrayBuffer = await (await fetch(signed)).arrayBuffer();
+    const georaster = await parseGeoraster(arrayBuffer);
+
+    // --- Determine pixel window for WV bounding box ---
+    const [west, south, east, north] = BBOX;
+    const { xmin, ymax, pixelWidth, pixelHeight, width, height } = georaster;
+
+    const ixStart = Math.max(0, Math.floor((west - xmin) / pixelWidth));
+    const ixEnd   = Math.min(width - 1, Math.ceil((east - xmin) / pixelWidth));
+
+    const iyStart = Math.max(0, Math.floor((ymax - north) / pixelHeight));
+    const iyEnd   = Math.min(height - 1, Math.ceil((ymax - south) / pixelHeight));
+
+    // --- Sample point grid ---
+    const points = [];
+    let count = 0;
+
+    for (let ix = ixStart; ix <= ixEnd && count < MAX_POINTS; ix++) {
+      for (let iy = iyStart; iy <= iyEnd && count < MAX_POINTS; iy++) {
+
+        // Temperature raster value (Celsius)
+        const cval = georaster.values[0][iy][ix];  // [band][row][col]
+        if (cval == null || Number.isNaN(cval)) continue;
+
+        // Convert pixel index to geographic coordinates
+        const lon = xmin + ix * pixelWidth;
+        const lat = ymax - iy * pixelHeight;
+
+        points.push({
+          lat,
+          lon,
+          tavg: c2f(cval)
+        });
+
+        count++;
+      }
+    }
+
+    // Final JSON output
+    res.json(points);
+  } catch (error) {
+    // Common causes:
+    // - Planetary Computer STAC search or signing endpoint unavailable
+    // - Malformed or unreadable GeoTIFF response
+    console.error('Error fetching temperature data:', error);
+    res.status(500).json({ error: 'Failed to fetch temperature data' });
+  }
 });
 
 export default router;

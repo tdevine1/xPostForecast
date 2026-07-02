@@ -224,7 +224,7 @@ Screenshot reference:
 
 ### 4.2 Required Settings
 
-Add or verify the following keys (exact names may be instructor-specified):
+Add or verify the following keys (exact names may be instructor-specified). See `.env.example` in this folder for the equivalent local-dev `.env` values (do **not** set `PORT` in Application Settings — Azure injects it automatically):
 
 | Name          | Description                                                     |
 |---------------|-----------------------------------------------------------------|

@@ -37,9 +37,9 @@ const Login = ({ setAuthenticated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-  console.log('Sending Login Request to:', `${api.defaults.baseURL}/auth/login`);
+    console.log('Sending Login Request to:', `${api.defaults.baseURL}/auth/login`);
     try {
-      const res = await api.post(`${api.defaults.baseURL}/auth/login`, { username, password });
+      const res = await api.post('/auth/login', { username, password });
       // Backend returns 200 + { message: 'Login successful' } on success
       if (res.status === 200) {
         setAuthenticated(true);
