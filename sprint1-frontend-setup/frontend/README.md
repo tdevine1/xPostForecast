@@ -18,23 +18,34 @@ Welcome to Sprint 1 of the **xPostForecast** project! In this phase, you'll buil
 
 Make sure the following are installed:
 
-- [Node.js & npm](https://nodejs.org/en/) – JavaScript runtime and package manager  
+- [Node.js & npm](https://nodejs.org/en/) – JavaScript runtime and package manager. Install the **LTS version (18 or later)** — this project won't run correctly on older versions.
 - [Git](https://git-scm.com/downloads) – Version control  
 - [VS Code](https://code.visualstudio.com/) – Recommended code editor
+- A [GitHub](https://github.com/) account
 
 ---
 
-## 2. 📂 Cloning the Repository
+## 2. 🍴 Get Your Own Copy of the Repo
+
+You'll work from your own copy of the class repo, not the shared one directly.
+
+1. Go to the class repo on GitHub (your instructor will give you the link).
+2. Click **Fork** (top right) to create a copy under your own GitHub account. Keep the repository name as `xPostForecast`.
+3. You now have your own repo at `https://github.com/<your-username>/xPostForecast` — use this URL in the next step, not the original.
+
+---
+
+## 3. 📂 Cloning the Repository
 
 1. Open **VS Code**
 2. Open the Command Palette: `Ctrl+Shift+P`
 3. Type `Git: Clone` and hit Enter
-4. Paste your repository URL (e.g., `https://github.com/your-name/xPostForecast`)
+4. Paste **your fork's** URL (e.g., `https://github.com/your-username/xPostForecast`)
 5. Open the folder: `sprint1-frontend-setup/frontend`
 
 ---
 
-## 3. 🧠 Understanding the Project Structure
+## 4. 🧠 Understanding the Project Structure
 
 ```bash
 frontend/
@@ -52,7 +63,7 @@ frontend/
 
 ---
 
-## 4. 📦 Installing Dependencies
+## 5. 📦 Installing Dependencies
 
 Open your VS Code terminal (`Ctrl+\``) and run:
 
@@ -64,7 +75,7 @@ This installs the project dependencies defined in `package.json`.
 
 ---
 
-## 5. 🚀 Running the Development Server
+## 6. 🚀 Running the Development Server
 
 In the terminal:
 
@@ -85,11 +96,11 @@ When you edit a file, the page updates instantly without reloading. This is Vite
 
 ---
 
-## 6. 🧪 What Should It Look Like?
+## 7. 🧪 What Should It Look Like?
 
 Here’s a sample screenshot of the app at the end of Sprint 1:
 
-![Sprint 1 UI](./screenshot-sprint1.png)
+![Sprint 1 UI](../images/screenshot-sprint1.png)
 
 - Map is visible using Leaflet
 - Month/year dropdowns shown
@@ -98,7 +109,16 @@ Here’s a sample screenshot of the app at the end of Sprint 1:
 
 ---
 
-## 7. 💡 Explore More (Optional Learning)
+## 8. 🛠️ Troubleshooting
+
+- **`npm install` fails or hangs** — delete `node_modules/` and `package-lock.json`, then re-run `npm install`. Make sure you're inside `sprint1-frontend-setup/frontend` when you run it.
+- **`npm` or `node` not recognized** — Node.js isn't installed or isn't on your PATH. Reinstall Node.js and restart VS Code.
+- **`Port 5173 is already in use`** — another instance of the dev server is already running. Stop it (`Ctrl+C` in that terminal) or close other terminal tabs running `npm run dev`.
+- **Map doesn't render / blank page** — open your browser's developer console (`F12`) and check for errors; a common cause is a typo in an import path under `src/components/`.
+
+---
+
+## 9. 💡 Explore More (Optional Learning)
 
 | Topic | Resource |
 |-------|----------|
@@ -122,17 +142,8 @@ Happy coding!
 
 ---
 
-## 🛑 Don't Forget: Add a `.gitignore`
+## 🛑 Don't Forget: Check Your `.gitignore`
 
-Before committing your project to GitHub, make sure your `frontend/` folder includes a `.gitignore` file to exclude temporary, build, and sensitive files:
+Because you forked the full `xPostForecast` repo, you already have a `.gitignore` at the repo root (`xPostForecast/.gitignore`) that excludes `node_modules/`, `.env`, `dist/`, and other files you never want committed — you don't need to create a new one in `frontend/`.
 
-```bash
-# .gitignore
-node_modules/
-dist/
-.env
-.vite/
-.vscode/
-```
-
-This keeps your repository clean and secure. You can [download a ready-made .gitignore file here](../.gitignore).
+Before you run `git add`, it's still worth double-checking with `git status` that nothing like `node_modules/` or a `.env` file is about to be committed. If it is, verify the root `.gitignore` covers it rather than adding a second `.gitignore` file.
