@@ -5,24 +5,6 @@
                 "authProtocol": "default",
                 "enableSsl": "Enabled",
                 "ssl": {
-                    "ca": "C:\\Users\\phlos\\git\\xPostForecast\\xPostForecast\\sprint3-api-integration\\backend\\config\\DigiCertGlobalRootG2.crt.pem"
-                }
-            },
-            "ssh": "Disabled",
-            "previewLimit": 50,
-            "server": "xpostforecast-db.mysql.database.azure.com",
-            "port": 3306,
-            "driver": "MySQL",
-            "name": "xPostForecast_DB",
-            "database": "authdb",
-            "username": "mysqladmin",
-            "password": "EatShitPitt2025!"
-        },
-        {
-            "mysqlOptions": {
-                "authProtocol": "default",
-                "enableSsl": "Enabled",
-                "ssl": {
                     "ca": "C:\\Users\\phlos\\git\\xPostForecast\\sprint2-login-backend\\backend\\config\\DigiCertGlobalRootG2.crt.pem"
                 }
             },
@@ -35,6 +17,23 @@
             "username": "mysqladmin",
             "password": "EatShitPitt!2026.01",
             "database": "authdb"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Enabled",
+                "ssl": {
+                    "ca": "C:\\Users\\phlos\\git\\xPostForecast\\sprint4-cloud-deployment\\backend\\config\\DigiCertGlobalRootG2.crt.pem"
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "202605-cs330-demo-db.mysql.database.azure.com",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "xPostForecast_DB_2026.05",
+            "database": "authdb",
+            "username": "mysqladmin"
         }
     ],
     "sonarlint.connectedMode.project": {
