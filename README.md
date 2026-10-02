@@ -1,67 +1,31 @@
-# xPostForecast
+# Sprint 1 – Frontend Setup
 
-This repository contains a staged, instructional full-stack web application that demonstrates how to build, deploy, and secure a cloud-connected weather visualization app using **React**, **Node.js**, **MySQL**, and **Azure**.
+This sprint introduces students to basic frontend development using **Vite + React**. **xPostForecast is a reference example, not a starter template** — you will create your own GitHub repository and build your own app on the same tech stack (React, Node.js, MySQL, Azure), following the same sprint structure. Use this repo to see what a finished sprint looks like and to follow along step-by-step; see [`frontend/README.md`](./frontend/README.md) for the walkthrough of how to set your own project up.
 
-The app displays **historical monthly average temperatures** across West Virginia using NOAA climate data. It includes user authentication, a map-based frontend, and cloud-backed services.
+## ✅ Goal
 
-![App Screenshot](./screenshot1.png)
+By the end of Sprint 1, students will have:
 
-## Purpose
+- Installed the necessary tools (VS Code, Node.js, Git)
+- Created their own GitHub repository and cloned it locally
+- Scaffolded a working Vite React app from scratch
+- Built an interactive frontend appropriate to their chosen topic (this example uses a Leaflet map of West Virginia with a date selector)
+- Understood how to build and run the app locally
 
-This repo is designed to **teach full-stack web app development** in an undergraduate course setting using a sprint-based structure. Students implement a new set of features during each two-week sprint.
+## 🌍 Preview
 
-## Sprint Overview
+Here's what *this reference example* looks like at the end of Sprint 1 — your app will look different since it's your own topic, but should follow the same structure:
 
-| Sprint | Description |
-|--------|-------------|
-| **Sprint 1** | Local setup of frontend using React; prepares for secure login |
-| **Sprint 2** | Adds local backend using Node.js for login; connects to Azure MySQL |
-| **Sprint 3** | API connection & data integration (STAC API + backend data flow) |
-| **Sprint 4** | Full cloud deployment of frontend & backend on Azure |
+![Sprint 1 Completed UI](./images/screenshot-sprint1.png)
 
-## Tech Stack
+## 📂 Folder Structure
 
-- **Frontend**: React, Leaflet, Axios, .env for config
-- **Backend**: Node.js, Express, MySQL2, JWT, bcrypt
-- **Database**: Azure Database for MySQL
-- **Deployment**: Azure App Service, Azure Static Web Apps, GitHub Actions
+- `frontend/`: Contains the Vite-based React project.
 
-## Features
+## 🚀 Next Steps
 
-- Interactive map with historical temperature overlays
-- NOAA grid cell data using STAC API
-- Secure user login with JWT
-- Responsive interface with dropdown selectors for year/month
-- Deployed using CI/CD pipelines
+In Sprint 2, you’ll:
+- Add login functionality
+- Connect to an Azure MySQL database
+- Begin developing a backend API
 
-## Repo Structure
-
-```
-xpostforecast/
-├── sprint1-frontend-setup/
-├── sprint2-login-backend/
-├── sprint3-api-integration/
-├── sprint4-cloud-deployment/
-├── shared/
-├── .github/
-├── screenshot1.png
-└── README.md
-```
-
-## Data Source
-
-Data is derived from NOAA's **nClimGrid** collection via Microsoft's Planetary Computer and the STAC API interface. This provides accurate, gridded climate data going back to 1951.
-
-## For Instructors
-
-This project is built to align with sprint-based teaching. You can assign one sprint at a time and use it to teach:
-
-- GitHub project setup & version control
-- CI/CD with GitHub Actions
-- Frontend/backend decoupling
-- API development & data fetching
-- Cloud deployment & service integration
-
-## License
-
-MIT License. See [LICENSE](./LICENSE) for details.
