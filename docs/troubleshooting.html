@@ -44,7 +44,7 @@
         <h3>Authentication and CORS Issues</h3>
         <p>
           If login behavior seems inconsistent, start here first. Cookie handling and cross-origin configuration are
-          the most common causes of “works locally, fails in cloud” behavior.
+          the most common causes of "works locally, fails in cloud" behavior.
         </p>
         <table>
           <thead>
@@ -56,33 +56,48 @@
           </thead>
           <tbody>
             <tr>
-              <td><code>403 /auth/test</code> on first load</td>
-              <td>No auth cookie yet</td>
-              <td>Expected before login; complete login first.</td>
+              <td><code>401</code> from <code>/auth/test</code> in the browser console</td>
+              <td>Not logged in</td>
+              <td>Expected before login and after logout.</td>
             </tr>
             <tr>
-              <td>Login succeeds but user appears logged out</td>
+              <td>Locally: login succeeds but a refresh logs the user out</td>
               <td>Credentials not sent with requests</td>
-              <td>Use <code>withCredentials: true</code> (Axios) and <code>credentials: include</code> (fetch).</td>
+              <td>Use <code>withCredentials: true</code> (axios; the shared <code>src/api.js</code> sets it) or <code>credentials: 'include'</code> (fetch).</td>
             </tr>
             <tr>
-              <td>CORS or cookie errors</td>
-              <td>Frontend URL mismatch or credentials disabled on server</td>
-              <td>Set backend CORS origin to exact frontend URL and enable credentials on both sides.</td>
+              <td>On Azure: login returns 200, then every request is <code>401</code></td>
+              <td>Cookie not sent cross-site</td>
+              <td>Set <code>NODE_ENV=production</code> on the App Service so the cookie is <code>SameSite=None; Secure; Partitioned</code>. If it works in one browser but not another, that browser blocks cross-site cookies.</td>
             </tr>
             <tr>
-              <td><code>404 /login</code> from backend</td>
+              <td>CORS error mentioning <code>Access-Control-Allow-Origin</code></td>
+              <td><code>FRONTEND_URL</code> doesn't match the frontend's address</td>
+              <td>Set it to the exact origin (<code>http://localhost:5173</code> locally, the SWA URL on Azure), no trailing slash.</td>
+            </tr>
+            <tr>
+              <td><code>404</code> for <code>/login</code> from the backend</td>
               <td>Missing auth route prefix</td>
               <td>Call <code>/auth/login</code> and <code>/auth/register</code>.</td>
+            </tr>
+            <tr>
+              <td><code>409</code> on register</td>
+              <td>Username or email already exists</td>
+              <td>Use another, or delete the row in MySQL.</td>
+            </tr>
+            <tr>
+              <td><code>429 Too Many Requests</code></td>
+              <td>Login/register rate limit (20 per IP per 15 minutes)</td>
+              <td>Wait, or restart the backend (the counter is in memory).</td>
             </tr>
           </tbody>
         </table>
       </section>
 
       <section class="section">
-        <h3>Database and SSL Issues</h3>
+        <h3>Database and TLS Issues</h3>
         <p>
-          Database errors often look like application failures. Validate SSL certificate path, credentials, and network
+          Database errors often look like application failures. Validate the certificate path, credentials, and network
           access before changing route or UI code.
         </p>
         <table>
@@ -95,24 +110,29 @@
           </thead>
           <tbody>
             <tr>
-              <td><code>ER_NO_DEFAULT_FOR_FIELD 'email'</code></td>
-              <td>Request missing required email or schema mismatch</td>
-              <td>Send <code>email</code> in register payload and verify users table schema.</td>
+              <td><code>Missing required environment variables: …</code> at startup</td>
+              <td><code>.env</code> (local) or App Service setting (Azure) missing or misspelled</td>
+              <td>Add the listed variables with the exact names from <code>backend/.env.example</code>.</td>
+            </tr>
+            <tr>
+              <td><code>ER_BAD_DB_ERROR: Unknown database</code></td>
+              <td>Schema not created</td>
+              <td>Run <code>backend/db/schema.sql</code>.</td>
             </tr>
             <tr>
               <td>MySQL TLS connection failure</td>
-              <td>Missing or wrong CA path</td>
-              <td>Place Azure certificate at <code>config/DigiCertGlobalRootG2.crt.pem</code>.</td>
+              <td>Missing or wrong CA certificate</td>
+              <td>Use the certificate downloaded from the server's Networking page, at <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>.</td>
             </tr>
             <tr>
               <td><code>connect ETIMEDOUT</code> to MySQL on Azure</td>
-              <td>Network or firewall path issue</td>
-              <td>Confirm server access settings and escalate to instructor or WVU cloud admin support.</td>
+              <td>Server networking doesn't allow Azure services</td>
+              <td>Enable "Allow public access from any Azure service" on the MySQL server, or escalate to WVU cloud support.</td>
             </tr>
             <tr>
               <td>Cannot connect from local tools</td>
               <td>Client IP not allowed</td>
-              <td>Add or update Azure MySQL firewall rule for your public IP.</td>
+              <td>Add or update the Azure MySQL firewall rule for your public IP.</td>
             </tr>
           </tbody>
         </table>
@@ -121,8 +141,8 @@
       <section class="section">
         <h3>GitHub Actions and Deployment Issues</h3>
         <p>
-          Pipeline failures are usually path, script, or secret mismatches. Compare workflow file values directly to
-          your repository folder names and secret names.
+          Pipeline failures are usually path, test, or secret mismatches. The deploy workflows check their secrets first
+          and name anything missing in the log.
         </p>
         <table>
           <thead>
@@ -134,47 +154,76 @@
           </thead>
           <tbody>
             <tr>
-              <td>Workflow cannot find backend directory</td>
-              <td>Wrong path like <code>./backend</code></td>
-              <td>Use <code>sprint4-cloud-deployment/backend</code> in working-directory, upload path, and package path.</td>
+              <td><code>… is not set</code> in the "Check repository settings" step</td>
+              <td>Missing secret or variable</td>
+              <td>Add it under Settings → Secrets and variables → Actions (names are case-sensitive).</td>
             </tr>
             <tr>
-              <td>Backend workflow fails at test step</td>
-              <td>Default test script exits with status 1</td>
-              <td>Disable placeholder test command or replace with real passing tests.</td>
+              <td>Workflow cannot find the backend or frontend directory</td>
+              <td>Path doesn't match the repo layout</td>
+              <td>Use <code>backend</code> / <code>frontend</code> (top-level folders) in working-directory, cache path, and package path.</td>
             </tr>
             <tr>
-              <td>Frontend build points at wrong API URL</td>
-              <td><code>VITE_BACKEND_API_URL</code> not set in workflow env</td>
-              <td>Add secret and map it to deploy job environment.</td>
+              <td>Workflow fails at the test step</td>
+              <td>A failing test, or npm's default placeholder <code>test</code> script</td>
+              <td>Run <code>npm test</code> locally and fix it; don't disable the step.</td>
+            </tr>
+            <tr>
+              <td><strong>Download publish profile</strong> is greyed out</td>
+              <td>SCM basic-auth publishing disabled</td>
+              <td>App Service → Configuration → General settings → SCM Basic Auth Publishing Credentials: On.</td>
+            </tr>
+            <tr>
+              <td>Deployed site calls <code>undefined/auth/...</code>; console shows <code>Frontend API Base URL: undefined</code></td>
+              <td><code>VITE_BACKEND_API_URL</code> not given to the build</td>
+              <td>Add the secret, and in an Azure-generated workflow map it in the deploy step's <code>env:</code>.</td>
+            </tr>
+            <tr>
+              <td><code>404</code> when refreshing <code>/map</code> on the deployed site</td>
+              <td>No navigation fallback</td>
+              <td>Add <code>frontend/public/staticwebapp.config.json</code>.</td>
+            </tr>
+            <tr>
+              <td>Every push deploys the frontend twice</td>
+              <td>An Azure-generated workflow and a custom one both deploy</td>
+              <td>Keep only one.</td>
             </tr>
             <tr>
               <td>SWA YAML validation warning in close PR job</td>
               <td>Missing <code>app_location</code> in close job config</td>
-              <td>Add same <code>app_location</code> value as main deploy job.</td>
+              <td>Add the same <code>app_location</code> value as the main deploy job.</td>
             </tr>
           </tbody>
         </table>
       </section>
 
       <section class="section">
+        <h3>Data (Temperature Map) Issues</h3>
+        <ul>
+          <li><code>404 No temperature data is available for …</code>: Planetary Computer's copy of nClimGrid covers January 1895 through September 2022.</li>
+          <li><code>502</code> from <code>/temperature/…</code>: Planetary Computer was unreachable; the log stream shows the underlying error. Retry later.</li>
+          <li>The first request for a month takes several seconds; repeats are fast because the backend caches each month.</li>
+        </ul>
+      </section>
+
+      <section class="section">
         <h3>App Service Runtime Issues</h3>
         <ul>
-          <li>If backend does not start on Azure, confirm app listens on <code>process.env.PORT</code>.</li>
-          <li>If health endpoint fails, confirm App Service application settings were saved and app was restarted.</li>
-          <li>If frontend calls fail in production, verify <code>FRONTEND_URL</code> in backend settings matches SWA URL exactly.</li>
-          <li>Use App Service Log Stream while restarting app to capture startup errors immediately.</li>
+          <li>If the backend does not start on Azure, read the first error in the log stream; the app listens on <code>process.env.PORT</code> automatically.</li>
+          <li>If the health endpoint fails, confirm the environment variables were applied and the app restarted.</li>
+          <li>If <code>/health</code> shows <code>"env": "development"</code>, <code>NODE_ENV</code> is not set to <code>production</code>.</li>
+          <li>Use App Service Log Stream while restarting the app to capture startup errors immediately.</li>
         </ul>
       </section>
 
       <section class="section">
         <h3>Fast Triage Workflow for Staff</h3>
         <ol class="step-list">
-          <li>Check GitHub Actions status for the latest backend and frontend deployments.</li>
-          <li>Validate backend health endpoint in browser.</li>
-          <li>Open browser dev tools and confirm frontend requests target correct backend URL.</li>
-          <li>Review App Service log stream for startup, CORS, and DB errors.</li>
-          <li>If resource or network-level issue is suspected, escalate through WVU support process.</li>
+          <li>Check GitHub Actions status for the latest CI, backend, and frontend runs.</li>
+          <li>Validate the backend health endpoint in the browser.</li>
+          <li>Open browser dev tools: the console's <code>Frontend API Base URL</code> and the Network tab show which backend the frontend calls.</li>
+          <li>Review the App Service log stream for startup, CORS, and database errors.</li>
+          <li>If a resource or network-level issue is suspected, escalate through the WVU support process.</li>
         </ol>
         <div class="notice">
           <strong>Escalation note:</strong> When missing resource groups or restricted cloud access blocks progress,

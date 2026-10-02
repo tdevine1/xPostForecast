@@ -35,8 +35,8 @@
       <section class="hero">
         <h2>GitHub Setup</h2>
         <p>
-          This page combines all repository, secrets, and GitHub Actions requirements from the Sprint 2 and Sprint 4
-          readmes so faculty and staff can verify the CI/CD pipeline configuration in one place.
+          This page combines the repository, secrets, and GitHub Actions requirements from the Sprint 4 guides so
+          faculty and staff can verify the CI/CD pipeline configuration in one place.
         </p>
         <div class="button-row">
           <a class="button gold" href="azure-basics.html">Next: Azure Basics</a>
@@ -46,44 +46,63 @@
       <section class="section">
         <h3>Repository Baseline</h3>
         <p>
-          Start by confirming how your team will track changes. If you are using the reference project, keep your
-          local copy synchronized with the upstream repository so deployment docs and code stay aligned.
+          Start by confirming how your team will track changes. Most deployment problems in class come from paths,
+          secret names, or files that should never have been committed.
         </p>
-        <ol class="step-list">
+        <ul>
           <li>Confirm instructors, staff, and project teams all have the correct repo permissions.</li>
-          <li>Use <code>main</code> as deployment branch unless course instructions say otherwise.</li>
-          <li>Ensure a valid <code>.gitignore</code> excludes <code>.env</code>, <code>node_modules</code>, and <code>dist</code>.</li>
-          <li>Use pull requests for major deployment changes when possible.</li>
-        </ol>
-        <pre><code># Clone the reference project
-git clone https://github.com/tdevine1/xPostForecast.git
-cd xPostForecast
-git checkout main
-git pull origin main
-
-# If using a fork, sync with upstream before deployment work
-git remote add upstream https://github.com/tdevine1/xPostForecast.git
-git fetch upstream
-git merge upstream/main
-git push origin main
-
-# Standard update cycle
-git status
+          <li>Use <code>main</code> as the deployment branch: both deploy workflows run on pushes to <code>main</code>.</li>
+          <li>Ensure <code>.gitignore</code> excludes <code>.env</code>, <code>node_modules</code>, and <code>dist</code>; check <code>git status</code> before every commit.</li>
+          <li>Use pull requests for larger changes: the CI workflow tests every push and pull request.</li>
+        </ul>
+        <pre><code># Standard update cycle
+git status                      # nothing like .env or node_modules listed?
 git add .
-git commit -m "Update deployment configuration"
-git push origin main</code></pre>
+git commit -m "Describe the change"
+git push origin main            # triggers CI, and deployment if frontend/ or backend/ changed</code></pre>
       </section>
 
       <section class="section">
-        <h3>Required GitHub Secrets</h3>
+        <h3>Workflows in the Reference Repository</h3>
+        <table>
+          <thead>
+            <tr><th>File</th><th>Runs when</th><th>Does</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ci.yml</code></td>
+              <td>Every push and pull request, on every branch</td>
+              <td>Lint, test, and build the frontend; lint and test the backend</td>
+            </tr>
+            <tr>
+              <td><code>deploy-backend.yml</code></td>
+              <td>Push to <code>main</code> changing <code>backend/</code>, or manually</td>
+              <td>Install, test, remove dev packages, deploy <code>backend/</code> to App Service</td>
+            </tr>
+            <tr>
+              <td><code>deploy-frontend.yml</code></td>
+              <td>Push to <code>main</code> changing <code>frontend/</code>, or manually</td>
+              <td>Install, test, build with <code>VITE_BACKEND_API_URL</code>, upload <code>frontend/dist</code> to Static Web Apps</td>
+            </tr>
+          </tbody>
+        </table>
         <p>
-          Secrets are required because Azure deployments need credentials and environment values that should never be
-          committed to source control.
+          "Manually" means <strong>Actions → choose the workflow → Run workflow</strong>, which is handy right after
+          setting up new Azure resources.
+        </p>
+      </section>
+
+      <section class="section">
+        <h3>Required GitHub Secrets and Variables</h3>
+        <p>
+          Secrets are required because Azure deployments need credentials that must never be committed to source
+          control. Add them under <strong>Settings → Secrets and variables → Actions</strong>.
         </p>
         <table>
           <thead>
             <tr>
-              <th>Secret Name</th>
+              <th>Name</th>
+              <th>Kind</th>
               <th>Used By</th>
               <th>Value</th>
             </tr>
@@ -91,86 +110,109 @@ git push origin main</code></pre>
           <tbody>
             <tr>
               <td><code>APP_SERVICE_PUBLISH_PROFILE</code></td>
-              <td>Backend App Service workflow</td>
-              <td>Full XML contents of App Service publish profile</td>
+              <td>Secret</td>
+              <td><code>deploy-backend.yml</code></td>
+              <td>Full XML contents of the App Service publish profile</td>
+            </tr>
+            <tr>
+              <td><code>AZURE_WEBAPP_NAME</code></td>
+              <td>Variable</td>
+              <td><code>deploy-backend.yml</code></td>
+              <td>The App Service's name</td>
             </tr>
             <tr>
               <td><code>VITE_BACKEND_API_URL</code></td>
-              <td>Frontend SWA workflow build environment</td>
+              <td>Secret</td>
+              <td><code>deploy-frontend.yml</code> build step</td>
               <td><code>https://&lt;backend-app&gt;.azurewebsites.net</code> (no trailing slash)</td>
             </tr>
             <tr>
-              <td><code>AZURE_STATIC_WEB_APPS_API_TOKEN_*</code></td>
-              <td>Auto-generated SWA deployment token</td>
-              <td>Created by Azure when SWA is linked to GitHub</td>
+              <td><code>AZURE_STATIC_WEB_APPS_API_TOKEN</code></td>
+              <td>Secret</td>
+              <td><code>deploy-frontend.yml</code></td>
+              <td>From the Static Web App's <strong>Manage deployment token</strong></td>
             </tr>
           </tbody>
         </table>
+        <p>
+          Both deploy workflows check for these first and fail with a clear message naming anything that is missing.
+        </p>
+        <div class="notice">
+          <strong>Student repositories:</strong> if you connect a group's Static Web App to their GitHub repo in the
+          Azure Portal, Azure commits its own workflow (<code>azure-static-web-apps-&lt;name&gt;.yml</code>) and creates
+          a secret named <code>AZURE_STATIC_WEB_APPS_API_TOKEN_&lt;NAME&gt;</code>. That's option A in the student
+          guide; students then only add <code>VITE_BACKEND_API_URL</code> and fix <code>app_location</code>.
+        </div>
       </section>
 
       <section class="section">
         <h3>Backend Workflow Checks</h3>
-        <p>
-          For backend deployment workflow (for example <code>.github/workflows/backend-appservice.yml</code>), verify
-          the build and deploy paths match your backend folder exactly.
-        </p>
+        <p>For <code>.github/workflows/deploy-backend.yml</code>, verify:</p>
         <ul>
-          <li><code>working-directory</code> points to <code>sprint4-cloud-deployment/backend</code>.</li>
-          <li>Artifact upload path and deploy package path use <code>sprint4-cloud-deployment/backend</code>.</li>
-          <li>Deployment action uses secret <code>APP_SERVICE_PUBLISH_PROFILE</code>.</li>
-          <li>Node version aligns with App Service runtime (typically Node 20).</li>
-          <li>If no tests exist, remove or disable failing <code>npm test</code> steps.</li>
+          <li><code>working-directory</code>, <code>cache-dependency-path</code>, and <code>package</code> all point to <code>backend</code>.</li>
+          <li>The deploy step uses <code>vars.AZURE_WEBAPP_NAME</code> and <code>secrets.APP_SERVICE_PUBLISH_PROFILE</code>.</li>
+          <li><code>node-version</code> is <code>24</code>, matching the App Service runtime.</li>
+          <li>The <code>test</code> script runs real tests. npm's default placeholder script exits with an error and blocks every deployment.</li>
         </ul>
-        <pre><code>- name: npm install, build, and test (backend only)
-  working-directory: sprint4-cloud-deployment/backend
-  run: |
-    npm install
-    npm run build --if-present
-
-- name: Deploy to Azure Web App
+        <pre><code>- run: npm ci
+- run: npm test
+- name: Remove dev-only packages before upload
+  run: npm prune --omit=dev
+- name: Deploy to Azure App Service
   uses: azure/webapps-deploy@v3
   with:
-    app-name: "&lt;your-appservice-name&gt;"
-    package: sprint4-cloud-deployment/backend
-    publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}</code></pre>
+    app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+    publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}
+    package: backend</code></pre>
       </section>
 
       <section class="section">
         <h3>Frontend SWA Workflow Checks</h3>
         <p>
-          For workflow such as <code>.github/workflows/azure-static-web-apps.yml</code>, check that the build points
-          at the correct frontend directory and receives the backend URL secret at build time.
+          The reference repo builds the frontend inside its own workflow and uploads the finished site. Check that the
+          build receives the backend URL and the upload points at the build output:
         </p>
-        <ul>
-          <li><code>app_location: "sprint4-cloud-deployment/frontend"</code></li>
-          <li><code>output_location: "dist"</code></li>
-          <li><code>api_location: ""</code> because backend is separate App Service</li>
-          <li>Deploy job environment includes <code>VITE_BACKEND_API_URL</code> secret mapping when needed</li>
-          <li><code>close_pull_request_job</code> includes the same <code>app_location</code> if YAML validation requires it</li>
-        </ul>
-        <pre><code>env:
-  VITE_BACKEND_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}
+        <pre><code>- name: Build
+  run: npm run build
+  env:
+    VITE_BACKEND_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}
 
-with:
-  app_location: "sprint4-cloud-deployment/frontend"
-  api_location: ""
-  output_location: "dist"</code></pre>
+- name: Deploy to Azure Static Web Apps
+  uses: Azure/static-web-apps-deploy@v1
+  with:
+    azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+    action: upload
+    app_location: frontend/dist
+    skip_app_build: true</code></pre>
+        <p>For an Azure-generated workflow in a student repo (option A), check instead:</p>
+        <ul>
+          <li><code>app_location: "frontend"</code>, <code>api_location: ""</code>, <code>output_location: "dist"</code></li>
+          <li>An <code>env:</code> block on the deploy step maps <code>VITE_BACKEND_API_URL</code> from secrets</li>
+          <li><code>close_pull_request_job</code> has the same <code>app_location</code> if YAML validation requires it</li>
+          <li>Only one workflow deploys the frontend</li>
+        </ul>
+        <p>
+          Either way, <code>frontend/public/staticwebapp.config.json</code> must exist so refreshing a page such as
+          <code>/map</code> doesn't return 404.
+        </p>
       </section>
 
       <section class="section">
         <h3>Deployment Trigger and Monitoring</h3>
         <p>
           After pushing changes, use GitHub Actions as your first diagnostics layer. A green workflow usually means the
-          problem is in runtime configuration, while a red workflow usually means path, script, or secret issues.
+          problem is in runtime configuration, while a red workflow usually means a path, script, test, or secret issue.
         </p>
         <ol class="step-list">
-          <li>Push a commit to deployment branch (<code>main</code> by default).</li>
-          <li>Open GitHub Actions and watch backend and frontend workflows.</li>
-          <li>Confirm build, artifact upload, and deploy steps are green.</li>
-          <li>If failed, open logs and use the troubleshooting page in this site.</li>
+          <li>Push a commit to <code>main</code> (or run a deploy workflow manually).</li>
+          <li>Open GitHub Actions and watch the CI and deploy workflows.</li>
+          <li>Confirm the settings check, test, build, and deploy steps are green.</li>
+          <li>If something failed, open the step's log and use the troubleshooting page in this site.</li>
         </ol>
-        <div class="danger-note">
-          <strong>Security reminder:</strong> Never commit publish profiles, API tokens, or any <code>.env</code> file to the repository.
+        <div class="notice">
+          <strong>Security reminder:</strong> Never commit publish profiles, deployment tokens, or any <code>.env</code>
+          file. Editor settings that store database passwords (for example SQLTools connections in
+          <code>.vscode/settings.json</code>) count too.
         </div>
         <div class="button-row">
           <a class="button gold" href="azure-basics.html">Continue to Azure Basics</a>

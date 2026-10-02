@@ -66,51 +66,51 @@
             </tr>
             <tr>
               <td>Static Web App (SWA)</td>
-              <td>Hosts built React frontend from GitHub Actions</td>
+              <td>Hosts the built React frontend, uploaded by GitHub Actions</td>
               <td>Instructor-provisioned, team-configured</td>
             </tr>
             <tr>
-              <td>App Service (Linux)</td>
-              <td>Runs Node.js backend API</td>
+              <td>App Service (Linux, Node 24 LTS)</td>
+              <td>Runs the Node.js backend API</td>
               <td>Instructor-provisioned, team-configured</td>
             </tr>
             <tr>
               <td>Azure Database for MySQL Flexible Server</td>
-              <td>Stores users and backend data</td>
-              <td>Provisioned earlier, reused in deployment</td>
+              <td>Stores users</td>
+              <td>Provisioned in Sprint 2, reused in deployment</td>
             </tr>
           </tbody>
         </table>
       </section>
 
       <section class="section">
-        <h3>MySQL and SSL Requirements</h3>
+        <h3>MySQL Networking and TLS</h3>
         <p>
-          The backend depends on a secure TLS connection to Azure MySQL. If SSL setup is incomplete, authentication and
-          data routes can fail even when the app itself starts.
+          The backend connects to Azure MySQL over TLS and verifies the server's certificate. Two network paths must be
+          open: from each developer's computer (local development) and from the App Service (production).
         </p>
         <ol class="step-list">
-          <li>In Azure Portal, open your MySQL Flexible Server networking page.</li>
-          <li>Ensure firewall rules allow required client IP or cloud path per class setup.</li>
-          <li>Download the SSL certificate from Azure portal.</li>
-          <li>Place certificate at backend path <code>config/DigiCertGlobalRootG2.crt.pem</code>.</li>
-          <li>Verify backend reads this CA cert for secure TLS connection.</li>
+          <li>In Azure Portal, open the MySQL Flexible Server's <strong>Networking</strong> page.</li>
+          <li>Add a firewall rule for each developer's public IP address (needed for local development and the <code>mysql</code> CLI).</li>
+          <li>Enable <strong>Allow public access from any Azure service within Azure to this server</strong>, so the App Service can connect.</li>
+          <li>The CA certificate (<strong>Download SSL Certificate</strong> on the same page) is committed at <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>; it is public, not a secret.</li>
         </ol>
-        <pre><code>const caPath = path.join(process.cwd(), "config", "DigiCertGlobalRootG2.crt.pem");
+        <p>How <code>backend/config/database.js</code> uses it:</p>
+        <pre><code>const caCert = fs.readFileSync(new URL('./DigiCertGlobalRootG2.crt.pem', import.meta.url));
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  port: Number(process.env.DB_PORT || 3306),
-  ssl: { ca: fs.readFileSync(caPath), rejectUnauthorized: true }
+  database: process.env.DB_NAME,
+  port: Number(process.env.DB_PORT) || 3306,
+  ssl: { ca: caCert, rejectUnauthorized: true },
 });</code></pre>
       </section>
 
       <section class="section">
-        <h3>App Service Application Settings</h3>
-        <p>In App Service go to <code>Configuration &gt; Application settings</code> and verify:</p>
+        <h3>App Service Environment Variables</h3>
+        <p>In App Service go to <code>Settings &gt; Environment variables &gt; App settings</code> and verify:</p>
         <table>
           <thead>
             <tr>
@@ -128,20 +128,24 @@ const pool = mysql.createPool({
               <td>Project database user</td>
             </tr>
             <tr>
-              <td><code>DB_PASS</code> or <code>DB_PASSWORD</code></td>
-              <td>Project database password</td>
+              <td><code>DB_PASSWORD</code></td>
+              <td>Project database password (exactly this name)</td>
             </tr>
             <tr>
-              <td><code>DB_NAME</code> or <code>DB_DATABASE</code></td>
-              <td>Project database name</td>
+              <td><code>DB_NAME</code></td>
+              <td>Project database name (<code>authdb</code> in the reference app)</td>
+            </tr>
+            <tr>
+              <td><code>DB_PORT</code></td>
+              <td><code>3306</code> (optional)</td>
             </tr>
             <tr>
               <td><code>FRONTEND_URL</code></td>
-              <td><code>https://&lt;your-swa&gt;.azurestaticapps.net</code></td>
+              <td><code>https://&lt;your-swa&gt;.azurestaticapps.net</code>, exactly, no trailing slash</td>
             </tr>
             <tr>
               <td><code>JWT_SECRET</code></td>
-              <td>Long random secret value</td>
+              <td>Long random secret value, different from any local one</td>
             </tr>
             <tr>
               <td><code>NODE_ENV</code></td>
@@ -149,45 +153,59 @@ const pool = mysql.createPool({
             </tr>
           </tbody>
         </table>
-        <p>After changes, save and restart the App Service.</p>
+        <p>
+          Click <strong>Apply</strong>; the app restarts. Do not add <code>PORT</code>: App Service sets it.
+        </p>
+        <div class="notice">
+          <strong>Why <code>NODE_ENV=production</code> matters:</strong> the frontend
+          (<code>*.azurestaticapps.net</code>) and backend (<code>*.azurewebsites.net</code>) are different sites.
+          In production the backend sets the login cookie as <code>HttpOnly; Secure; SameSite=None; Partitioned</code>,
+          the only form browsers send on cross-site requests. Without it, login returns 200 but users are immediately
+          treated as logged out.
+        </div>
       </section>
 
       <section class="section">
         <h3>App Service Runtime and Health</h3>
         <p>
-          App Service controls runtime networking. Your Node app must respect Azure runtime values instead of local
+          App Service controls runtime networking. The Node app must respect Azure runtime values instead of local
           defaults to boot correctly in production.
         </p>
         <ul>
-          <li>Backend must use Azure assigned port: <code>const PORT = Number(process.env.PORT) || 5175;</code></li>
-          <li>Do not hard-code production port values.</li>
-          <li>Validate health endpoint after deploy: <code>https://&lt;backend&gt;.azurewebsites.net/health</code></li>
-          <li>Use App Service Log Stream for startup and database error analysis.</li>
+          <li>Runtime stack: <strong>Node 24 LTS</strong> on Linux. App Service starts the app with <code>npm start</code>.</li>
+          <li>The backend listens on the Azure-assigned port: <code>const PORT = Number(process.env.PORT) || 5175;</code></li>
+          <li>Publish-profile deployments need <strong>Settings → Configuration → General settings → SCM Basic Auth Publishing Credentials</strong> turned on; otherwise <strong>Download publish profile</strong> is greyed out.</li>
+          <li>Validate after deploy: <code>https://&lt;backend&gt;.azurewebsites.net/health</code> returns <code>{"ok":true,"env":"production"}</code>.</li>
+          <li>Use <strong>Monitoring → Log stream</strong> for startup and database errors. A missing setting is reported as <code>Missing required environment variables: …</code>.</li>
+          <li>The backend calls Microsoft Planetary Computer (<code>planetarycomputer.microsoft.com</code> and <code>*.blob.core.windows.net</code>); outbound internet access is allowed by default.</li>
         </ul>
       </section>
 
       <section class="section">
         <h3>Static Web App Deployment Basics</h3>
         <p>
-          The SWA build process compiles frontend code at deployment time. That means environment values must be
-          available in GitHub Actions before deployment starts.
+          A Vite build copies environment values into the JavaScript bundle, so the backend URL must be available in
+          GitHub Actions <em>when the frontend is built</em>, not later.
         </p>
         <ul>
-          <li>Azure-generated workflow should target <code>sprint4-cloud-deployment/frontend</code>.</li>
-          <li>Build output must be <code>dist</code> for Vite projects.</li>
-          <li>Provide backend URL through secret <code>VITE_BACKEND_API_URL</code>.</li>
-          <li>Confirm deployed frontend sends requests to <code>https://&lt;appservice&gt;.azurewebsites.net/auth/...</code>.</li>
+          <li>When creating an SWA, the <strong>deployment source</strong> decides who writes the workflow:
+            <strong>GitHub</strong> makes Azure commit a workflow to the chosen repo (student option A);
+            <strong>Other</strong> lets you deploy with your own workflow and the SWA's deployment token (the reference repo).</li>
+          <li>Build output is <code>dist</code> for Vite projects.</li>
+          <li>Provide the backend URL through the secret <code>VITE_BACKEND_API_URL</code>.</li>
+          <li><code>frontend/public/staticwebapp.config.json</code> (a <code>navigationFallback</code> to <code>/index.html</code>) makes refreshes on <code>/map</code> and <code>/login</code> work.</li>
+          <li>Confirm the deployed frontend sends requests to <code>https://&lt;appservice&gt;.azurewebsites.net/auth/...</code>; the browser console also prints <code>Frontend API Base URL: …</code>.</li>
         </ul>
       </section>
 
       <section class="section">
         <h3>Operational Checklist for Staff</h3>
         <ul class="checklist">
-          <li>Resource group exists and is mapped to correct course team.</li>
-          <li>App Service can start and return successful health check.</li>
+          <li>Resource group exists and is mapped to the correct course team.</li>
+          <li>App Service runs Node 24 LTS, starts, and returns a successful health check.</li>
           <li>SWA deployment is green in GitHub Actions.</li>
-          <li>CORS is configured so SWA origin can call backend with credentials.</li>
-          <li>Backend can connect to MySQL without timeout or SSL errors.</li>
+          <li><code>FRONTEND_URL</code> matches the SWA URL exactly, and <code>NODE_ENV</code> is <code>production</code>.</li>
+          <li>Backend connects to MySQL without timeout or TLS errors.</li>
         </ul>
         <div class="button-row">
           <a class="button gold" href="deployment-steps.html">Continue to Deployment Steps</a>

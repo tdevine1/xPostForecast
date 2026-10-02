@@ -39,8 +39,9 @@
           application from local development to Microsoft Azure cloud hosting.
         </p>
         <p>
-          The content is built from all project README files and reorganized into a single step-by-step flow so a
-          professor can follow from initial setup through final production validation.
+          It reorganizes the project's README files into a single step-by-step flow so a professor can go from
+          initial setup through final production validation, and it adds the instructor-only steps (provisioning
+          Azure resources each semester) that the student guides leave out.
         </p>
         <div class="notice">
           <strong>WVU note:</strong> For WVU courses, resource groups are not self-created by project teams.
@@ -62,25 +63,48 @@
           <li>Read <a href="getting-started.html">Getting Started</a> for prerequisites and required access.</li>
           <li>Use <a href="github-setup.html">GitHub Setup</a> to configure repo workflows and secrets.</li>
           <li>Use <a href="azure-basics.html">Azure Basics</a> to confirm Azure resources and settings.</li>
-          <li>Follow <a href="deployment-steps.html">Deployment Steps</a> from first local run to production.</li>
+          <li>Follow <a href="deployment-steps.html">Deployment Steps</a> from first local run to production, including the per-semester setup checklist.</li>
           <li>Use <a href="troubleshooting.html">Troubleshooting</a> for common errors and quick fixes.</li>
         </ol>
       </section>
 
       <section class="section">
-        <h3>Coverage from the source READMEs</h3>
+        <h3>How the course repository is organized</h3>
         <p>
-          These guides are built from the project README set and rewritten into a single path for instructors, staff,
-          and first-time reviewers. The goal is to reduce ambiguity during class support and grading.
+          <a href="https://github.com/tdevine1/xPostForecast">xPostForecast</a> keeps each sprint on its own branch,
+          with the app's <code>frontend/</code> and <code>backend/</code> folders at the top level of every branch:
         </p>
+        <table>
+          <thead>
+            <tr><th>Branch</th><th>Sprint</th><th>Adds</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>sprint-1</code></td><td>1</td><td>React (Vite) frontend: Leaflet map and month/year selector</td></tr>
+            <tr><td><code>sprint-2</code></td><td>2</td><td>Express backend, Azure MySQL, login with JWT cookies</td></tr>
+            <tr><td><code>sprint-3</code></td><td>3</td><td>NOAA temperature data from the Planetary Computer STAC API</td></tr>
+            <tr><td><code>main</code></td><td>4</td><td>Deployment to Azure with GitHub Actions; also holds this site in <code>docs/</code></td></tr>
+          </tbody>
+        </table>
+        <p>
+          GitHub's compare view shows exactly what each sprint changed, for example
+          <a href="https://github.com/tdevine1/xPostForecast/compare/sprint-2...sprint-3">sprint-2...sprint-3</a>.
+        </p>
+      </section>
+
+      <section class="section">
+        <h3>What these guides cover</h3>
         <ul>
           <li>Local project setup with Vite, React, Node.js, Express, and MySQL.</li>
           <li>Authentication with JWT in HTTP-only cookies and protected routes.</li>
-          <li>Azure MySQL connection using SSL certificate and environment variables.</li>
+          <li>Azure MySQL connection using a CA certificate and environment variables.</li>
           <li>STAC climate data integration through Microsoft Planetary Computer APIs.</li>
           <li>Cloud deployment via Azure App Service, Azure Static Web Apps, and GitHub Actions.</li>
           <li>Validation steps, health checks, and production troubleshooting.</li>
         </ul>
+        <p>
+          This site is published with GitHub Pages from the <code>docs/</code> folder of the
+          <code>main</code> branch. Update it in the same commit as any code change it describes.
+        </p>
       </section>
     </main>
   </div>

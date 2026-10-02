@@ -51,37 +51,61 @@
           on a known-good state.
         </p>
         <ol class="step-list">
-          <li>Confirm team has required software: Node.js, Git, VS Code, and Azure/GitHub access.</li>
-          <li>Confirm WVU resource group and Azure resources exist (request via Statler ITS if needed).</li>
-          <li>Clone repository, open project, and verify baseline structure.</li>
-          <li>Set up backend locally: install packages, configure <code>.env</code>, add SSL cert, and run backend.</li>
-          <li>Set up frontend locally: install packages, configure backend URL env variable, and run Vite.</li>
-          <li>Create database/table if not already prepared and verify authentication routes work.</li>
-          <li>Validate Sprint 3 integration path: date selection, STAC fetch, and map visualization.</li>
-          <li>Add required GitHub secrets for backend publish profile and frontend backend URL.</li>
-          <li>Inspect backend workflow paths and deploy to App Service on push to main.</li>
-          <li>Set App Service application settings and verify <code>/health</code> endpoint returns success.</li>
-          <li>Inspect SWA workflow settings and deploy frontend through GitHub Actions.</li>
-          <li>Perform end-to-end production tests: login, map fetch, and backend request validation from browser network tools.</li>
+          <li>Confirm the team has the required software: Node.js 24 LTS, Git, VS Code, the <code>mysql</code> CLI, and Azure/GitHub access.</li>
+          <li>Confirm the WVU resource group and Azure resources exist (request via Statler ITS if needed).</li>
+          <li>Clone the repository and verify its structure (<code>frontend/</code>, <code>backend/</code>, <code>.github/workflows/</code>).</li>
+          <li>Set up the backend locally: <code>npm install</code>, <code>backend/.env</code>, database schema, <code>npm run dev</code>.</li>
+          <li>Set up the frontend locally: <code>npm install</code>, <code>frontend/.env</code>, <code>npm run dev</code>.</li>
+          <li>Verify registration, login, refresh, and logout work locally.</li>
+          <li>Validate the Sprint 3 data path: choose a month, Fetch Data, see the map fill in.</li>
+          <li>Add the GitHub secrets and variable (see <a href="github-setup.html">GitHub Setup</a>).</li>
+          <li>Set the App Service environment variables, deploy the backend, and verify <code>/health</code>.</li>
+          <li>Deploy the frontend through GitHub Actions.</li>
+          <li>Perform end-to-end production tests: login, refresh, map fetch, logout, and backend requests in the browser's network tools.</li>
         </ol>
+      </section>
+
+      <section class="section">
+        <h3>Per-Semester Setup of the Reference Deployment</h3>
+        <p>
+          The reference app's Azure resources are torn down and rebuilt each semester. To bring the demo back up:
+        </p>
+        <ol class="step-list">
+          <li>Request the resource group through Statler ITS.</li>
+          <li><strong>MySQL Flexible Server:</strong> create it; in <strong>Networking</strong> add your IP and enable access from Azure services. Run <code>backend/db/schema.sql</code> with the <code>mysql</code> CLI.</li>
+          <li><strong>App Service:</strong> Web App, Linux, runtime <strong>Node 24 LTS</strong>. Turn on <strong>SCM Basic Auth Publishing Credentials</strong> (Configuration → General settings), then <strong>Download publish profile</strong>.</li>
+          <li><strong>Static Web App:</strong> deployment source <strong>Other</strong> (so Azure doesn't commit its own workflow to the repo). Copy the token from <strong>Manage deployment token</strong>.</li>
+          <li><strong>App Service environment variables:</strong> the eight settings on <a href="azure-basics.html">Azure Basics</a>, with <code>FRONTEND_URL</code> set to the new SWA URL and a fresh <code>JWT_SECRET</code>.</li>
+          <li><strong>GitHub</strong> (Settings → Secrets and variables → Actions): replace <code>APP_SERVICE_PUBLISH_PROFILE</code>, <code>AZURE_STATIC_WEB_APPS_API_TOKEN</code>, and <code>VITE_BACKEND_API_URL</code>; set the variable <code>AZURE_WEBAPP_NAME</code>.</li>
+          <li><strong>Deploy:</strong> Actions → run <strong>Deploy backend (App Service)</strong>, then <strong>Deploy frontend (Static Web Apps)</strong>.</li>
+          <li>Work through the Final Acceptance Checklist below.</li>
+        </ol>
+        <p>
+          At the end of the semester, after the resources are deleted, remove or replace those secrets so stale
+          credentials don't linger in the repository settings.
+        </p>
       </section>
 
       <section class="section">
         <h3>Commands Used Most Often</h3>
         <p>
           These are the core commands used during setup and redeployment. If you cloned
-          <code>https://github.com/tdevine1/xPostForecast</code>, these paths should work as written. If you are using
-          your own repository, update folder paths to match your project structure.
+          <code>https://github.com/tdevine1/xPostForecast</code>, these paths work as written on every branch.
+          If you are using your own repository, update folder paths to match your project structure.
         </p>
         <pre><code># Backend local run
-cd sprint2-login-backend/backend
-npm install
-node server.js
-
-# Frontend local run
-cd sprint2-login-backend/frontend
+cd backend
 npm install
 npm run dev
+
+# Frontend local run (second terminal)
+cd frontend
+npm install
+npm run dev
+
+# Run the checks CI runs
+npm run lint
+npm test
 
 # Trigger cloud deployment
 git add .
@@ -99,21 +123,21 @@ git push origin main</code></pre>
           <div class="card">
             <h4>Backend (App Service)</h4>
             <ul>
-              <li>Workflow path uses <code>sprint4-cloud-deployment/backend</code></li>
-              <li><code>APP_SERVICE_PUBLISH_PROFILE</code> secret is present</li>
-              <li><code>PORT</code> is read from environment at runtime</li>
-              <li>App settings contain DB, JWT, and frontend URL values</li>
-              <li><code>/health</code> returns healthy JSON response</li>
+              <li>Workflow paths use <code>backend</code></li>
+              <li><code>APP_SERVICE_PUBLISH_PROFILE</code> secret and <code>AZURE_WEBAPP_NAME</code> variable are present</li>
+              <li>Runtime is Node 24 LTS; <code>PORT</code> is not set by hand</li>
+              <li>App settings contain DB, JWT, <code>FRONTEND_URL</code>, and <code>NODE_ENV=production</code></li>
+              <li><code>/health</code> returns <code>{"ok":true,"env":"production"}</code></li>
             </ul>
           </div>
           <div class="card">
             <h4>Frontend (Static Web App)</h4>
             <ul>
-              <li><code>app_location</code> points to Sprint 4 frontend folder</li>
-              <li><code>output_location</code> set to <code>dist</code></li>
-              <li><code>VITE_BACKEND_API_URL</code> secret is provided</li>
-              <li>Build succeeds in GitHub Actions</li>
-              <li>Browser requests hit App Service backend endpoints</li>
+              <li>The deploy step uploads <code>frontend/dist</code> (or, in an Azure-generated workflow, <code>app_location: "frontend"</code> with <code>output_location: "dist"</code>)</li>
+              <li><code>VITE_BACKEND_API_URL</code> is provided to the build</li>
+              <li><code>staticwebapp.config.json</code> is in <code>frontend/public/</code></li>
+              <li>Build and tests succeed in GitHub Actions</li>
+              <li>Browser console shows the Azure backend as <code>Frontend API Base URL</code></li>
             </ul>
           </div>
         </div>
@@ -126,12 +150,13 @@ git push origin main</code></pre>
           local development.
         </p>
         <ul class="checklist">
-          <li>Frontend site loads at SWA URL without build-time runtime errors.</li>
-          <li>Users can register and log in using production backend.</li>
-          <li>Session verification route works using cookie-based auth.</li>
-          <li>Temperature data requests return points and map renders markers.</li>
-          <li>No CORS or mixed-origin issues in browser console.</li>
-          <li>App Service log stream does not show startup crashes or DB connection failures.</li>
+          <li>Frontend site loads at the SWA URL without errors in the console.</li>
+          <li>Users can register and log in using the production backend.</li>
+          <li>Refreshing on <code>/map</code> keeps the user logged in (no 404, no redirect to login).</li>
+          <li>Temperature data requests return points and the map renders markers.</li>
+          <li>Logout returns to the login page, and <code>/map</code> then redirects to login.</li>
+          <li>No CORS errors in the browser console.</li>
+          <li>The App Service log stream shows no startup crashes or database connection failures.</li>
         </ul>
         <div class="button-row">
           <a class="button gold" href="troubleshooting.html">Open Troubleshooting</a>
