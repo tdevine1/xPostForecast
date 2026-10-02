@@ -15,8 +15,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MapPage from './pages/MapPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
-
-const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+import api from './api';
 
 /**
  * Main application component that manages authentication and routing.
@@ -30,12 +29,10 @@ function App() {
   useEffect(() => {
     async function verifyAuth() {
       try {
-        const res = await fetch(`${API_URL}/auth/test`, {
-          credentials: 'include', // send the HTTP-only cookie
-        });
-        setAuthenticated(res.ok); // fetch: res.ok is true for any 2xx status
+        await api.get('/auth/test');
+        setAuthenticated(true); // axios only gets here for 2xx responses
       } catch {
-        setAuthenticated(false); // backend unreachable: treat as logged out
+        setAuthenticated(false); // 401 (not logged in) or backend unreachable
       } finally {
         setCheckingAuth(false);
       }

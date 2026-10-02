@@ -31,7 +31,16 @@ Frontend flow:
 Register.jsx  → POST /auth/register → row inserted
 Login.jsx     → POST /auth/login    → cookie set
 App.jsx       → GET  /auth/test     → session checked on every page load
+MapPage.jsx   → GET  /temperature/:date → map points (Sprint 3)
 MapPage.jsx   → POST /auth/logout   → cookie cleared
 ```
+
+## `stac.js` (mounted at `/temperature`, behind `authMiddleware`)
+
+| Route | Method | Response |
+|---|---|---|
+| `/temperature/:date` | GET | `200 [{ lat, lon, tavg }, …]` (°F); `400` bad date; `401` not logged in; `404` no data for that month; `502` Planetary Computer unavailable |
+
+Steps: check the in-memory cache → STAC search for the `noaa-nclimgrid-monthly` item covering the month → take the item's `tavg` asset (by name) → sign its URL with `sign/sign.js` → download the GeoTIFF and read the West Virginia window with `geotiff` → convert each cell center inside the bounding box to a point in °F → cache and return. See [`../README.md`](../README.md) for the full walkthrough.
 
 References: [Express routing](https://expressjs.com/en/guide/routing.html) · [bcryptjs](https://github.com/dcodeIO/bcrypt.js) · [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken)

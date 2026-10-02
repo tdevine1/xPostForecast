@@ -4,17 +4,13 @@
  * Login form. On success the backend sets an HTTP-only cookie; we then mark
  * the app as authenticated and go to the map page.
  *
- * NOTE:
- * - Requests must use `withCredentials: true` so the browser stores the cookie.
- * - Backend auth routes are mounted at `/auth/*`, so the URL is `/auth/login`.
+ * NOTE: requests go through the shared `api` client (src/api.js), which adds
+ * the backend base URL and `withCredentials: true` so the browser stores the cookie.
  */
 
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
-
-// Base URL of the backend (e.g., http://localhost:5175), from frontend/.env
-const API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 /**
  * Login component allows users to enter credentials to access the app.
@@ -34,11 +30,7 @@ const Login = ({ setAuthenticated }) => {
     e.preventDefault();
 
     try {
-      await axios.post(
-        `${API_URL}/auth/login`,
-        { username, password },
-        { withCredentials: true } // lets the browser store the HTTP-only cookie
-      );
+      await api.post('/auth/login', { username, password });
 
       // axios only gets here for 2xx responses; errors jump to catch
       setAuthenticated(true);

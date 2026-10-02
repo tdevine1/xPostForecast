@@ -19,6 +19,10 @@ router.get('/test', authMiddleware, (req, res) => {
 });
 ```
 
-In Sprint 2 it protects `GET /auth/test`.
+It protects `GET /auth/test` and, from Sprint 3, every `/temperature` route:
+
+```js
+app.use('/temperature', authMiddleware, stacRoutes); // app.js
+```
 
 References: [Express: using middleware](https://expressjs.com/en/guide/using-middleware.html) · [Introduction to JWTs](https://jwt.io/introduction)

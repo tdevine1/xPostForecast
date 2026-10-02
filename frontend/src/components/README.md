@@ -25,7 +25,7 @@ A [React-Leaflet](https://react-leaflet.js.org/) map centered on West Virginia, 
 |------|------|-------------|
 | `temperatures` | `Array<{ lat: number, lon: number, tavg: number }>` | Points to draw (°F). An empty array shows just the map. |
 
-Each point becomes a `CircleMarker` colored by temperature, with a popup showing latitude, longitude, and temperature. In Sprint 2 the array is always empty; Sprint 3 supplies real data.
+Each point becomes a `CircleMarker` (radius 25 px, no outline) colored by a `chroma-js` scale from dark blue at −10 °F to dark red at 110 °F, with a popup showing latitude, longitude, and temperature. `preferCanvas` draws all markers on one `<canvas>`, which keeps ~9,700 markers fast.
 
 ```jsx
 <MapComponent temperatures={temperatureData} />

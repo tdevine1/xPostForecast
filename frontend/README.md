@@ -1,145 +1,163 @@
-# Sprint 2 Frontend: Authentication & Integration Guide
+# Sprint 3 Frontend: Fetching and Mapping Real Data
 
-In **Sprint 2**, the React (Vite) frontend talks to the backend using **cookie-based JWT authentication**. The backend sets an **HTTP-only cookie** on login (page JavaScript cannot read it, and nothing is kept in `localStorage`), and the frontend asks the backend whether the session is valid with `GET /auth/test`.
+> This is the **reference implementation** for Sprint 3's frontend. Keep building in the `frontend/` you created in earlier sprints; don't clone or fork this one.
 
-> This is the **reference implementation**. Keep building in the `frontend/` you created in Sprint 1; don't clone or fork this one.
+This React (Vite) frontend provides:
 
----
+- Login and registration using an HTTP-only cookie (from Sprint 2)
+- **New:** a shared axios client, `src/api.js`, used for every backend call
+- **New:** a real **Fetch Data** that loads a month of West Virginia temperatures from the backend and draws them on a Leaflet map, colored with `chroma-js`
+- **New:** on-page error messages, and an automatic return to `/login` when the session has expired
 
-## 📂 Frontend Folder Structure
-
-```text
-frontend/
-├── src/
-│   ├── components/
-│   │   ├── DateSelector.jsx       # month/year dropdowns (+ DateSelector.test.jsx)
-│   │   └── MapComponent.jsx       # Leaflet map
-│   ├── pages/
-│   │   ├── Login.jsx              # POST /auth/login (withCredentials)
-│   │   ├── Register.jsx           # POST /auth/register (email, username, password)
-│   │   └── MapPage.jsx            # protected page; POST /auth/logout
-│   ├── App.jsx                    # routes; GET /auth/test on startup
-│   ├── App.test.jsx               # tests for the session check and redirects
-│   └── main.jsx                   # entry point
-├── .env.example                   # template for frontend/.env
-└── index.html
-```
-
----
-
-## 🛠 Prerequisites
-
-- **Node.js 24 LTS**
-- The backend running at `http://localhost:5175` (see [`../backend/README.md`](../backend/README.md))
-
----
-
-## 1) Install
+Setup (Node.js 24 LTS, `frontend/.env` with `VITE_BACKEND_API_URL`) is the same as Sprint 2.
 
 ```bash
 cd frontend
-npm install
+npm install      # picks up the new dependency: chroma-js
+npm run dev      # http://localhost:5173
 ```
-
-New in this sprint: `axios` for HTTP requests.
 
 ---
 
-## 2) Configure Environment Variables
+## Tech Stack
+
+- **Framework**: React 19 + Vite
+- **Routing**: React Router
+- **HTTP client**: axios, through the shared instance in `src/api.js`
+- **Mapping**: Leaflet + React-Leaflet
+- **Color scale**: `chroma-js`
+- **Loading indicator**: `react-spinners` (`ClipLoader`)
+- **Tests**: Vitest + Testing Library
+
+---
+
+## Folder Structure
+
+```text
+frontend/
+├── .env.example           # VITE_BACKEND_API_URL=http://localhost:5175
+└── src/
+    ├── api.js             # shared axios instance   ← new
+    ├── App.jsx            # routes + session check (now via api.get)
+    ├── App.test.jsx       # session + data-fetch tests
+    ├── main.jsx
+    ├── index.css
+    ├── components/
+    │   ├── DateSelector.jsx (+ DateSelector.test.jsx)
+    │   └── MapComponent.jsx   # color scale + canvas rendering
+    └── pages/
+        ├── Login.jsx
+        ├── Register.jsx
+        └── MapPage.jsx        # real data fetch
+```
+
+---
+
+## Shared HTTP Client (`src/api.js`)
+
+Every backend call goes through one preconfigured axios instance:
+
+```js
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_BACKEND_API_URL, // e.g. http://localhost:5175
+  withCredentials: true,                         // send/receive the HTTP-only auth cookie
+});
+
+export default api;
+```
+
+- The backend address comes from `VITE_BACKEND_API_URL` and nothing else, so pointing the app at a different backend (as Sprint 4 does for Azure) means changing one variable.
+- `withCredentials: true` is set once, so no request can forget to send the cookie.
+- Pages call `api.get('/temperature/2020-07-01')` or `api.post('/auth/login', …)` with just the path.
+
+---
+
+## App-Level Routing and Auth (`src/App.jsx`)
+
+- On startup, `api.get('/auth/test')`: success means logged in; any error (`401`, or backend unreachable) means logged out. While it waits, the app shows "Checking your session…".
+- Routes: `/` redirects; `/login` and `/register` redirect to `/map` when logged in; `/map` redirects to `/login` when not.
+
+Note the change from Sprint 2: `fetch` resolves for every status (you check `res.ok`), but **axios throws for any non-2xx status**, so "logged in" is decided by whether `api.get` succeeds or throws.
+
+---
+
+## Map Page (`src/pages/MapPage.jsx`)
+
+State:
+
+| State | Meaning |
+|---|---|
+| `date` | `'YYYY-MM-01'` from `DateSelector` |
+| `temperatureData` | array of `{ lat, lon, tavg }` passed to the map |
+| `isLoading` | shows the spinner while a request is running |
+| `error` | message shown under the selectors, or `''` |
+
+**Fetch Data** flow:
+
+1. No date chosen yet → show "Please select a month and year."
+2. `` api.get(`/temperature/${date}`) ``
+3. Success → `temperatureData` is the returned array; `MapComponent` redraws.
+4. `401` → the session has expired: set `authenticated` to `false` and go to `/login`.
+5. Any other error → empty the map and show the backend's message (`404` "No temperature data is available for 2022-12", `502` "The temperature data service is unavailable…"), or "Could not reach the server" if there was no response at all.
+
+**Logout** calls `api.post('/auth/logout')` and returns to `/login`, even if the request fails.
+
+The first request for a month can take several seconds (the backend goes out to Planetary Computer); the backend caches each month, so repeat requests are fast.
+
+---
+
+## Date Selection (`src/components/DateSelector.jsx`)
+
+- Month and year dropdowns; years 1895–2022 (newest first), the range Planetary Computer has.
+- Calls `onDateChange('YYYY-MM-01')` once both are chosen, and `fetchTemperatureData()` on **Fetch Data**.
+- Planetary Computer's copy ends in **September 2022**; October–December 2022 produce the "no data" message.
+
+---
+
+## Map Visualization (`src/components/MapComponent.jsx`)
+
+- `MapContainer` centered on West Virginia (zoom 7) with OpenStreetMap tiles.
+- One `CircleMarker` per point (radius 25 px, no outline, so neighbors blend into a continuous surface), with a popup showing latitude, longitude, and temperature.
+- Color: a `chroma-js` scale from dark blue (−10 °F) through yellow to dark red (110 °F):
+
+  ```js
+  const scale = chroma
+    .scale(['#002366', '#4169E1', '#87CEEB', '#FFFF66', '#FFD700', '#FF4500', '#B22222'])
+    .domain([-10, 110]);
+  ```
+
+- `preferCanvas` makes Leaflet draw all ~9,700 circles on one `<canvas>` instead of creating ~9,700 SVG elements, which is much faster.
+
+The backend already converts to °F, so `tavg` is display-ready.
+
+---
+
+## Data Flow: Date → Backend → Map
+
+1. User picks a month and year in `DateSelector`; `MapPage` stores `'2020-07-01'`.
+2. User clicks **Fetch Data**; `MapPage` calls `api.get('/temperature/2020-07-01')` (cookie included).
+3. The backend checks the cookie, then (on a cache miss) searches the STAC API, signs the GeoTIFF URL, reads the West Virginia window, and returns about 9,700 `{ lat, lon, tavg }` points. See [`../backend/README.md`](../backend/README.md).
+4. `MapPage` stores the array; `MapComponent` draws it.
+
+---
+
+## Tests
 
 ```bash
-cp .env.example .env
-```
-
-```ini
-VITE_BACKEND_API_URL=http://localhost:5175
-```
-
-Vite only exposes variables whose names start with `VITE_`, and it reads them when the dev server starts or the app is built, so **restart `npm run dev` after editing `.env`**. The value is the backend's base URL with no trailing slash; the code appends paths such as `/auth/login`.
-
-> Anything in a `VITE_` variable ends up in the JavaScript sent to the browser. Never put secrets there.
-
----
-
-## 3) How Cookie-Based Authentication Works
-
-1. **Login**: `POST /auth/login`. The backend responds with `Set-Cookie: token=...; HttpOnly`.
-2. The browser stores the cookie and sends it with later requests to the backend, **but only if each request opts in**:
-   - axios: `{ withCredentials: true }`
-   - fetch: `{ credentials: 'include' }`
-3. **Page load**: `App.jsx` calls `GET /auth/test`. A `200` means "logged in", a `401` means "not logged in". Until the answer arrives, `App.jsx` shows "Checking your session…" instead of any page, so a refresh on `/map` doesn't bounce you to `/login`.
-4. **Logout**: `POST /auth/logout`, and the backend clears the cookie.
-
----
-
-## 4) Component Responsibilities
-
-| File | Responsibilities |
-|------|------------------|
-| `App.jsx` | On startup calls `/auth/test` with `credentials: 'include'` and sets `authenticated`. Routes: `/` redirects; `/login` and `/register` (redirect to `/map` if already logged in); `/map` (redirects to `/login` if not). |
-| `pages/Login.jsx` | `POST /auth/login` with `{ username, password }` and `withCredentials: true`. On success sets `authenticated` and navigates to `/map`; on `401` alerts "Invalid credentials". |
-| `pages/Register.jsx` | `POST /auth/register` with `{ email, username, password }`. On success navigates to `/login`; on error shows the backend's message (for example, "That username or email is already registered"). |
-| `pages/MapPage.jsx` | Protected page. **Logout** calls `POST /auth/logout`. **Fetch Data** is still a stub (Sprint 3 makes it real). |
-| `components/DateSelector.jsx` | Month and year dropdowns (1895–2022). Calls `onDateChange('YYYY-MM-01')` once both are chosen, and `fetchTemperatureData()` on **Fetch Data**. |
-| `components/MapComponent.jsx` | Leaflet map of West Virginia; draws a colored circle per `{ lat, lon, tavg }` point (none yet in this sprint). |
-
----
-
-## 5) Auth Call Patterns
-
-**Login (axios):**
-
-```js
-await axios.post(`${API_URL}/auth/login`, { username, password }, { withCredentials: true });
-```
-
-**Session check in `App.jsx` (fetch):**
-
-```js
-const res = await fetch(`${API_URL}/auth/test`, { credentials: 'include' });
-setAuthenticated(res.ok); // fetch: res.ok is true for 2xx responses
-```
-
-Note the difference: `fetch` resolves for **every** HTTP status (check `res.ok`), while axios **throws** for non-2xx statuses (handle them in `catch`).
-
-**Logout (axios):**
-
-```js
-await axios.post(`${API_URL}/auth/logout`, null, { withCredentials: true });
-```
-
----
-
-## 6) Run, Lint, and Test
-
-```bash
-npm run dev     # http://localhost:5173
-npm run lint
 npm test
+npm run lint
 ```
 
-`App.test.jsx` replaces `fetch` with a fake and checks that a valid session stays on `/map` after a refresh and that a logged-out visitor is sent to `/login`.
-
-> The backend's `FRONTEND_URL` must be exactly `http://localhost:5173`, otherwise CORS blocks every request.
+`App.test.jsx` replaces the `api` module with a mock and checks: a valid session stays on `/map` after a refresh; a logged-out visitor is sent to `/login`; Fetch Data requests the chosen month and hands the points to the map; a `404` shows the backend's message; an expired session (`401`) returns to `/login`.
 
 ---
 
-## 7) Troubleshooting
+## Build
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| Red `401` for `/auth/test` in the browser console | Not logged in | Normal before login and after logout |
-| Login succeeds but a refresh logs you out | Cookie not stored or not sent | Use `withCredentials: true` / `credentials: 'include'`; check the backend's CORS `credentials: true` |
-| `Network Error` or `Failed to fetch` | Backend not running, wrong `VITE_BACKEND_API_URL`, or CORS | Start the backend; check `.env`, restart `npm run dev`; read the console's CORS message |
-| `VITE_BACKEND_API_URL` is `undefined` | `.env` missing, or dev server not restarted | Create `frontend/.env`, then restart `npm run dev` |
-| Register shows "Password must be at least 8 characters" | Backend validation | Use a longer password |
+```bash
+npm run build    # production bundle in dist/
+```
 
----
-
-## 📚 References
-
-- React Router: <https://reactrouter.com/>
-- Axios: <https://axios-http.com/>
-- Vite env variables: <https://vite.dev/guide/env-and-mode>
-- MDN CORS: <https://developer.mozilla.org/docs/Web/HTTP/Guides/CORS>
-- MDN Cookies: <https://developer.mozilla.org/docs/Web/HTTP/Guides/Cookies>
+`VITE_BACKEND_API_URL` is baked into the bundle **at build time**. In Sprint 4, GitHub Actions sets it to the Azure backend's URL before building.

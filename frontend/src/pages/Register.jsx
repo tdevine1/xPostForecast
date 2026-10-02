@@ -3,15 +3,12 @@
  *
  * Registration form for new users. On success, sends the user to the login page.
  *
- * NOTE: Backend auth routes are mounted at `/auth/*`, so the URL is `/auth/register`.
+ * NOTE: requests go through the shared `api` client (src/api.js).
  */
 
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
-
-// Base URL of the backend (e.g., http://localhost:5175), from frontend/.env
-const API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 /**
  * Register component allows new users to create an account.
@@ -37,7 +34,7 @@ const Register = () => {
     }
 
     try {
-      await axios.post(`${API_URL}/auth/register`, { email, username, password });
+      await api.post('/auth/register', { email, username, password });
       alert('Registration successful. Please log in.');
       navigate('/login', { replace: true });
     } catch (error) {

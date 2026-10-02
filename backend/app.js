@@ -9,6 +9,8 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
+import stacRoutes from './routes/stac.js';
+import authMiddleware from './middleware/authMiddleware.js';
 
 const app = express();
 
@@ -43,6 +45,9 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/auth', authRoutes);
+
+// Temperature data: logged-in users only (authMiddleware runs first)
+app.use('/temperature', authMiddleware, stacRoutes);
 
 // 404 for any route not matched above
 app.use((req, res) => {
