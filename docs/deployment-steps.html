@@ -76,13 +76,14 @@
           <li><strong>App Service:</strong> Web App, Linux, runtime <strong>Node 24 LTS</strong>. Turn on <strong>SCM Basic Auth Publishing Credentials</strong> (Configuration → General settings), then <strong>Download publish profile</strong>.</li>
           <li><strong>Static Web App:</strong> deployment source <strong>Other</strong> (so Azure doesn't commit its own workflow to the repo). Copy the token from <strong>Manage deployment token</strong>.</li>
           <li><strong>App Service environment variables:</strong> the eight settings on <a href="azure-basics.html">Azure Basics</a>, with <code>FRONTEND_URL</code> set to the new SWA URL and a fresh <code>JWT_SECRET</code>.</li>
-          <li><strong>GitHub</strong> (Settings → Secrets and variables → Actions): replace <code>APP_SERVICE_PUBLISH_PROFILE</code>, <code>AZURE_STATIC_WEB_APPS_API_TOKEN</code>, and <code>VITE_BACKEND_API_URL</code>; set the variable <code>AZURE_WEBAPP_NAME</code>.</li>
+          <li><strong>GitHub</strong> (Settings → Secrets and variables → Actions): replace <code>APP_SERVICE_PUBLISH_PROFILE</code>, <code>AZURE_STATIC_WEB_APPS_API_TOKEN</code>, and <code>VITE_BACKEND_API_URL</code>; set the variables <code>AZURE_WEBAPP_NAME</code> and <code>DEPLOY_TO_AZURE</code> = <code>true</code>.</li>
           <li><strong>Deploy:</strong> Actions → run <strong>Deploy backend (App Service)</strong>, then <strong>Deploy frontend (Static Web Apps)</strong>.</li>
           <li>Work through the Final Acceptance Checklist below.</li>
         </ol>
         <p>
-          At the end of the semester, after the resources are deleted, remove or replace those secrets so stale
-          credentials don't linger in the repository settings.
+          At the end of the semester, after the resources are deleted, set <code>DEPLOY_TO_AZURE</code> to
+          <code>false</code> (deploy workflows then show as skipped instead of failing) and delete those secrets so
+          stale credentials don't linger in the repository settings.
         </p>
       </section>
 

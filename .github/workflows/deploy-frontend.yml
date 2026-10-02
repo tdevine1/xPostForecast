@@ -2,9 +2,10 @@
 #
 # The app is built HERE (not by Azure) so tests run first and the Node version is ours to choose.
 #
-# Repository secrets this workflow needs (Settings > Secrets and variables > Actions):
-#   AZURE_STATIC_WEB_APPS_API_TOKEN  SWA deployment token (Azure Portal > your Static Web App > Manage deployment token)
-#   VITE_BACKEND_API_URL             backend URL, e.g. https://<app>.azurewebsites.net (no trailing slash)
+# Repository settings this workflow needs (Settings > Secrets and variables > Actions):
+#   Variable DEPLOY_TO_AZURE                  true while the Azure resources exist
+#   Secret   AZURE_STATIC_WEB_APPS_API_TOKEN  SWA deployment token (Azure Portal > your Static Web App > Manage deployment token)
+#   Secret   VITE_BACKEND_API_URL             backend URL, e.g. https://<app>.azurewebsites.net (no trailing slash)
 name: Deploy frontend (Static Web Apps)
 
 on:
@@ -20,6 +21,10 @@ concurrency: deploy-frontend
 
 jobs:
   build-test-deploy:
+    # The reference deployment's Azure resources exist only part of the year. While they do, set the
+    # repository variable DEPLOY_TO_AZURE to true; otherwise this job is skipped instead of failing.
+    # (A student repo with permanent resources can delete this line.)
+    if: vars.DEPLOY_TO_AZURE == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

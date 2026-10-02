@@ -94,7 +94,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # (this repo's file also has a step that fails early if a secret is missing or the URL ends in /)
+      # (this repo's file also has an `if:` that skips the job unless the repository variable
+      #  DEPLOY_TO_AZURE is true, and a step that fails early if a secret is missing or the URL ends in /)
 
       - run: npm ci
       - run: npm test

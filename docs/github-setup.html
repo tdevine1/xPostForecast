@@ -109,6 +109,12 @@ git push origin main            # triggers CI, and deployment if frontend/ or ba
           </thead>
           <tbody>
             <tr>
+              <td><code>DEPLOY_TO_AZURE</code></td>
+              <td>Variable</td>
+              <td>Both deploy workflows</td>
+              <td><code>true</code> while this semester's Azure resources exist; anything else skips deployment</td>
+            </tr>
+            <tr>
               <td><code>APP_SERVICE_PUBLISH_PROFILE</code></td>
               <td>Secret</td>
               <td><code>deploy-backend.yml</code></td>
@@ -151,6 +157,7 @@ git push origin main            # triggers CI, and deployment if frontend/ or ba
         <ul>
           <li><code>working-directory</code>, <code>cache-dependency-path</code>, and <code>package</code> all point to <code>backend</code>.</li>
           <li>The deploy step uses <code>vars.AZURE_WEBAPP_NAME</code> and <code>secrets.APP_SERVICE_PUBLISH_PROFILE</code>.</li>
+          <li>In the reference repo, the job runs only when <code>vars.DEPLOY_TO_AZURE</code> is <code>true</code>; student repos don't need that line.</li>
           <li><code>node-version</code> is <code>24</code>, matching the App Service runtime.</li>
           <li>The <code>test</code> script runs real tests. npm's default placeholder script exits with an error and blocks every deployment.</li>
         </ul>

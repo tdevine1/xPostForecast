@@ -109,7 +109,7 @@ The backend code needs no changes: it was written from Sprint 2 on to read `PORT
 
 ## 🔧 Maintaining This Repo (Instructors)
 
-**Per-semester Azure setup** for this reference deployment (resources, GitHub secrets and variables) is in the [instructor runbook](https://tdevine1.github.io/xPostForecast/).
+**Per-semester Azure setup** for this reference deployment (resources, GitHub secrets and variables) is in the [instructor runbook](https://tdevine1.github.io/xPostForecast/deployment-steps.html). The deploy workflows only run while the repository variable `DEPLOY_TO_AZURE` is `true`; the rest of the year they show as skipped, and CI still tests every push.
 
 **Fixing something that exists in several sprints**: make the fix on the **earliest** sprint branch that has the problem, then merge it forward so every later sprint gets it:
 

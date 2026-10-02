@@ -1,6 +1,7 @@
 # Deploys backend/ to Azure App Service whenever backend code changes on main.
 #
 # Repository settings this workflow needs (Settings > Secrets and variables > Actions):
+#   Variable DEPLOY_TO_AZURE              true while the Azure resources exist
 #   Secret   APP_SERVICE_PUBLISH_PROFILE  full XML of the App Service publish profile
 #   Variable AZURE_WEBAPP_NAME            the App Service's name, e.g. 202608-cs330-demo-backend
 name: Deploy backend (App Service)
@@ -18,6 +19,10 @@ concurrency: deploy-backend
 
 jobs:
   build-test-deploy:
+    # The reference deployment's Azure resources exist only part of the year. While they do, set the
+    # repository variable DEPLOY_TO_AZURE to true; otherwise this job is skipped instead of failing.
+    # (A student repo with permanent resources can delete this line.)
+    if: vars.DEPLOY_TO_AZURE == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
