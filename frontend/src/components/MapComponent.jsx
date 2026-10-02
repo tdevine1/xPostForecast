@@ -34,7 +34,7 @@ function MapComponent({ temperatures = [] }) {
     // preferCanvas: draw the ~10,000 circles on one <canvas> instead of 10,000 SVG elements (much faster)
     <MapContainer center={CENTER} zoom={7} preferCanvas style={{ height: '500px', width: '100%' }}>
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
       {temperatures.map((point) => (
