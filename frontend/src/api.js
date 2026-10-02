@@ -13,6 +13,10 @@
 
 import axios from 'axios';
 
+// Shown in the browser console. On the deployed site this must be the Azure
+// backend URL; "undefined" means the build didn't receive VITE_BACKEND_API_URL.
+console.log('Frontend API Base URL:', import.meta.env.VITE_BACKEND_API_URL);
+
 const api = axios.create({
   // Backend base URL from frontend/.env (Sprint 4: set at build time by GitHub Actions)
   baseURL: import.meta.env.VITE_BACKEND_API_URL,

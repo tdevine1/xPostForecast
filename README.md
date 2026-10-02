@@ -19,107 +19,117 @@ Switch sprints with the branch dropdown on GitHub, or locally with `git switch s
 
 ---
 
-# Sprint 3 – API Integration & Climate Data Pipeline
+![xPostForecast showing December 1980 average temperatures, with one grid cell's popup open](./images/screenshot-app.png)
 
-Sprint 3 turns xPostForecast from an authenticated shell into a **data-driven climate app**. The backend queries the **Microsoft Planetary Computer STAC API** for NOAA climate data, reads the matching grid file, and returns West Virginia temperatures; the frontend draws them on the map.
+# Sprint 4 – Cloud Deployment (Instructor-Provisioned Resources)
 
-Keep building in your own project repo: add the equivalent data pipeline for your own topic's data source, using this branch as your worked example.
+In Sprint 4, your team deploys the full-stack app to **Microsoft Azure**, using cloud resources the instructor has already created for your group:
 
-New in this sprint:
+- **Azure Static Web Apps (SWA)** hosts the built React frontend
+- **Azure App Service** (Web App for Linux, Node 24 LTS) runs the Express backend
+- **Azure Database for MySQL – Flexible Server**, the same database you've used since Sprint 2
 
-- Backend route `GET /temperature/:date`, **only for logged-in users**
-- STAC search, URL signing, and Cloud Optimized GeoTIFF reading (`geotiff`)
-- Grid cells converted to `{ lat, lon, tavg }` points in °F, cached per month
-- Frontend calls consolidated into one axios client, `src/api.js`
-- Temperatures drawn on the Leaflet map with a `chroma-js` color scale
-- Error messages on the page (no data for a month, service unavailable) and automatic return to login when the session expires
+The instructor acts as the cloud administrator (creating resources); your team acts as the DevOps team (configuring, deploying, and debugging). Deploy your own group's repo, using this branch as your worked example for the GitHub Actions workflows and Azure settings.
 
-See every changed file: **[Sprint 2 → 3 diff](https://github.com/tdevine1/xPostForecast/compare/sprint-2...sprint-3)**.
-
----
-
-## 🎯 Objectives
-
-By the end of this sprint, students should be able to:
-
-1. **Integrate an external scientific API** into a Node.js backend
-2. Explain the **STAC (SpatioTemporal Asset Catalog)** search model: collections → items → assets
-3. Get temporary read access to cloud-hosted files with **SAS URL signing**
-4. Read a raster (grid) file and convert grid cells into map points
-5. Protect a data route with the auth middleware from Sprint 2
-6. Build a frontend that selects a date, fetches data, handles errors, and visualizes the result
-
----
-
-## 🌡️ The Data
-
-- **Dataset**: NOAA **nClimGrid** monthly, collection `noaa-nclimgrid-monthly` on [Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/dataset/noaa-nclimgrid-monthly)
-- **Coverage**: the contiguous U.S. on a grid of about 1/24° (≈ 5 km); January 1895 to **September 2022** in Planetary Computer's copy (later months return "no data")
-- **Variable used**: `tavg`, monthly average temperature in °C (the item's other assets are `prcp`, `tmax`, `tmin`)
-- **Format**: one Cloud Optimized GeoTIFF (COG) per month and variable, about 1.2 MB each
-- **West Virginia**: the bounding box `[-82.644739, 37.201483, -77.719519, 40.638801]` (west, south, east, north) contains **9,676** grid cells
-
-No API key is needed: STAC search and URL signing are free and anonymous.
+See every changed file: **[Sprint 3 → 4 diff](https://github.com/tdevine1/xPostForecast/compare/sprint-3...main)**.
 
 ---
 
 ## 🏗️ Architecture
 
 ```text
- Frontend (React + Leaflet)                          Backend (Express)
- ─────────────────────────                           ─────────────────
- DateSelector ── date ──► MapPage                    app.js: /temperature → authMiddleware → routes/stac.js
-                            │  api.get('/temperature/2020-07-01')   (cookie sent automatically)
-                            └──────────────────────────────────────►  1. cache hit? return it
-                                                                      2. STAC search (collection + bbox + date)
-                                                                      3. item.assets.tavg.href → sign/sign.js (SAS)
-                                                                      4. download COG; geotiff reads the WV window
-                                                                      5. cell centers inside the box → { lat, lon, tavg°F }
- MapComponent ◄── [{ lat, lon, tavg }, …] (≈9,700) ◄──────────────────  6. cache and return JSON
+                       push to main
+   GitHub repo  ────────────────────────►  GitHub Actions
+                                            ├─ deploy-frontend.yml: test → build (with VITE_BACKEND_API_URL) → upload
+                                            └─ deploy-backend.yml:  test → upload (publish profile)
+                                                  │                         │
+                                                  ▼                         ▼
+ Browser ── loads site ──►  Static Web App          App Service (Node 24)  ── TLS ──►  Azure MySQL
+    │                       https://<swa>.azurestaticapps.net     https://<app>.azurewebsites.net
+    └──────── API calls with auth cookie (CORS, credentials) ────────────►│
+                                                                           └── HTTPS ──►  Planetary Computer
 ```
 
+The frontend and backend live on **different sites**, which shapes two settings:
+
+- **CORS**: the backend's `FRONTEND_URL` must be the SWA URL exactly.
+- **Cookies**: browsers only send cross-site cookies marked `SameSite=None; Secure`, so with `NODE_ENV=production` the backend sets the auth cookie as `HttpOnly; Secure; SameSite=None; Partitioned` (see [`backend/config/cookies.js`](./backend/config/cookies.js)).
+
 ---
 
-## 📁 What's New in This Branch
+## 🧑‍🏫 What the Instructor Has Already Created (Per Group)
 
-```text
-backend/
-├── routes/stac.js               # GET /temperature/:date
-├── sign/sign.js                 # signs Planetary Computer asset URLs
-└── tests/temperature.test.js    # route + sampling tests (Planetary Computer faked)
-frontend/
-└── src/
-    ├── api.js                   # shared axios client: base URL + cookies
-    ├── pages/MapPage.jsx        # real fetch, error message, 401 → /login
-    └── components/MapComponent.jsx  # chroma-js color scale, canvas rendering
+1. **Static Web App**: region, plan, and resource group set.
+2. **App Service** (Web App for Linux): Node 24 LTS runtime, in your group's resource group.
+3. **Azure MySQL Flexible Server**: created in Sprint 2, with networking that allows Azure services (including your App Service) to connect.
+
+You do **not** create or delete Azure resources in this sprint.
+
+---
+
+## 🎯 Your Team's Responsibilities
+
+1. **Backend → App Service** ([`backend/README.md`](./backend/README.md))
+   - Add the publish profile and app name to GitHub
+   - Add the deploy workflow
+   - Set the App Service environment variables (database, `JWT_SECRET`, `FRONTEND_URL`, `NODE_ENV=production`)
+   - Verify `/health` and the startup logs
+2. **Frontend → Static Web App** ([`frontend/README.md`](./frontend/README.md))
+   - Add the backend URL (`VITE_BACKEND_API_URL`) and the deployment token to GitHub
+   - Add or fix the deploy workflow
+   - Add `staticwebapp.config.json` so page refreshes work
+3. **End-to-end validation**: register, log in, refresh, fetch data, log out on the live site; use the browser's dev tools and the App Service log stream to investigate problems.
+
+---
+
+## 🆕 What Changed from Sprint 3
+
+| Area | Change |
+|---|---|
+| `.github/workflows/deploy-backend.yml` | **New.** On pushes to `main` that touch `backend/`: install, test, remove dev packages, deploy to App Service |
+| `.github/workflows/deploy-frontend.yml` | **New.** On pushes to `main` that touch `frontend/`: install, test, build with `VITE_BACKEND_API_URL`, upload to SWA |
+| `frontend/public/staticwebapp.config.json` | **New.** Sends unknown paths such as `/map` to `index.html` so refreshing a page doesn't 404 |
+| `frontend/src/api.js` | Logs the API base URL to the browser console (a quick way to confirm the build got the right URL) |
+
+The backend code needs no changes: it was written from Sprint 2 on to read `PORT` and all settings from the environment, and to switch cookie settings with `NODE_ENV`.
+
+---
+
+## ✅ End-to-End Validation (Live Site)
+
+- [ ] `https://<your-backend>.azurewebsites.net/health` returns `{"ok":true,"env":"production"}`
+- [ ] The SWA URL loads; the browser console shows `Frontend API Base URL: https://<your-backend>.azurewebsites.net`
+- [ ] Register and log in work
+- [ ] Refreshing on `/map` keeps you logged in (no 404, no bounce to `/login`)
+- [ ] Fetch Data draws temperatures for a month between 1895 and September 2022
+- [ ] Logout returns you to `/login`, and `/map` then redirects to `/login`
+- [ ] No CORS errors in the console; no crashes or database errors in the App Service log stream
+
+---
+
+## 🔧 Maintaining This Repo (Instructors)
+
+**Per-semester Azure setup** for this reference deployment (resources, GitHub secrets and variables) is in the [instructor runbook](https://tdevine1.github.io/xPostForecast/).
+
+**Fixing something that exists in several sprints**: make the fix on the **earliest** sprint branch that has the problem, then merge it forward so every later sprint gets it:
+
+```bash
+git switch sprint-2 && git commit -am "Fix ..." && git push
+git switch sprint-3 && git merge sprint-2 && git push
+git switch main     && git merge sprint-3 && git push
 ```
 
-Setup is unchanged from Sprint 2 (`.env` files, database). Detailed guides:
+CI runs on every branch, so each merge is tested. Changes that only make sense in a later sprint go directly on that sprint's branch.
 
-- **Backend**: [`backend/README.md`](./backend/README.md), including how the temperature route works step by step
-- **Frontend**: [`frontend/README.md`](./frontend/README.md), including the shared API client and the data flow
-
----
-
-## 🧪 Try It
-
-1. Start the backend (`cd backend && npm run dev`) and the frontend (`cd frontend && npm run dev`).
-2. Log in, choose a month and year, and click **Fetch Data**.
-3. The first request for a month takes several seconds (it goes out to Planetary Computer); asking for the same month again is nearly instant because the backend caches it.
-4. Try **December 2022** to see the "no data" message.
-5. Click a colored circle to see that cell's coordinates and temperature.
+**Instructor docs** (`docs/`) live only on `main` and are published by GitHub Pages (Settings → Pages → Deploy from a branch → `main` / `/docs`).
 
 ---
 
-## 📚 References
+## 🙏 Credits
 
-- STAC specification: <https://stacspec.org>
-- Planetary Computer: [STAC API](https://planetarycomputer.microsoft.com/docs/quickstarts/reading-stac/) · [SAS signing](https://planetarycomputer.microsoft.com/docs/concepts/sas/) · [nClimGrid monthly dataset](https://planetarycomputer.microsoft.com/dataset/noaa-nclimgrid-monthly)
-- Cloud Optimized GeoTIFF: <https://cogeo.org>
-- geotiff.js: <https://geotiffjs.github.io/>
-- Leaflet: <https://leafletjs.com> · React-Leaflet: <https://react-leaflet.js.org> · chroma.js: <https://gka.github.io/chroma.js/>
+The instructor runbook in [`docs/`](./docs) was written by **Grace Hanson** (WVU) under Tom Devine; its original commit history is preserved in this repository. See [`docs/LICENSE`](./docs/LICENSE).
 
----
+## License
 
-In **Sprint 4**, the whole app moves to Azure: the frontend to Azure Static Web Apps and the backend to Azure App Service, deployed automatically by GitHub Actions.
+MIT. See [LICENSE](./LICENSE).
 

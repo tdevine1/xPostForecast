@@ -1,0 +1,55 @@
+# Deploys backend/ to Azure App Service whenever backend code changes on main.
+#
+# Repository settings this workflow needs (Settings > Secrets and variables > Actions):
+#   Secret   APP_SERVICE_PUBLISH_PROFILE  full XML of the App Service publish profile
+#   Variable AZURE_WEBAPP_NAME            the App Service's name, e.g. 202608-cs330-demo-backend
+name: Deploy backend (App Service)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch: # also allows a manual "Run workflow" button in the Actions tab
+
+# Never run two deployments at once
+concurrency: deploy-backend
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24' # keep in step with the App Service runtime (Node 24 LTS)
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Check repository settings
+        env:
+          APP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          HAS_PROFILE: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE != '' }}
+        run: |
+          [ -n "$APP_NAME" ] || { echo "::error::Repository variable AZURE_WEBAPP_NAME is not set"; exit 1; }
+          [ "$HAS_PROFILE" = "true" ] || { echo "::error::Repository secret APP_SERVICE_PUBLISH_PROFILE is not set"; exit 1; }
+
+      - run: npm ci
+      - run: npm test # a failing test stops the deployment
+
+      - name: Remove dev-only packages before upload
+        run: npm prune --omit=dev
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}
+          package: backend # relative to the repository root
