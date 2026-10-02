@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="West Virginia University cloud deployment documentation for faculty and staff." />
+  <title>WVU Cloud Deployment Docs</title>
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>WVU Cloud Deployment Documentation</h1>
+        <p>Complete faculty and staff guide for project setup, Azure deployment, and support workflows.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Guide Navigation</h2>
+      <ul>
+        <li><a class="active-link" aria-current="page" href="index.html">Home</a></li>
+        <li><a href="getting-started.html">1. Getting Started</a></li>
+        <li><a href="github-setup.html">2. GitHub Setup</a></li>
+        <li><a href="azure-basics.html">3. Azure Basics</a></li>
+        <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
+        <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Welcome</h2>
+        <p>
+          This website is the WVU instructor and staff handbook for deploying the xPostForecast full-stack
+          application from local development to Microsoft Azure cloud hosting.
+        </p>
+        <p>
+          The content is built from all project README files and reorganized into a single step-by-step flow so a
+          professor can follow from initial setup through final production validation.
+        </p>
+        <div class="notice">
+          <strong>WVU note:</strong> For WVU courses, resource groups are not self-created by project teams.
+          Submit a request to <strong>Statler ITS</strong> to have resource groups created or updated.
+        </div>
+        <div class="button-row">
+          <a class="button gold" href="getting-started.html">Start Here</a>
+          <a class="button" href="deployment-steps.html">View End-to-End Runbook</a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>How to use this documentation</h3>
+        <p>
+          If you are new to cloud deployment support, follow these pages in order. Each page explains what to verify,
+          why the step matters, and what success should look like before moving to the next stage.
+        </p>
+        <ol>
+          <li>Read <a href="getting-started.html">Getting Started</a> for prerequisites and required access.</li>
+          <li>Use <a href="github-setup.html">GitHub Setup</a> to configure repo workflows and secrets.</li>
+          <li>Use <a href="azure-basics.html">Azure Basics</a> to confirm Azure resources and settings.</li>
+          <li>Follow <a href="deployment-steps.html">Deployment Steps</a> from first local run to production.</li>
+          <li>Use <a href="troubleshooting.html">Troubleshooting</a> for common errors and quick fixes.</li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h3>Coverage from the source READMEs</h3>
+        <p>
+          These guides are built from the project README set and rewritten into a single path for instructors, staff,
+          and first-time reviewers. The goal is to reduce ambiguity during class support and grading.
+        </p>
+        <ul>
+          <li>Local project setup with Vite, React, Node.js, Express, and MySQL.</li>
+          <li>Authentication with JWT in HTTP-only cookies and protected routes.</li>
+          <li>Azure MySQL connection using SSL certificate and environment variables.</li>
+          <li>STAC climate data integration through Microsoft Planetary Computer APIs.</li>
+          <li>Cloud deployment via Azure App Service, Azure Static Web Apps, and GitHub Actions.</li>
+          <li>Validation steps, health checks, and production troubleshooting.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>WVU Cloud Deployment Docs</p>
+    </div>
+  </footer>
+</body>
+</html>

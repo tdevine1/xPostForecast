@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Troubleshooting guide for WVU xPostForecast cloud deployment workflows." />
+  <title>Troubleshooting | WVU Cloud Deployment Docs</title>
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>WVU Cloud Deployment Documentation</h1>
+        <p>Common errors and fixes for local, CI/CD, and Azure production issues.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Guide Navigation</h2>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="getting-started.html">1. Getting Started</a></li>
+        <li><a href="github-setup.html">2. GitHub Setup</a></li>
+        <li><a href="azure-basics.html">3. Azure Basics</a></li>
+        <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
+        <li><a class="active-link" aria-current="page" href="troubleshooting.html">5. Troubleshooting</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Troubleshooting</h2>
+        <p>
+          This page centralizes common errors from the project READMEs and gives immediate checks and fixes for staff
+          supporting course teams.
+        </p>
+      </section>
+
+      <section class="section">
+        <h3>Authentication and CORS Issues</h3>
+        <p>
+          If login behavior seems inconsistent, start here first. Cookie handling and cross-origin configuration are
+          the most common causes of “works locally, fails in cloud” behavior.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Symptom</th>
+              <th>Likely Cause</th>
+              <th>Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>403 /auth/test</code> on first load</td>
+              <td>No auth cookie yet</td>
+              <td>Expected before login; complete login first.</td>
+            </tr>
+            <tr>
+              <td>Login succeeds but user appears logged out</td>
+              <td>Credentials not sent with requests</td>
+              <td>Use <code>withCredentials: true</code> (Axios) and <code>credentials: include</code> (fetch).</td>
+            </tr>
+            <tr>
+              <td>CORS or cookie errors</td>
+              <td>Frontend URL mismatch or credentials disabled on server</td>
+              <td>Set backend CORS origin to exact frontend URL and enable credentials on both sides.</td>
+            </tr>
+            <tr>
+              <td><code>404 /login</code> from backend</td>
+              <td>Missing auth route prefix</td>
+              <td>Call <code>/auth/login</code> and <code>/auth/register</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h3>Database and SSL Issues</h3>
+        <p>
+          Database errors often look like application failures. Validate SSL certificate path, credentials, and network
+          access before changing route or UI code.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Symptom</th>
+              <th>Likely Cause</th>
+              <th>Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ER_NO_DEFAULT_FOR_FIELD 'email'</code></td>
+              <td>Request missing required email or schema mismatch</td>
+              <td>Send <code>email</code> in register payload and verify users table schema.</td>
+            </tr>
+            <tr>
+              <td>MySQL TLS connection failure</td>
+              <td>Missing or wrong CA path</td>
+              <td>Place Azure certificate at <code>config/DigiCertGlobalRootG2.crt.pem</code>.</td>
+            </tr>
+            <tr>
+              <td><code>connect ETIMEDOUT</code> to MySQL on Azure</td>
+              <td>Network or firewall path issue</td>
+              <td>Confirm server access settings and escalate to instructor or WVU cloud admin support.</td>
+            </tr>
+            <tr>
+              <td>Cannot connect from local tools</td>
+              <td>Client IP not allowed</td>
+              <td>Add or update Azure MySQL firewall rule for your public IP.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h3>GitHub Actions and Deployment Issues</h3>
+        <p>
+          Pipeline failures are usually path, script, or secret mismatches. Compare workflow file values directly to
+          your repository folder names and secret names.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Symptom</th>
+              <th>Likely Cause</th>
+              <th>Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Workflow cannot find backend directory</td>
+              <td>Wrong path like <code>./backend</code></td>
+              <td>Use <code>sprint4-cloud-deployment/backend</code> in working-directory, upload path, and package path.</td>
+            </tr>
+            <tr>
+              <td>Backend workflow fails at test step</td>
+              <td>Default test script exits with status 1</td>
+              <td>Disable placeholder test command or replace with real passing tests.</td>
+            </tr>
+            <tr>
+              <td>Frontend build points at wrong API URL</td>
+              <td><code>VITE_BACKEND_API_URL</code> not set in workflow env</td>
+              <td>Add secret and map it to deploy job environment.</td>
+            </tr>
+            <tr>
+              <td>SWA YAML validation warning in close PR job</td>
+              <td>Missing <code>app_location</code> in close job config</td>
+              <td>Add same <code>app_location</code> value as main deploy job.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h3>App Service Runtime Issues</h3>
+        <ul>
+          <li>If backend does not start on Azure, confirm app listens on <code>process.env.PORT</code>.</li>
+          <li>If health endpoint fails, confirm App Service application settings were saved and app was restarted.</li>
+          <li>If frontend calls fail in production, verify <code>FRONTEND_URL</code> in backend settings matches SWA URL exactly.</li>
+          <li>Use App Service Log Stream while restarting app to capture startup errors immediately.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Fast Triage Workflow for Staff</h3>
+        <ol class="step-list">
+          <li>Check GitHub Actions status for the latest backend and frontend deployments.</li>
+          <li>Validate backend health endpoint in browser.</li>
+          <li>Open browser dev tools and confirm frontend requests target correct backend URL.</li>
+          <li>Review App Service log stream for startup, CORS, and DB errors.</li>
+          <li>If resource or network-level issue is suspected, escalate through WVU support process.</li>
+        </ol>
+        <div class="notice">
+          <strong>Escalation note:</strong> When missing resource groups or restricted cloud access blocks progress,
+          route the request to <strong>Statler ITS</strong>.
+        </div>
+        <div class="button-row">
+          <a class="button gold" href="deployment-steps.html">Back to Deployment Steps</a>
+          <a class="button" href="index.html">Back to Home</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>WVU Cloud Deployment Docs | Troubleshooting and support playbook.</p>
+    </div>
+  </footer>
+</body>
+</html>

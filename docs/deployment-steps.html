@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="End-to-end WVU cloud deployment runbook for xPostForecast project." />
+  <title>Deployment Steps | WVU Cloud Deployment Docs</title>
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>WVU Cloud Deployment Documentation</h1>
+        <p>Complete runbook from first setup to final production verification.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Guide Navigation</h2>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="getting-started.html">1. Getting Started</a></li>
+        <li><a href="github-setup.html">2. GitHub Setup</a></li>
+        <li><a href="azure-basics.html">3. Azure Basics</a></li>
+        <li><a class="active-link" aria-current="page" href="deployment-steps.html">4. Deployment Steps</a></li>
+        <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>End-to-End Deployment Steps</h2>
+        <p>
+          Use this as the single sequence for professors and staff supporting class teams. It combines local setup,
+          integration, CI/CD, and production validation into one ordered process.
+        </p>
+        <div class="notice">
+          <strong>WVU note:</strong> If cloud resources are missing, submit a request to <strong>Statler ITS</strong>
+          for resource group and access support before continuing.
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Step-by-Step Runbook</h3>
+        <p>
+          Follow these steps in order. If a step fails, resolve it before moving ahead so later cloud checks are based
+          on a known-good state.
+        </p>
+        <ol class="step-list">
+          <li>Confirm team has required software: Node.js, Git, VS Code, and Azure/GitHub access.</li>
+          <li>Confirm WVU resource group and Azure resources exist (request via Statler ITS if needed).</li>
+          <li>Clone repository, open project, and verify baseline structure.</li>
+          <li>Set up backend locally: install packages, configure <code>.env</code>, add SSL cert, and run backend.</li>
+          <li>Set up frontend locally: install packages, configure backend URL env variable, and run Vite.</li>
+          <li>Create database/table if not already prepared and verify authentication routes work.</li>
+          <li>Validate Sprint 3 integration path: date selection, STAC fetch, and map visualization.</li>
+          <li>Add required GitHub secrets for backend publish profile and frontend backend URL.</li>
+          <li>Inspect backend workflow paths and deploy to App Service on push to main.</li>
+          <li>Set App Service application settings and verify <code>/health</code> endpoint returns success.</li>
+          <li>Inspect SWA workflow settings and deploy frontend through GitHub Actions.</li>
+          <li>Perform end-to-end production tests: login, map fetch, and backend request validation from browser network tools.</li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h3>Commands Used Most Often</h3>
+        <p>
+          These are the core commands used during setup and redeployment. If you cloned
+          <code>https://github.com/tdevine1/xPostForecast</code>, these paths should work as written. If you are using
+          your own repository, update folder paths to match your project structure.
+        </p>
+        <pre><code># Backend local run
+cd sprint2-login-backend/backend
+npm install
+node server.js
+
+# Frontend local run
+cd sprint2-login-backend/frontend
+npm install
+npm run dev
+
+# Trigger cloud deployment
+git add .
+git commit -m "Deploy updates"
+git push origin main</code></pre>
+      </section>
+
+      <section class="section">
+        <h3>Critical Deployment Checks</h3>
+        <p>
+          Use this section as a quick side-by-side review when a deployment succeeds in one layer but fails in the
+          other. Most production issues come from one missed setting in these lists.
+        </p>
+        <div class="grid-two">
+          <div class="card">
+            <h4>Backend (App Service)</h4>
+            <ul>
+              <li>Workflow path uses <code>sprint4-cloud-deployment/backend</code></li>
+              <li><code>APP_SERVICE_PUBLISH_PROFILE</code> secret is present</li>
+              <li><code>PORT</code> is read from environment at runtime</li>
+              <li>App settings contain DB, JWT, and frontend URL values</li>
+              <li><code>/health</code> returns healthy JSON response</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Frontend (Static Web App)</h4>
+            <ul>
+              <li><code>app_location</code> points to Sprint 4 frontend folder</li>
+              <li><code>output_location</code> set to <code>dist</code></li>
+              <li><code>VITE_BACKEND_API_URL</code> secret is provided</li>
+              <li>Build succeeds in GitHub Actions</li>
+              <li>Browser requests hit App Service backend endpoints</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Final Acceptance Checklist</h3>
+        <p>
+          Consider the deployment complete only after all items below are true in the live environment, not just in
+          local development.
+        </p>
+        <ul class="checklist">
+          <li>Frontend site loads at SWA URL without build-time runtime errors.</li>
+          <li>Users can register and log in using production backend.</li>
+          <li>Session verification route works using cookie-based auth.</li>
+          <li>Temperature data requests return points and map renders markers.</li>
+          <li>No CORS or mixed-origin issues in browser console.</li>
+          <li>App Service log stream does not show startup crashes or DB connection failures.</li>
+        </ul>
+        <div class="button-row">
+          <a class="button gold" href="troubleshooting.html">Open Troubleshooting</a>
+          <a class="button" href="index.html">Back to Home</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>WVU Cloud Deployment Docs | Full runbook for staff and instructors.</p>
+    </div>
+  </footer>
+</body>
+</html>
