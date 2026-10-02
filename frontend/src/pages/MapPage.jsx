@@ -1,29 +1,35 @@
 /**
  * MapPage.jsx
  *
- * Main page of the temperature map application.
- * Provides a date selector, a "Fetch Data" button, and the map.
+ * Main page of the temperature map application (only reachable when logged in).
+ * Provides a date selector, a "Fetch Data" button, the map, and logout.
  *
- * Sprint 1: data fetching and logout are STUBS. They log to the console so you
- * can see the wiring works; Sprint 2 implements logout and Sprint 3 fetches
- * real temperature data from the backend.
+ * Sprint 2: logout is real (it clears the backend's cookie). Fetching data is
+ * still a STUB; Sprint 3 replaces it with a call to the backend.
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { ClipLoader } from 'react-spinners';
 import MapComponent from '../components/MapComponent';
 import DateSelector from '../components/DateSelector';
 
+// Base URL of the backend (e.g., http://localhost:5175), from frontend/.env
+const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+
 /**
- * MapPage component that displays the map and (eventually) fetches temperature data.
+ * MapPage component that displays the map and handles logout.
  *
  * @component
+ * @param {Function} setAuthenticated - Updates the app's authentication state.
  * @returns {JSX.Element} The map page with a date selector, map, and logout button.
  */
-function MapPage() {
+function MapPage({ setAuthenticated }) {
   const [date, setDate] = useState('');
   const [temperatureData] = useState([]); // stays empty until Sprint 3 fetches real data
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   /**
    * Fetch handler (stub). Simulates a short request, but sets no data.
@@ -44,10 +50,18 @@ function MapPage() {
   };
 
   /**
-   * Logout handler (stub). Sprint 2 replaces this with a real backend call.
+   * Logs out: asks the backend to clear the cookie, then returns to /login.
    */
-  const handleLogout = () => {
-    console.log('Logout clicked (stub)');
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/auth/logout`, null, { withCredentials: true });
+    } catch (err) {
+      // Even if the request fails, log out on this side so the user isn't stuck
+      console.error('Logout request failed (continuing client-side):', err);
+    } finally {
+      setAuthenticated(false);
+      navigate('/login', { replace: true });
+    }
   };
 
   return (

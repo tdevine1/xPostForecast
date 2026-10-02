@@ -1,201 +1,145 @@
-# Sprint 1: Frontend Setup Guide
+# Sprint 2 Frontend: Authentication & Integration Guide
 
-Welcome to Sprint 1! **This `frontend/` folder is xPostForecast's own reference implementation** — a finished example you can read, run, and compare against. You will **not** clone or fork it. Instead, you'll create your own GitHub repository and build your own app, on your own topic, using the same tools and steps shown here.
+In **Sprint 2**, the React (Vite) frontend talks to the backend using **cookie-based JWT authentication**. The backend sets an **HTTP-only cookie** on login (page JavaScript cannot read it, and nothing is kept in `localStorage`), and the frontend asks the backend whether the session is valid with `GET /auth/test`.
 
-In this phase, you'll scaffold a React front end using [Vite](https://vite.dev/), connect it to your own GitHub repo, and build out an interactive UI. This sprint focuses on learning how front-end development is structured and how modern dev tools help streamline the process.
-
----
-
-## 🧰 What You’ll Learn
-
-- How to scaffold and set up a Vite-powered React project from scratch
-- Understanding the frontend folder and component structure
-- How routing works using React Router
-- How to run the local development server with hot reloading
+> This is the **reference implementation**. Keep building in the `frontend/` you created in Sprint 1; don't clone or fork this one.
 
 ---
 
-## 1. 🔧 Prerequisites
+## 📂 Frontend Folder Structure
 
-Make sure the following are installed:
-
-- [Node.js & npm](https://nodejs.org/en/) – JavaScript runtime and package manager. Install **Node.js 24 LTS**. Current Vite releases do not run on older versions such as Node 18.
-- [Git](https://git-scm.com/downloads) – Version control  
-- [VS Code](https://code.visualstudio.com/) – Recommended code editor
-- A [GitHub](https://github.com/) account
-
----
-
-## 2. 📖 Look at the Reference Example First
-
-Before building your own app, skim this repo's `frontend/` folder on the [`sprint-1` branch](https://github.com/tdevine1/xPostForecast/tree/sprint-1) to see a complete Sprint 1 solution:
-
-- `src/components/` – reusable UI pieces (`MapComponent.jsx`, `DateSelector.jsx`)
-- `src/pages/` – full screens that compose components (`MapPage.jsx`)
-- `src/App.jsx` / `src/main.jsx` – routing and entry point
-
-You're not copying this code — you're building the *equivalent* structure for your own topic. Come back to this repo any time as a reference while you work.
-
----
-
-## 3. 🆕 Create Your Own GitHub Repository
-
-1. Go to [github.com/new](https://github.com/new) and create a new **empty** repository (choose your own name, e.g. `my-project-name`). Don't initialize it with a README, license, or `.gitignore` yet — you'll add those from your local project in a later step.
-2. Open **VS Code** and open a terminal (`` Ctrl+` ``).
-3. Clone your new (currently empty) repo:
-
-   ```bash
-   git clone https://github.com/<your-username>/<your-repo-name>.git
-   cd <your-repo-name>
-   ```
-
----
-
-## 4. 🏗️ Scaffold Your Project with Vite
-
-From inside your cloned repo folder, run:
-
-```bash
-npm create vite@latest frontend -- --template react
-cd frontend
-```
-
-This generates a new Vite + React project in a `frontend/` subfolder — mirroring how this reference repo separates `frontend/` from `backend/` (added in Sprint 2). If the tool asks whether to install dependencies and start the dev server now, either answer is fine; if the server starts, stop it with `Ctrl+C` and continue.
-
-Vite also generates a starter `.gitignore` inside `frontend/` covering `node_modules/`, `dist/`, and editor files, and sets up **oxlint** as the project's linter (`npm run lint`).
-
-**Mini-Lesson: Why keep frontend and backend in separate folders?**  
-Later sprints add a Node.js backend alongside your React frontend. Separating them from the start keeps dependencies, configs, and deployment concerns cleanly split.
-
----
-
-## 5. 📦 Installing Dependencies
-
-Still inside `frontend/`, install the packages you'll need. At minimum, for routing:
-
-```bash
-npm install react-router-dom
-```
-
-If your topic includes a map (like this example does, using [Leaflet](https://leafletjs.com/)), also install:
-
-```bash
-npm install leaflet react-leaflet
-```
-
-Pick libraries that fit *your* topic — a chart library (e.g. `chart.js`), a calendar picker, etc. are all reasonable substitutes depending on what your app needs to display.
-
----
-
-## 6. 🧠 Structuring Your Project
-
-Organize your `src/` folder the same way this reference example does:
-
-```bash
+```text
 frontend/
-└── src/
-    ├── components/     # Reusable pieces (your equivalents of MapComponent, DateSelector)
-    ├── pages/          # Full screens tied to routes
-    ├── App.jsx         # Main app routing component
-    ├── main.jsx        # Entry point for rendering App
-    └── index.css       # Global styles
+├── src/
+│   ├── components/
+│   │   ├── DateSelector.jsx       # month/year dropdowns (+ DateSelector.test.jsx)
+│   │   └── MapComponent.jsx       # Leaflet map
+│   ├── pages/
+│   │   ├── Login.jsx              # POST /auth/login (withCredentials)
+│   │   ├── Register.jsx           # POST /auth/register (email, username, password)
+│   │   └── MapPage.jsx            # protected page; POST /auth/logout
+│   ├── App.jsx                    # routes; GET /auth/test on startup
+│   ├── App.test.jsx               # tests for the session check and redirects
+│   └── main.jsx                   # entry point
+├── .env.example                   # template for frontend/.env
+└── index.html
 ```
-
-**Mini-Lesson: Why split components and pages?**  
-`components/` are reusable widgets (like buttons or selectors).  
-`pages/` are full screens (like "MapPage") that use multiple components.
 
 ---
 
-## 7. 🚀 Running the Development Server
+## 🛠 Prerequisites
 
-In the terminal:
+- **Node.js 24 LTS**
+- The backend running at `http://localhost:5175` (see [`../backend/README.md`](../backend/README.md))
+
+---
+
+## 1) Install
 
 ```bash
-npm run dev
+cd frontend
+npm install
 ```
 
-This launches the Vite development server. Your terminal will show something like:
-
-```
-  ➜  Local:   http://localhost:5173/
-```
-
-Visit that URL in your browser to see the app.
-
-**Mini-Lesson: What is hot reloading?**  
-When you edit a file, the page updates instantly without reloading. This is Vite’s superpower!
+New in this sprint: `axios` for HTTP requests.
 
 ---
 
-## 8. ✅ Lint and Test
-
-Two habits worth starting now:
+## 2) Configure Environment Variables
 
 ```bash
-npm run lint   # oxlint: catches unused variables, hook mistakes, and similar bugs
+cp .env.example .env
 ```
 
-This reference example also has a component test, `src/components/DateSelector.test.jsx`, run with [Vitest](https://vitest.dev/) via `npm test`, and a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs lint, tests, and a build on every push. Check with your instructor whether tests are required for your project; either way, the files are a short, working example to copy from.
+```ini
+VITE_BACKEND_API_URL=http://localhost:5175
+```
+
+Vite only exposes variables whose names start with `VITE_`, and it reads them when the dev server starts or the app is built, so **restart `npm run dev` after editing `.env`**. The value is the backend's base URL with no trailing slash; the code appends paths such as `/auth/login`.
+
+> Anything in a `VITE_` variable ends up in the JavaScript sent to the browser. Never put secrets there.
 
 ---
 
-## 9. 🧪 What the Reference Example Looks Like
+## 3) How Cookie-Based Authentication Works
 
-Here's a screenshot of *this reference app* at the end of Sprint 1 — yours will look different since it's your own topic, but should hit the same milestones:
-
-![Sprint 1 UI](../images/screenshot-sprint1.png)
-
-By the end of Sprint 1, your own app should have:
-
-- A working interactive UI element relevant to your topic (this example uses a Leaflet map)
-- A selector/input UI for choosing what data to view (this example uses month/year dropdowns)
-- Placeholder "Fetch Data" and "Logout" buttons — no real data fetch or login logic yet, that comes in later sprints
+1. **Login**: `POST /auth/login`. The backend responds with `Set-Cookie: token=...; HttpOnly`.
+2. The browser stores the cookie and sends it with later requests to the backend, **but only if each request opts in**:
+   - axios: `{ withCredentials: true }`
+   - fetch: `{ credentials: 'include' }`
+3. **Page load**: `App.jsx` calls `GET /auth/test`. A `200` means "logged in", a `401` means "not logged in". Until the answer arrives, `App.jsx` shows "Checking your session…" instead of any page, so a refresh on `/map` doesn't bounce you to `/login`.
+4. **Logout**: `POST /auth/logout`, and the backend clears the cookie.
 
 ---
 
-## 10. 🛠️ Troubleshooting
+## 4) Component Responsibilities
 
-- **`npm install` fails or hangs** — delete `node_modules/` and `package-lock.json`, then re-run `npm install`. Make sure you're inside your `frontend/` folder when you run it.
-- **`npm` or `node` not recognized** — Node.js isn't installed or isn't on your PATH. Reinstall Node.js and restart VS Code.
-- **Errors mentioning an unsupported Node version** — run `node --version`; if it is older than v24, install Node.js 24 LTS.
-- **`Port 5173 is already in use`** — another instance of the dev server is already running. Stop it (`Ctrl+C` in that terminal) or close other terminal tabs running `npm run dev`.
-- **Blank page / component doesn't render** — open your browser's developer console (`F12`) and check for errors; a common cause is a typo in an import path under `src/components/`.
-
----
-
-## 11. 💡 Explore More (Optional Learning)
-
-| Topic | Resource |
-|-------|----------|
-| Learn JSX | [React: Writing Markup with JSX](https://react.dev/learn/writing-markup-with-jsx) |
-| Learn React Router | [React Router: Declarative Mode](https://reactrouter.com/start/declarative/installation) |
-| Learn Vite | [Vite Guide](https://vite.dev/guide/) |
-| Learn Vitest | [Vitest Guide](https://vitest.dev/guide/) |
+| File | Responsibilities |
+|------|------------------|
+| `App.jsx` | On startup calls `/auth/test` with `credentials: 'include'` and sets `authenticated`. Routes: `/` redirects; `/login` and `/register` (redirect to `/map` if already logged in); `/map` (redirects to `/login` if not). |
+| `pages/Login.jsx` | `POST /auth/login` with `{ username, password }` and `withCredentials: true`. On success sets `authenticated` and navigates to `/map`; on `401` alerts "Invalid credentials". |
+| `pages/Register.jsx` | `POST /auth/register` with `{ email, username, password }`. On success navigates to `/login`; on error shows the backend's message (for example, "That username or email is already registered"). |
+| `pages/MapPage.jsx` | Protected page. **Logout** calls `POST /auth/logout`. **Fetch Data** is still a stub (Sprint 3 makes it real). |
+| `components/DateSelector.jsx` | Month and year dropdowns (1895–2022). Calls `onDateChange('YYYY-MM-01')` once both are chosen, and `fetchTemperatureData()` on **Fetch Data**. |
+| `components/MapComponent.jsx` | Leaflet map of West Virginia; draws a colored circle per `{ lat, lon, tavg }` point (none yet in this sprint). |
 
 ---
 
-## ✅ You Now Have
+## 5) Auth Call Patterns
 
-- Created your own GitHub repository and cloned it locally
-- Scaffolded a Vite React app of your own from scratch
-- Installed dependencies and structured your project
-- Built and previewed an interactive frontend for your own topic
+**Login (axios):**
 
-In **Sprint 2**, we’ll add a backend connection and a database for login functionality.
+```js
+await axios.post(`${API_URL}/auth/login`, { username, password }, { withCredentials: true });
+```
 
-Happy coding!
+**Session check in `App.jsx` (fetch):**
+
+```js
+const res = await fetch(`${API_URL}/auth/test`, { credentials: 'include' });
+setAuthenticated(res.ok); // fetch: res.ok is true for 2xx responses
+```
+
+Note the difference: `fetch` resolves for **every** HTTP status (check `res.ok`), while axios **throws** for non-2xx statuses (handle them in `catch`).
+
+**Logout (axios):**
+
+```js
+await axios.post(`${API_URL}/auth/logout`, null, { withCredentials: true });
+```
 
 ---
 
-## 🛑 Don't Forget: Commit Your Work
-
-Vite's scaffold generates a `.gitignore` in `frontend/` covering `node_modules/` and `dist/`, but **it does not exclude `.env` by default** — double-check it does, or add `.env` to it yourself before you ever create one (you'll need one starting in Sprint 2 for secrets like database credentials).
-
-Before you `git add`, run `git status` and confirm nothing like `node_modules/` or a `.env` file is about to be committed.
+## 6) Run, Lint, and Test
 
 ```bash
-git add .
-git commit -m "Sprint 1: frontend setup"
-git push
+npm run dev     # http://localhost:5173
+npm run lint
+npm test
 ```
+
+`App.test.jsx` replaces `fetch` with a fake and checks that a valid session stays on `/map` after a refresh and that a logged-out visitor is sent to `/login`.
+
+> The backend's `FRONTEND_URL` must be exactly `http://localhost:5173`, otherwise CORS blocks every request.
+
+---
+
+## 7) Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Red `401` for `/auth/test` in the browser console | Not logged in | Normal before login and after logout |
+| Login succeeds but a refresh logs you out | Cookie not stored or not sent | Use `withCredentials: true` / `credentials: 'include'`; check the backend's CORS `credentials: true` |
+| `Network Error` or `Failed to fetch` | Backend not running, wrong `VITE_BACKEND_API_URL`, or CORS | Start the backend; check `.env`, restart `npm run dev`; read the console's CORS message |
+| `VITE_BACKEND_API_URL` is `undefined` | `.env` missing, or dev server not restarted | Create `frontend/.env`, then restart `npm run dev` |
+| Register shows "Password must be at least 8 characters" | Backend validation | Use a longer password |
+
+---
+
+## 📚 References
+
+- React Router: <https://reactrouter.com/>
+- Axios: <https://axios-http.com/>
+- Vite env variables: <https://vite.dev/guide/env-and-mode>
+- MDN CORS: <https://developer.mozilla.org/docs/Web/HTTP/Guides/CORS>
+- MDN Cookies: <https://developer.mozilla.org/docs/Web/HTTP/Guides/Cookies>
