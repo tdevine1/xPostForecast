@@ -1,9 +1,9 @@
 /**
- * App.js
- * 
- * Main entry point of the application with persistent authentication using local storage.
- * It sets up routing for the login, register, and map pages, and manages authentication state.
- * For this sprint, it only includes the MapPage route.
+ * App.jsx
+ *
+ * Top-level component: sets up client-side routing with React Router.
+ * In Sprint 1 there is only one real page (/map). Sprint 2 adds /login and
+ * /register and puts /map behind a login check.
  */
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -14,21 +14,14 @@ import MapPage from './pages/MapPage';
  * @returns {JSX.Element} The rendered application with routes.
  */
 function App() {
-
-
   return (
     <Router>
       <Routes>
-        {/* Redirect to /login if not authenticated; otherwise to /map */}
-        <Route
-          path="/"
-          element={<Navigate to="/map" replace />}
-        />
+        {/* Send the base URL straight to the map page */}
+        <Route path="/" element={<Navigate to="/map" replace />} />
+
         {/* Map Page Route */}
-        <Route
-          path="/map"
-          element={<MapPage />}
-        />
+        <Route path="/map" element={<MapPage />} />
       </Routes>
     </Router>
   );

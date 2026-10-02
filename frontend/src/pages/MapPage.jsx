@@ -1,91 +1,71 @@
 /**
- * MapPage.js
- * 
- * React component for the main page of the temperature map application.
- * Provides a date selector and a button to fetch temperature data from the backend API.
- * Displays a loading indicator while data is being fetched.
+ * MapPage.jsx
+ *
+ * Main page of the temperature map application.
+ * Provides a date selector, a "Fetch Data" button, and the map.
+ *
+ * Sprint 1: data fetching and logout are STUBS. They log to the console so you
+ * can see the wiring works; Sprint 2 implements logout and Sprint 3 fetches
+ * real temperature data from the backend.
  */
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { ClipLoader } from 'react-spinners';
 import MapComponent from '../components/MapComponent';
 import DateSelector from '../components/DateSelector';
-import { ClipLoader } from 'react-spinners';
-
 
 /**
- * MapPage component that displays the map and handles temperature data fetching.
- * 
+ * MapPage component that displays the map and (eventually) fetches temperature data.
+ *
  * @component
- * @returns {JSX.Element} The rendered map page with temperature markers, a logout button, and a loading indicator.
+ * @returns {JSX.Element} The map page with a date selector, map, and logout button.
  */
-function MapPage({ setAuthenticated }) {
+function MapPage() {
   const [date, setDate] = useState('');
-  const [temperatureData, setTemperatureData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); 
-  const navigate = useNavigate();
+  const [temperatureData] = useState([]); // stays empty until Sprint 3 fetches real data
+  const [isLoading, setIsLoading] = useState(false);
 
   /**
-   * Handles the selected date change from DateSelector component.
-   * 
-   * @param {string} selectedDate - The selected date string in YYYY-MM format.
-   */
-  const handleDateChange = (selectedDate) => {
-    setDate(selectedDate);  // Update date state
-  };
-
-  /**
-   * fetchTemperatureData (stub)
-   * 
-   * Stubbed version of the temperature fetch function.
-   * This placeholder simulates the interface but performs no actual API call.
-   * 
-   * @async
-   * @function
+   * Fetch handler (stub). Simulates a short request, but sets no data.
    */
   const fetchTemperatureData = async () => {
     if (!date) {
-      alert("Please select a date.");
+      alert('Please select a month and year.');
       return;
     }
 
     setIsLoading(true);
     console.log(`Stub: would fetch temperature data for date: ${date}`);
 
-    // Simulate short delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // No data is actually set in this stub
-    console.log("Stub: No temperature data fetched.");
+    // Simulate a short network delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     setIsLoading(false);
   };
-  
+
   /**
-   * handleLogout (stub)
-   * 
-   * Placeholder function for logout behavior.
-   * In future sprints, this will clear authentication state and redirect the user.
+   * Logout handler (stub). Sprint 2 replaces this with a real backend call.
    */
   const handleLogout = () => {
-    console.log("Logout clicked (stub)");
+    console.log('Logout clicked (stub)');
   };
 
-return (
+  return (
     <div>
       <h1>ExPostForecast: Historical Monthly Average Temperatures</h1>
-      
-      {/* DateSelector component allows user to select a date and trigger data fetch */}
-      <DateSelector onDateChange={handleDateChange} fetchTemperatureData={fetchTemperatureData} />
 
-      {/* Loading Indicator */}
+      {/* DateSelector reports the chosen date and triggers the fetch */}
+      <DateSelector onDateChange={setDate} fetchTemperatureData={fetchTemperatureData} />
+
+      {/* Loading indicator while a fetch is in progress */}
       {isLoading && <ClipLoader color="#123abc" loading={isLoading} size={50} />}
 
-      {/* MapComponent displays the temperature data as markers on the map */}
+      {/* MapComponent draws one marker per temperature point */}
       {!isLoading && <MapComponent temperatures={temperatureData} />}
 
-      {/* Logout button triggers the handleLogout function */}
-      <button onClick={handleLogout} style={{ marginTop: '20px' }}>Logout</button>
+      <button type="button" onClick={handleLogout} style={{ marginTop: '20px' }}>
+        Logout
+      </button>
     </div>
   );
 }

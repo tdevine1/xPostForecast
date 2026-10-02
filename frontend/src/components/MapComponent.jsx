@@ -1,12 +1,11 @@
 /**
- * MapComponent.js
+ * MapComponent.jsx
  * 
  * React component that renders a map with color-coded markers for temperature data.
  * Each marker represents a location with latitude, longitude, and temperature (tavg),
  * and displays this information in a popup.
  */
 
-import React from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 

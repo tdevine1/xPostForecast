@@ -1,9 +1,8 @@
-
 # Sprint 1: Frontend Setup Guide
 
 Welcome to Sprint 1! **This `frontend/` folder is xPostForecast's own reference implementation** — a finished example you can read, run, and compare against. You will **not** clone or fork it. Instead, you'll create your own GitHub repository and build your own app, on your own topic, using the same tools and steps shown here.
 
-In this phase, you'll scaffold a React front end using [Vite](https://vitejs.dev/), connect it to your own GitHub repo, and build out an interactive UI. This sprint focuses on learning how front-end development is structured and how modern dev tools help streamline the process.
+In this phase, you'll scaffold a React front end using [Vite](https://vite.dev/), connect it to your own GitHub repo, and build out an interactive UI. This sprint focuses on learning how front-end development is structured and how modern dev tools help streamline the process.
 
 ---
 
@@ -20,7 +19,7 @@ In this phase, you'll scaffold a React front end using [Vite](https://vitejs.dev
 
 Make sure the following are installed:
 
-- [Node.js & npm](https://nodejs.org/en/) – JavaScript runtime and package manager. Install the **LTS version (18 or later)** — this project won't run correctly on older versions.
+- [Node.js & npm](https://nodejs.org/en/) – JavaScript runtime and package manager. Install **Node.js 24 LTS**. Current Vite releases do not run on older versions such as Node 18.
 - [Git](https://git-scm.com/downloads) – Version control  
 - [VS Code](https://code.visualstudio.com/) – Recommended code editor
 - A [GitHub](https://github.com/) account
@@ -29,7 +28,7 @@ Make sure the following are installed:
 
 ## 2. 📖 Look at the Reference Example First
 
-Before building your own app, skim this repo's `frontend/` folder on GitHub (or open it locally if your instructor shared it) to see a complete Sprint 1 solution:
+Before building your own app, skim this repo's `frontend/` folder on the [`sprint-1` branch](https://github.com/tdevine1/xPostForecast/tree/sprint-1) to see a complete Sprint 1 solution:
 
 - `src/components/` – reusable UI pieces (`MapComponent.jsx`, `DateSelector.jsx`)
 - `src/pages/` – full screens that compose components (`MapPage.jsx`)
@@ -61,7 +60,9 @@ npm create vite@latest frontend -- --template react
 cd frontend
 ```
 
-This generates a new Vite + React project in a `frontend/` subfolder — mirroring how this reference repo separates `frontend/` from `backend/` (added in Sprint 2). Vite also generates a starter `.gitignore` for you inside `frontend/` covering `node_modules/`, `dist/`, and build artifacts.
+This generates a new Vite + React project in a `frontend/` subfolder — mirroring how this reference repo separates `frontend/` from `backend/` (added in Sprint 2). If the tool asks whether to install dependencies and start the dev server now, either answer is fine; if the server starts, stop it with `Ctrl+C` and continue.
+
+Vite also generates a starter `.gitignore` inside `frontend/` covering `node_modules/`, `dist/`, and editor files, and sets up **oxlint** as the project's linter (`npm run lint`).
 
 **Mini-Lesson: Why keep frontend and backend in separate folders?**  
 Later sprints add a Node.js backend alongside your React frontend. Separating them from the start keeps dependencies, configs, and deployment concerns cleanly split.
@@ -127,7 +128,19 @@ When you edit a file, the page updates instantly without reloading. This is Vite
 
 ---
 
-## 8. 🧪 What the Reference Example Looks Like
+## 8. ✅ Lint and Test
+
+Two habits worth starting now:
+
+```bash
+npm run lint   # oxlint: catches unused variables, hook mistakes, and similar bugs
+```
+
+This reference example also has a component test, `src/components/DateSelector.test.jsx`, run with [Vitest](https://vitest.dev/) via `npm test`, and a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs lint, tests, and a build on every push. Check with your instructor whether tests are required for your project; either way, the files are a short, working example to copy from.
+
+---
+
+## 9. 🧪 What the Reference Example Looks Like
 
 Here's a screenshot of *this reference app* at the end of Sprint 1 — yours will look different since it's your own topic, but should hit the same milestones:
 
@@ -141,22 +154,24 @@ By the end of Sprint 1, your own app should have:
 
 ---
 
-## 9. 🛠️ Troubleshooting
+## 10. 🛠️ Troubleshooting
 
 - **`npm install` fails or hangs** — delete `node_modules/` and `package-lock.json`, then re-run `npm install`. Make sure you're inside your `frontend/` folder when you run it.
 - **`npm` or `node` not recognized** — Node.js isn't installed or isn't on your PATH. Reinstall Node.js and restart VS Code.
+- **Errors mentioning an unsupported Node version** — run `node --version`; if it is older than v24, install Node.js 24 LTS.
 - **`Port 5173 is already in use`** — another instance of the dev server is already running. Stop it (`Ctrl+C` in that terminal) or close other terminal tabs running `npm run dev`.
 - **Blank page / component doesn't render** — open your browser's developer console (`F12`) and check for errors; a common cause is a typo in an import path under `src/components/`.
 
 ---
 
-## 10. 💡 Explore More (Optional Learning)
+## 11. 💡 Explore More (Optional Learning)
 
 | Topic | Resource |
 |-------|----------|
-| Learn JSX | [React: Introducing JSX](https://reactjs.org/docs/introducing-jsx.html) |
-| Learn React Router | [React Router Tutorial](https://reactrouter.com/en/main/start/tutorial) |
-| Learn Vite | [Vite Docs](https://vitejs.dev/guide/) |
+| Learn JSX | [React: Writing Markup with JSX](https://react.dev/learn/writing-markup-with-jsx) |
+| Learn React Router | [React Router: Declarative Mode](https://reactrouter.com/start/declarative/installation) |
+| Learn Vite | [Vite Guide](https://vite.dev/guide/) |
+| Learn Vitest | [Vitest Guide](https://vitest.dev/guide/) |
 
 ---
 
