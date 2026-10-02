@@ -49,7 +49,7 @@ function MapComponent({ temperatures = [] }) {
     return (
         <MapContainer center={center} zoom={7} style={{ height: '500px', width: '100%' }}>
             <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
              {Array.isArray(temperatures) && temperatures.map((point, index) => (
