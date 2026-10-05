@@ -35,7 +35,7 @@ backend/
 ## 🛠 Prerequisites
 
 - **Node.js 24 LTS**
-- The **`mysql` command-line client** (install instructions in step 4)
+- **VS Code** with the **SQLTools** and **SQLTools MySQL/MariaDB/TiDB** extensions (from Sprint 1)
 - An **Azure Database for MySQL – Flexible Server** (your instructor provides the host, admin user, and password)
 - Your current public IP address allowed in **Azure Portal → your MySQL server → Networking → Firewall rules**
 
@@ -105,48 +105,77 @@ mv ~/Downloads/DigiCertGlobalRootG2.crt.pem backend/config/DigiCertGlobalRootG2.
 
 ---
 
-## 4) Connect and Verify with the `mysql` CLI
+## 4) Connect with SQLTools
 
-Before wiring up the code, confirm you can reach the database from the command line. VS Code's integrated terminal works fine; no database extension is needed.
+Before wiring up the code, confirm you can reach the database from VS Code with the **SQLTools** extension and its **SQLTools MySQL/MariaDB/TiDB** driver (installed in Sprint 1; VS Code suggests them when you open this repo).
 
-**Install the `mysql` client if you don't have it:**
+1. Click the **SQLTools** icon (a database cylinder) in VS Code's left sidebar → **Add New Connection** → **MySQL**.
+2. Fill in the form:
 
-| OS | Command |
-|---|---|
-| Windows | `winget install Oracle.MySQL` (or download the "MySQL Command Line Client" from [dev.mysql.com](https://dev.mysql.com/downloads/mysql/)) |
-| macOS | `brew install mysql-client`, then add it to your PATH (`brew info mysql-client` shows the exact path) |
-| Linux (Debian/Ubuntu) | `sudo apt install mysql-client` |
+   | Field | Value |
+   |---|---|
+   | Connection name | anything, e.g. `xPostForecast Azure` |
+   | Connect using | **Server and Port** |
+   | Server Address | your `DB_HOST`, e.g. `<your-server>.mysql.database.azure.com` |
+   | Port | `3306` |
+   | Database | `mysql` for now (`authdb` doesn't exist until step 5) |
+   | Username | your `DB_USER` |
+   | **Password mode** | **SQLTools Driver Credentials** (the default) or **Ask on connect**. **Never "Save as plaintext in settings"**; see the box below. |
+   | MySQL driver specific options → SSL | **Enabled**, with **Certificate Authority (CA) Certificate File** set to `backend/config/DigiCertGlobalRootG2.crt.pem` |
 
-> **Windows note:** `winget install Oracle.MySQL` adds `mysql` to your PATH, but already-open terminals won't see the change. **Fully close and reopen VS Code** (not just the terminal panel) before running `mysql --version`. If it still isn't found, open a new Command Prompt and try there; if that fails too, log out and back in, or add the MySQL `bin` folder (typically `C:\Program Files\MySQL\MySQL Server 9.x\bin`) to your PATH.
+3. Click **Test Connection**, then **Save Connection**, then connect to it from the SQLTools sidebar.
+4. Open a new SQL file (or use the query editor SQLTools opens) and run:
 
-```bash
-mysql --version
-```
+   ```sql
+   SHOW DATABASES;
+   SELECT CURRENT_USER();
+   ```
 
-**Connect** (from the `backend/` folder):
+   Run a query by placing the cursor in it and pressing **Ctrl+E Ctrl+E** (**Cmd+E Cmd+E** on macOS), or with the **Run on active connection** link SQLTools shows above the query.
+
+These are the same `DB_HOST` / `DB_USER` / `DB_PASSWORD` values as in `.env`: if SQLTools connects, the app's connection will work too.
+
+> ### 🔐 Where SQLTools keeps your connection (read this)
+>
+> SQLTools saves the connection in **`.vscode/settings.json`** inside your project. What it saves depends on **Password mode**:
+>
+> - **SQLTools Driver Credentials**: the password goes into VS Code's secure credential storage, not the file.
+> - **Ask on connect**: the password isn't stored anywhere; you type it each time.
+> - **Save as plaintext in settings**: the password is written **in plain text** into `.vscode/settings.json`.
+>
+> If that file is ever committed, everyone who can see the repository, now or later, can read the password, and removing the file in a later commit doesn't help: it stays in the git history. **This reference repository made exactly this mistake once**: a database password saved by SQLTools was committed and stayed visible in the history until the history was rewritten.
+>
+> Two layers of protection, use both:
+> 1. Choose a password mode that doesn't write the password to the file.
+> 2. Keep `.vscode/settings.json` out of git. This repo's `.gitignore` does that while still sharing `extensions.json`:
+>
+>    ```gitignore
+>    .vscode/*
+>    !.vscode/extensions.json
+>    ```
+>
+> Check with `git status` before every commit: `.vscode/settings.json` should never appear. If a password does get pushed, assume it's compromised: **change it in Azure first**, then clean up the repository.
+
+<details>
+<summary>Prefer the command line? The <code>mysql</code> client works too</summary>
+
+Install it (Windows: `winget install Oracle.MySQL`, then fully restart VS Code; macOS: `brew install mysql-client`; Debian/Ubuntu: `sudo apt install mysql-client`), then from the `backend/` folder:
 
 ```bash
 mysql -h <your-server>.mysql.database.azure.com -u <your-admin-user> -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem
 ```
 
-Enter your password when prompted. These are the same `DB_HOST` / `DB_USER` / `DB_PASSWORD` values as in `.env`: if this connects, the app's connection will work too. Then try:
-
-```sql
-SHOW DATABASES;
-SELECT CURRENT_USER();
-```
-
-Type `exit` to leave.
+</details>
 
 ---
 
 ## 5) Create the Database and `users` Table
 
-The schema is in [`db/schema.sql`](./db/schema.sql). Run it from the `backend/` folder:
+The schema is in [`db/schema.sql`](./db/schema.sql). Open it in VS Code with your SQLTools connection active, select the whole file (**Ctrl+A**), and run it (**Ctrl+E Ctrl+E**).
 
-```bash
-mysql -h <your-server>.mysql.database.azure.com -u <your-admin-user> -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem < db/schema.sql
-```
+(With the `mysql` client instead, from the `backend/` folder: `mysql -h <your-server>.mysql.database.azure.com -u <your-admin-user> -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem < db/schema.sql`.)
+
+Afterwards, refresh the connection in the SQLTools sidebar: `authdb` with its `users` table should appear. You can edit the connection's **Database** to `authdb` from now on.
 
 It creates the `authdb` database and this table:
 
@@ -270,8 +299,11 @@ fetch(`${API_URL}/auth/test`, { credentials: 'include' });           // fetch
 | `MySQL connection failed on startup` + `ETIMEDOUT` / `ERROR 2002` | Firewall rule missing or wrong host | Add your current IP in Azure → Networking; check `DB_HOST` |
 | `Access denied for user` | Wrong username or password | Check `DB_USER` / `DB_PASSWORD` against the **Connect** page in the Azure Portal |
 | `ER_BAD_DB_ERROR: Unknown database 'authdb'` | Schema not created | Run `db/schema.sql` (step 5) |
-| TLS/SSL errors (`ERROR 2026`, `self-signed certificate`) | Wrong or missing CA file | Make sure `config/DigiCertGlobalRootG2.crt.pem` is the certificate downloaded from Azure |
-| `mysql: command not found` right after installing | PATH change not picked up | **Fully restart VS Code**, or open a fresh Command Prompt |
+| Backend TLS/SSL errors (`self-signed certificate`, `ERROR 2026` in the CLI) | Wrong or missing CA file | Make sure `config/DigiCertGlobalRootG2.crt.pem` is the certificate downloaded from Azure |
+| SQLTools: **Test Connection** fails with a timeout | Firewall rule missing for your current IP | Azure → MySQL server → Networking → add your IP (it changes between home, campus, and hotspots) |
+| SQLTools: certificate or SSL error | SSL disabled or CA file path wrong | Set SSL to **Enabled** and point **Certificate Authority (CA) Certificate File** at `backend/config/DigiCertGlobalRootG2.crt.pem` |
+| `.vscode/settings.json` shows up in `git status` | Not ignored | Add `.vscode/*` and `!.vscode/extensions.json` to `.gitignore`; if it was already committed, run `git rm --cached .vscode/settings.json` |
+| `mysql: command not found` right after installing (CLI option) | PATH change not picked up | **Fully restart VS Code**, or open a fresh Command Prompt |
 
 ---
 
