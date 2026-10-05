@@ -21,7 +21,7 @@ Make sure the following are installed:
 
 - [Node.js & npm](https://nodejs.org/en/) – JavaScript runtime and package manager. Install **Node.js 24 LTS**. Current Vite releases do not run on older versions such as Node 18.
 - [Git](https://git-scm.com/downloads) – Version control  
-- [VS Code](https://code.visualstudio.com/) – Recommended code editor
+- [VS Code](https://code.visualstudio.com/) – Recommended code editor, with the **SQLTools** extension (by Matheus Teixeira) and its **SQLTools MySQL/MariaDB/TiDB** driver. You'll use them from Sprint 2 to work with your database. This repo's `.vscode/extensions.json` makes VS Code suggest both when you open it.
 - A [GitHub](https://github.com/) account
 
 ---
@@ -193,7 +193,9 @@ Happy coding!
 
 Vite's scaffold adds a `.gitignore` in `frontend/` covering `node_modules/` and `dist/`, but **it does not exclude `.env`**. The repo-level `.gitignore` from GitHub's **Node** template does. If your repo was created without that template, add `.env` to a `.gitignore` yourself before you ever create one (you'll need one starting in Sprint 2 for settings like the backend URL and database credentials).
 
-Before you `git add`, run `git status` and confirm nothing like `node_modules/` or a `.env` file is about to be committed.
+Also ignore `.vscode/settings.json`. Starting in Sprint 2, SQLTools saves your database connection there, and depending on one setting it can include your database password. This repo's [`.gitignore`](../.gitignore) shows the pattern: ignore everything in `.vscode/` except `extensions.json`.
+
+Before you `git add`, run `git status` and confirm nothing like `node_modules/`, a `.env` file, or `.vscode/settings.json` is about to be committed.
 
 ```bash
 git add .

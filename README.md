@@ -27,7 +27,7 @@ This sprint introduces frontend development with **Vite + React**. You will crea
 
 By the end of Sprint 1, students will have:
 
-- Installed the necessary tools (VS Code, Node.js 24 LTS, Git)
+- Installed the necessary tools (VS Code with the SQLTools extensions, Node.js 24 LTS, Git)
 - Created their own GitHub repository and cloned it locally
 - Scaffolded a working Vite + React app from scratch
 - Built an interactive frontend appropriate to their chosen topic (this example uses a Leaflet map of West Virginia with a month/year selector)
@@ -46,6 +46,7 @@ The **Fetch Data** and **Logout** buttons are stubs in this sprint: they only lo
 ```text
 .
 ├── .github/workflows/ci.yml   # lint + test + build on every push
+├── .vscode/extensions.json    # VS Code suggests the SQLTools extensions when you open the repo
 ├── frontend/                  # Vite + React app
 │   ├── src/
 │   │   ├── components/        # DateSelector.jsx (+ its test), MapComponent.jsx
