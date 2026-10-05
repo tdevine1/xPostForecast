@@ -51,7 +51,7 @@
           on a known-good state.
         </p>
         <ol class="step-list">
-          <li>Confirm the team has the required software: Node.js 24 LTS, Git, VS Code, the <code>mysql</code> CLI, and Azure/GitHub access.</li>
+          <li>Confirm the team has the required software: Node.js 24 LTS, Git, VS Code with the SQLTools extensions, and Azure/GitHub access.</li>
           <li>Confirm the WVU resource group and Azure resources exist (request via Statler ITS if needed).</li>
           <li>Clone the repository and verify its structure (<code>frontend/</code>, <code>backend/</code>, <code>.github/workflows/</code>).</li>
           <li>Set up the backend locally: <code>npm install</code>, <code>backend/.env</code>, database schema, <code>npm run dev</code>.</li>
@@ -72,7 +72,7 @@
         </p>
         <ol class="step-list">
           <li>Request the resource group through Statler ITS.</li>
-          <li><strong>MySQL Flexible Server:</strong> create it; in <strong>Networking</strong> add your IP and enable access from Azure services. Run <code>backend/db/schema.sql</code> with the <code>mysql</code> CLI.</li>
+          <li><strong>MySQL Flexible Server:</strong> create it; in <strong>Networking</strong> add your IP and enable access from Azure services. Run <code>backend/db/schema.sql</code> with SQLTools.</li>
           <li><strong>App Service:</strong> Web App, Linux, runtime <strong>Node 24 LTS</strong>. Turn on <strong>SCM Basic Auth Publishing Credentials</strong> (Configuration → General settings), then <strong>Download publish profile</strong>.</li>
           <li><strong>Static Web App:</strong> deployment source <strong>Other</strong> (so Azure doesn't commit its own workflow to the repo). Copy the token from <strong>Manage deployment token</strong>.</li>
           <li><strong>App Service environment variables:</strong> the eight settings on <a href="azure-basics.html">Azure Basics</a>, with <code>FRONTEND_URL</code> set to the new SWA URL and a fresh <code>JWT_SECRET</code>.</li>

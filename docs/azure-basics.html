@@ -91,7 +91,7 @@
         </p>
         <ol class="step-list">
           <li>In Azure Portal, open the MySQL Flexible Server's <strong>Networking</strong> page.</li>
-          <li>Add a firewall rule for each developer's public IP address (needed for local development and the <code>mysql</code> CLI).</li>
+          <li>Add a firewall rule for each developer's public IP address (needed for local development and SQLTools).</li>
           <li>Enable <strong>Allow public access from any Azure service within Azure to this server</strong>, so the App Service can connect.</li>
           <li>The CA certificate (<strong>Download SSL Certificate</strong> on the same page) is committed at <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>; it is public, not a secret.</li>
         </ol>

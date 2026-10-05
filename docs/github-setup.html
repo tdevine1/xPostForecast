@@ -52,7 +52,7 @@
         <ul>
           <li>Confirm instructors, staff, and project teams all have the correct repo permissions.</li>
           <li>Use <code>main</code> as the deployment branch: both deploy workflows run on pushes to <code>main</code>.</li>
-          <li>Ensure <code>.gitignore</code> excludes <code>.env</code>, <code>node_modules</code>, and <code>dist</code>; check <code>git status</code> before every commit.</li>
+          <li>Ensure <code>.gitignore</code> excludes <code>.env</code>, <code>node_modules</code>, <code>dist</code>, <code>.vscode/*</code> (except <code>extensions.json</code>), and <code>*.PublishSettings</code>; check <code>git status</code> before every commit.</li>
           <li>Use pull requests for larger changes: the CI workflow tests every push and pull request.</li>
         </ul>
         <pre><code># Standard update cycle
@@ -218,8 +218,9 @@ git push origin main            # triggers CI, and deployment if frontend/ or ba
         </ol>
         <div class="notice">
           <strong>Security reminder:</strong> Never commit publish profiles, deployment tokens, or any <code>.env</code>
-          file. Editor settings that store database passwords (for example SQLTools connections in
-          <code>.vscode/settings.json</code>) count too.
+          file. Editor settings that store database passwords count too: SQLTools writes connections to
+          <code>.vscode/settings.json</code>, including the password in plaintext mode, so the reference
+          <code>.gitignore</code> ignores <code>.vscode/*</code> except <code>extensions.json</code>.
         </div>
         <div class="button-row">
           <a class="button gold" href="azure-basics.html">Continue to Azure Basics</a>

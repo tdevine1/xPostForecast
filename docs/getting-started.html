@@ -57,7 +57,7 @@
           <li>Node.js 24 LTS and npm (current Vite releases don't run on older Node versions)</li>
           <li>Git</li>
           <li>VS Code</li>
-          <li>The <code>mysql</code> command-line client (install steps are in the Sprint 2 backend guide)</li>
+          <li>VS Code extensions <strong>SQLTools</strong> (Matheus Teixeira) and <strong>SQLTools MySQL/MariaDB/TiDB</strong>; the repo's <code>.vscode/extensions.json</code> recommends both</li>
           <li>GitHub repository access for your course project</li>
           <li>Azure access details from instructor or WVU support staff</li>
         </ul>
@@ -133,7 +133,7 @@ git switch main          # back to the finished app</code></pre>
           <li>Clone the project repository and open it in VS Code.</li>
           <li>Allow your public IP address in the Azure MySQL server's <strong>Networking</strong> firewall rules.</li>
           <li>Install backend dependencies and create <code>backend/.env</code> from <code>.env.example</code>.</li>
-          <li>Create the database and users table from <code>backend/db/schema.sql</code>, then run the backend.</li>
+          <li>Connect to Azure MySQL with SQLTools (SSL enabled, CA file <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>, a Password mode other than plaintext), run <code>backend/db/schema.sql</code>, then run the backend.</li>
           <li>Install frontend dependencies, create <code>frontend/.env</code>, run Vite, and test the login flow.</li>
         </ol>
         <pre><code># Example using the reference repository (main branch)
@@ -144,8 +144,7 @@ cd xPostForecast
 cd backend
 npm install
 cp .env.example .env          # then fill in the values (table below)
-mysql -h &lt;server&gt;.mysql.database.azure.com -u &lt;admin-user&gt; -p \
-  --ssl-ca=config/DigiCertGlobalRootG2.crt.pem &lt; db/schema.sql
+# create the schema: open db/schema.sql in VS Code, select all, run with SQLTools (Ctrl+E Ctrl+E)
 npm run dev                   # http://localhost:5175
 
 # frontend (in another terminal, from the repository root)
@@ -207,8 +206,23 @@ npm run dev                   # http://localhost:5173</code></pre>
       </section>
 
       <section class="section">
+        <h3>SQLTools and Database Passwords</h3>
+        <p>
+          SQLTools saves each connection in the project's <code>.vscode/settings.json</code>. With Password mode
+          <strong>Save as plaintext in settings</strong>, the database password is written into that file, and a
+          committed copy stays in the git history even after the file is deleted. This reference repository leaked a
+          database password exactly that way once, which makes it a useful example for students.
+        </p>
+        <ul>
+          <li>Use Password mode <strong>SQLTools Driver Credentials</strong> (the default, stored in VS Code's secure storage) or <strong>Ask on connect</strong>.</li>
+          <li>Keep <code>.vscode/settings.json</code> out of git with <code>.vscode/*</code> and <code>!.vscode/extensions.json</code> in <code>.gitignore</code>, as this repo does.</li>
+          <li>If a password is ever pushed, change it in Azure first, then clean up the repository.</li>
+        </ul>
+      </section>
+
+      <section class="section">
         <h3>Database Bootstrap SQL</h3>
-        <p>The schema is in <code>backend/db/schema.sql</code> (run it as shown above). It contains:</p>
+        <p>The schema is in <code>backend/db/schema.sql</code> (run it with SQLTools as described above). It contains:</p>
         <pre><code>CREATE DATABASE IF NOT EXISTS authdb;
 USE authdb;
 
