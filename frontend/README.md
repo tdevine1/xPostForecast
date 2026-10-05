@@ -40,12 +40,13 @@ You're not copying this code — you're building the *equivalent* structure for 
 
 ## 3. 🆕 Create Your Own GitHub Repository
 
-1. Go to [github.com/new](https://github.com/new) and create a new **empty** repository (choose your own name, e.g. `my-project-name`). Don't initialize it with a README, license, or `.gitignore` yet — you'll add those from your local project in a later step.
-2. Open **VS Code** and open a terminal (`` Ctrl+` ``).
-3. Clone your new (currently empty) repo:
+Follow your course's setup guide for the details (team naming, class organization, collaborators). In short:
+
+1. **One teammate** creates the repository at [github.com/new](https://github.com/new), owned by the course organization, set to **Private**, with **Add a README file** checked and the **Node** `.gitignore` template selected. That template already ignores `node_modules/` and `.env` files (but not `.env.example`).
+2. **Every teammate** clones it, either with VS Code's **Source Control → Clone Repository** or in a terminal (`` Ctrl+` ``):
 
    ```bash
-   git clone https://github.com/<your-username>/<your-repo-name>.git
+   git clone https://github.com/<organization>/<your-repo-name>.git
    cd <your-repo-name>
    ```
 
@@ -53,14 +54,14 @@ You're not copying this code — you're building the *equivalent* structure for 
 
 ## 4. 🏗️ Scaffold Your Project with Vite
 
-From inside your cloned repo folder, run:
+From the **top level** of your cloned repo folder (the one containing `README.md`), run:
 
 ```bash
 npm create vite@latest frontend -- --template react
 cd frontend
 ```
 
-This generates a new Vite + React project in a `frontend/` subfolder — mirroring how this reference repo separates `frontend/` from `backend/` (added in Sprint 2). If the tool asks whether to install dependencies and start the dev server now, either answer is fine; if the server starts, stop it with `Ctrl+C` and continue.
+This generates a new Vite + React project in a `frontend/` subfolder — mirroring how this reference repo separates `frontend/` from `backend/` (added in Sprint 2). Keep the app directly in `frontend/` (not nested deeper, such as `frontend/app/`): later sprints and the Sprint 4 deployment workflows assume `frontend/` and `backend/` sit side by side at the top of the repo. If the tool asks whether to install dependencies and start the dev server now, either answer is fine; if the server starts, stop it with `Ctrl+C` and continue.
 
 Vite also generates a starter `.gitignore` inside `frontend/` covering `node_modules/`, `dist/`, and editor files, and sets up **oxlint** as the project's linter (`npm run lint`).
 
@@ -190,7 +191,7 @@ Happy coding!
 
 ## 🛑 Don't Forget: Commit Your Work
 
-Vite's scaffold generates a `.gitignore` in `frontend/` covering `node_modules/` and `dist/`, but **it does not exclude `.env` by default** — double-check it does, or add `.env` to it yourself before you ever create one (you'll need one starting in Sprint 2 for secrets like database credentials).
+Vite's scaffold adds a `.gitignore` in `frontend/` covering `node_modules/` and `dist/`, but **it does not exclude `.env`**. The repo-level `.gitignore` from GitHub's **Node** template does. If your repo was created without that template, add `.env` to a `.gitignore` yourself before you ever create one (you'll need one starting in Sprint 2 for settings like the backend URL and database credentials).
 
 Before you `git add`, run `git status` and confirm nothing like `node_modules/` or a `.env` file is about to be committed.
 
