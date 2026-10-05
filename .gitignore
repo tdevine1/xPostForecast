@@ -16,8 +16,15 @@
 **/yarn-error.log*
 
 # IDE/editor settings
-.vscode/
+# .vscode/settings.json can hold secrets: SQLTools saves database connections there, and with
+# Password mode "Save as plaintext in settings" that includes the database password.
+# Ignore everything in .vscode except files meant to be shared, like recommended extensions.
+.vscode/*
+!.vscode/extensions.json
 *.swp
+
+# Azure deployment credentials (Sprint 4): a downloaded publish profile works like a password
+*.PublishSettings
 
 # OS junk
 .DS_Store
