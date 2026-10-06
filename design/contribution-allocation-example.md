@@ -6,7 +6,7 @@
 |---|---|---|
 | Team Member A | 100% | Wrote the grammatical parse of all eight user stories and turned its results into the class list used for the CRC cards. |
 | Team Member B | 100% | Drew both user story diagrams in draw.io and checked every connector against the parse's actors and external entities. |
-| Team Member C | 100% | Wrote the CRC cards for the eight backend classes and reconciled their collaborators with the frontend cards. |
+| Team Member C | 100% | Wrote the CRC cards for the ten backend classes and reconciled their collaborators with the frontend cards. |
 | Team Member D | 70% | Wrote the CRC cards for the frontend classes; missed the second team meeting, so others finished the review of those cards. |
 
 How to read the percentages:
