@@ -107,6 +107,12 @@ The backend code needs no changes: it was written from Sprint 2 on to read `PORT
 
 ---
 
+## 📐 Design Artifacts (Milestones 2–4)
+
+Worked examples of the course's design deliverables for this app are in [`design/`](./design): user stories, a grammatical parse, user story diagrams, CRC cards, three architecture views, and four component designs (pseudocode and flowchart for each). They describe the code on this branch.
+
+---
+
 ## 🔧 Maintaining This Repo (Instructors)
 
 **Per-semester Azure setup** for this reference deployment (resources, GitHub secrets and variables) is in the [instructor runbook](https://tdevine1.github.io/xPostForecast/deployment-steps.html). The deploy workflows only run while the repository variable `DEPLOY_TO_AZURE` is `true`; the rest of the year they show as skipped, and CI still tests every push.
