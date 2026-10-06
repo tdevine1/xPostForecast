@@ -41,11 +41,11 @@ Three distinct views, each readable on its own:
 
 | View | File |
 |---|---|
-| 1. Overall architectural style: client–server with a layered server | [`architecture-1-client-server.pdf`](./milestone-3/architecture-1-client-server.pdf) |
-| 2. Navigation design: pages, the actions between them, and the login check | [`architecture-2-navigation.pdf`](./milestone-3/architecture-2-navigation.pdf) |
+| 1. Overall architectural style: deployment on Azure, with the Model–View–Controller roles marked | [`architecture-1-deployment-mvc.pdf`](./milestone-3/architecture-1-deployment-mvc.pdf) |
+| 2. Navigation design: every screen and screen state, and the action that moves between them | [`architecture-2-navigation.pdf`](./milestone-3/architecture-2-navigation.pdf) |
 | 3. Control flow: the backend's hierarchical calling structure (structure chart) | [`architecture-3-control-flow.pdf`](./milestone-3/architecture-3-control-flow.pdf) |
 
-![Architecture 1](./milestone-3/architecture-1-client-server.png)
+![Architecture 1](./milestone-3/architecture-1-deployment-mvc.png)
 
 ![Architecture 2](./milestone-3/architecture-2-navigation.png)
 
@@ -53,9 +53,10 @@ Three distinct views, each readable on its own:
 
 Principles from the lectures that each view makes visible:
 
-- **Layering:** in view 1, each server layer calls only the one directly below it.
+- **Model–View–Controller:** view 1 marks which part of the system plays each role. The View (React) runs in the browser, and its files are hosted by the Static Web App. The Controller (the Express routes) and the Model (the data classes, the MySQL database, and Planetary Computer) are on the server side.
+- **Client–server:** view 1 shows that the browser talks to two servers. It downloads the app from the Static Web App, then calls the App Service's REST API directly.
 - **Separation of concerns:** in views 1 and 3, the login check (AuthGuard) is separate from the routes it protects.
-- **Information hiding:** in view 1, only the data access layer talks to the database, and only the service layer talks to Planetary Computer.
+- **Information hiding:** in view 3, only UserStore talks to the database, and every contact with Planetary Computer happens inside the MonthLoader branch (catalog search, UrlSigner, TemperatureGrid).
 - **Simplicity:** each diagram shows one view, with a title and a one-line explanation, and nothing it doesn't need.
 
 ## Milestone 4: Component-Level Design
