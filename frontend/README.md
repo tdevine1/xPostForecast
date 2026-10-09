@@ -43,7 +43,11 @@ You're not copying this code — you're building the *equivalent* structure for 
 Follow your course's setup guide for the details (team naming, class organization, collaborators). In short:
 
 1. **One teammate** creates the repository at [github.com/new](https://github.com/new), owned by the course organization, set to **Private**, with **Add a README file** checked and the **Node** `.gitignore` template selected. That template already ignores `node_modules/` and `.env` files (but not `.env.example`).
-2. **Every teammate** clones it, either with VS Code's **Source Control → Clone Repository** or in a terminal (`` Ctrl+` ``):
+2. **The same teammate adds every team member** right away, so each person can push commits under their own account (never share one login). In the repo go to **Settings → Collaborators and teams → Add people**, invite each teammate by GitHub username, and have them accept the invitation. Give each person only the access they need, the **principle of least privilege**:
+   - **Write** is enough for day-to-day work: cloning, branching, pushing, and opening pull requests. Choose **Write** for every teammate, not Admin.
+   - Keep **Admin** for **one person** only (the teammate who created the repo). Admin can change settings, add deployment secrets, manage who has access, and delete the repository. Those powers are rarely needed and can cause real damage if misused or if an account is compromised.
+   - You'll need that one Admin again in Sprint 4, when the deployment secrets are added.
+3. **Every teammate** clones it, either with VS Code's **Source Control → Clone Repository** or in a terminal (`` Ctrl+` ``):
 
    ```bash
    git clone https://github.com/<organization>/<your-repo-name>.git
@@ -179,6 +183,7 @@ By the end of Sprint 1, your own app should have:
 ## ✅ You Now Have
 
 - Created your own GitHub repository and cloned it locally
+- Added every teammate with Write access (Admin for one person only)
 - Scaffolded a Vite React app of your own from scratch
 - Installed dependencies and structured your project
 - Built and previewed an interactive frontend for your own topic
