@@ -124,6 +124,8 @@ Get the token: Azure Portal → your Static Web App → **Manage deployment toke
 
 In your GitHub repo: **Settings → Secrets and variables → Actions → New repository secret**.
 
+> **Admin only:** only your repo's **Admin** (the one person with Admin access, per Sprint 1) can see **Settings** and add secrets. Everyone else keeps **Write** access, the principle of least privilege.
+
 | Name | Value | Needed for |
 |---|---|---|
 | `VITE_BACKEND_API_URL` | `https://<your-backend>.azurewebsites.net` (**no trailing slash**) | A and B |

@@ -48,6 +48,8 @@ This downloads an XML file (`<app-name>.PublishSettings`).
 
 In your GitHub repo: **Settings → Secrets and variables → Actions**.
 
+> **Admin only:** the **Settings** tab (and secrets) is only visible to a repo **Admin**. Following the principle of least privilege, only one teammate has Admin (see Sprint 1, section 3); that person adds the secrets, and everyone else keeps **Write** access.
+
 1. **Secrets** tab → **New repository secret**:
    - Name: `APP_SERVICE_PUBLISH_PROFILE`
    - Value: the **entire** contents of the `.PublishSettings` file
