@@ -57,7 +57,7 @@
           <li>Node.js 24 LTS and npm (current Vite releases don't run on older Node versions)</li>
           <li>Git</li>
           <li>VS Code</li>
-          <li>VS Code extensions <strong>SQLTools</strong> (Matheus Teixeira) and <strong>SQLTools MySQL/MariaDB/TiDB</strong>; the repo's <code>.vscode/extensions.json</code> recommends both</li>
+          <li>VS Code extensions <strong>SQLTools</strong> (Matheus Teixeira) and <strong>SQLTools MySQL/MariaDB/TiDB</strong>; optional, for browsing the database from VS Code; the repo's <code>.vscode/extensions.json</code> recommends both</li>
           <li>GitHub repository access for your course project</li>
           <li>Azure access details from instructor or WVU support staff</li>
         </ul>
@@ -134,7 +134,8 @@ git switch main          # back to the finished app</code></pre>
           <li>Allow your public IP address in the Azure MySQL server's <strong>Networking</strong> firewall rules.</li>
           <li>Install backend dependencies and create <code>backend/.env</code> from <code>.env.example</code>.</li>
           <li>Create the schema from the Azure Portal: MySQL server → <strong>Connect</strong> → Cloud Shell, run the <code>mysql</code> command shown, and paste <code>backend/db/schema.sql</code> at the <code>mysql&gt;</code> prompt. This works without a firewall rule for your IP, because Cloud Shell runs inside Azure.</li>
-          <li>Connect to Azure MySQL with SQLTools (SSL enabled, CA file <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>, a Password mode other than plaintext) to confirm your own computer can reach it, then run the backend.</li>
+          <li>Run the backend. Its log line <code>Successfully connected to MySQL</code> confirms your computer can reach the database; a timeout means your IP isn't in the firewall rules yet.</li>
+          <li>Optional: connect SQLTools for browsing the data (SSL enabled, CA file <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>, a Password mode other than plaintext).</li>
           <li>Install frontend dependencies, create <code>frontend/.env</code>, run Vite, and test the login flow.</li>
         </ol>
         <pre><code># Example using the reference repository (main branch)
@@ -208,9 +209,9 @@ npm run dev                   # http://localhost:5173</code></pre>
       </section>
 
       <section class="section">
-        <h3>SQLTools and Database Passwords</h3>
+        <h3>SQLTools (Optional) and Database Passwords</h3>
         <p>
-          SQLTools saves each connection in the project's <code>.vscode/settings.json</code>. With Password mode
+          Students who use SQLTools to browse the database should know that it saves each connection in the project's <code>.vscode/settings.json</code>. With Password mode
           <strong>Save as plaintext in settings</strong>, the database password is written into that file, and a
           committed copy stays in the git history even after the file is deleted. This reference repository leaked a
           database password exactly that way once, which makes it a useful example for students.
