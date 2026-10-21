@@ -35,7 +35,7 @@ backend/
 ## 🛠 Prerequisites
 
 - **Node.js 24 LTS**
-- **VS Code** with the **SQLTools** and **SQLTools MySQL/MariaDB/TiDB** extensions (from Sprint 1)
+- **VS Code** (the **SQLTools** extensions from Sprint 1 are optional, for browsing the database)
 - An **Azure Database for MySQL – Flexible Server** (your instructor provides the host, admin user, and password)
 - Your current public IP address allowed in **Azure Portal → your MySQL server → Networking → Firewall rules**
 
@@ -107,7 +107,7 @@ mv ~/Downloads/DigiCertGlobalRootG2.crt.pem backend/config/DigiCertGlobalRootG2.
 
 ## 4) Create the Database and `users` Table (Azure Portal)
 
-The quickest way to create the schema is from the Azure Portal itself: its **Connect** page opens a MySQL session in **Azure Cloud Shell**, a terminal in your browser, so there's nothing to install and no firewall rule to add for your own computer.
+The quickest way to create the schema is from the Azure Portal itself: its **Connect** page opens a MySQL session in **Azure Cloud Shell**, a terminal in your browser, so there's nothing to install, and this step works even before your IP address is in the firewall rules.
 
 1. **Azure Portal** → your **MySQL Flexible Server** → **Connect** (on the **Overview** toolbar, or under **Settings**).
 2. Open **Cloud Shell** from the Connect page. The first time, choose **Bash**; if it asks about storage, choose **No storage account required**.
@@ -137,77 +137,11 @@ The `UNIQUE` constraints are what stop two accounts from sharing a username or e
 
 > **Type the password at the prompt, never on the command line.** `mysql -p` asks for it without showing it. Writing it into the command (`-pMyPassword`) saves it in the shell's history, where anyone using that shell later can read it.
 
-If Cloud Shell can't connect (`ERROR 2002 (HY000): Can't connect to MySQL server`), the server isn't allowing connections from Azure services. Ask your instructor to turn on **Allow public access from any Azure service within Azure to this server** in **Networking**, or use SQLTools (step 5) to run the file instead.
+If Cloud Shell can't connect (`ERROR 2002 (HY000): Can't connect to MySQL server`), the server isn't allowing connections from Azure services. Ask your instructor to turn on **Allow public access from any Azure service within Azure to this server** in **Networking**, or run the file with SQLTools instead (see **Optional: Browse the Database** below).
 
 ---
 
-## 5) Connect from VS Code with SQLTools
-
-Cloud Shell runs inside Azure. Your backend runs on **your** computer, so also confirm your computer can reach the database, using the **SQLTools** extension and its **SQLTools MySQL/MariaDB/TiDB** driver (installed in Sprint 1; VS Code suggests them when you open this repo). You'll use this connection to look at the `users` table while you test registration.
-
-1. Click the **SQLTools** icon (a database cylinder) in VS Code's left sidebar → **Add New Connection** → **MySQL**.
-2. Fill in the form:
-
-   | Field | Value |
-   |---|---|
-   | Connection name | anything, e.g. `xPostForecast Azure` |
-   | Connect using | **Server and Port** |
-   | Server Address | your `DB_HOST`, e.g. `<your-server>.mysql.database.azure.com` |
-   | Port | `3306` |
-   | Database | `authdb` |
-   | Username | your `DB_USER` |
-   | **Password mode** | **SQLTools Driver Credentials** (the default) or **Ask on connect**. **Never "Save as plaintext in settings"**; see the box below. |
-   | MySQL driver specific options → SSL | **Enabled**, with **Certificate Authority (CA) Certificate File** set to `backend/config/DigiCertGlobalRootG2.crt.pem` |
-
-3. Click **Test Connection**, then **Save Connection**, then connect to it from the SQLTools sidebar. If the test times out, add your current IP address in Azure → MySQL server → **Networking**.
-4. Open a new SQL file (or use the query editor SQLTools opens) and run:
-
-   ```sql
-   SELECT CURRENT_USER();
-   SELECT id, email, username, created_at FROM users;
-   ```
-
-   Run a query by placing the cursor in it and pressing **Ctrl+E Ctrl+E** (**Cmd+E Cmd+E** on macOS), or with the **Run on active connection** link SQLTools shows above the query. The table is empty until someone registers in step 7.
-
-These are the same `DB_HOST` / `DB_USER` / `DB_PASSWORD` values as in `.env`: if SQLTools connects, the app's connection will work too. (If you skipped step 4, open `db/schema.sql` with this connection active, select the whole file with **Ctrl+A**, and run it with **Ctrl+E Ctrl+E**. Set **Database** to `mysql` for that first connection, since `authdb` doesn't exist yet.)
-
-> ### 🔐 Where SQLTools keeps your connection (read this)
->
-> SQLTools saves the connection in **`.vscode/settings.json`** inside your project. What it saves depends on **Password mode**:
->
-> - **SQLTools Driver Credentials**: the password goes into VS Code's secure credential storage, not the file.
-> - **Ask on connect**: the password isn't stored anywhere; you type it each time.
-> - **Save as plaintext in settings**: the password is written **in plain text** into `.vscode/settings.json`.
->
-> If that file is ever committed, everyone who can see the repository, now or later, can read the password, and removing the file in a later commit doesn't help: it stays in the git history. **This reference repository made exactly this mistake once**: a database password saved by SQLTools was committed and stayed visible in the history until the history was rewritten.
->
-> Two layers of protection, use both:
-> 1. Choose a password mode that doesn't write the password to the file.
-> 2. Keep `.vscode/settings.json` out of git. This repo's `.gitignore` does that while still sharing `extensions.json`:
->
->    ```gitignore
->    .vscode/*
->    !.vscode/extensions.json
->    ```
->
-> Check with `git status` before every commit: `.vscode/settings.json` should never appear. If a password does get pushed, assume it's compromised: **change it in Azure first**, then clean up the repository.
-
-<details>
-<summary>Prefer the command line? The <code>mysql</code> client works too</summary>
-
-Install it (Windows: `winget install Oracle.MySQL`, then fully restart VS Code; macOS: `brew install mysql-client`; Debian/Ubuntu: `sudo apt install mysql-client`), then from the `backend/` folder:
-
-```bash
-mysql -h <your-server>.mysql.database.azure.com -u <your-admin-user> -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem
-```
-
-To run the schema with it instead of step 4: add `< db/schema.sql` to the end of that command.
-
-</details>
-
----
-
-## 6) Run the Backend
+## 5) Run the Backend
 
 ```bash
 npm run dev     # restarts automatically when you save a file (node --watch)
@@ -227,11 +161,13 @@ Successfully connected to MySQL
 
 (The last two lines can appear in either order: the server and the database connection start at the same time.)
 
+`Successfully connected to MySQL` confirms your computer can reach the database. If you see `MySQL connection failed on startup` with `ETIMEDOUT` instead, add your current public IP in **Azure Portal → your MySQL server → Networking** (it changes between home, campus, and hotspots) and start the backend again.
+
 Check it's alive at <http://localhost:5175/health>, which should return `{"ok":true,"env":"development"}`.
 
 ---
 
-## 7) Test the Auth Routes
+## 6) Test the Auth Routes
 
 All routes are mounted under `/auth`:
 
@@ -267,7 +203,7 @@ curl -i -X POST http://localhost:5175/auth/logout -b cookies.txt
 
 ---
 
-## 8) Automated Tests
+## 7) Automated Tests
 
 ```bash
 npm test        # Vitest + Supertest
@@ -275,6 +211,72 @@ npm run lint    # oxlint
 ```
 
 `tests/auth.test.js` sends real HTTP requests to the Express app (imported from `app.js`, so no server or port is needed) and replaces the database with a mock, so the tests run anywhere, including GitHub Actions. They check things that are easy to break without noticing, for example that passwords are stored only as hashes, the cookie is `HttpOnly`, and a token signed with the wrong secret is rejected.
+
+---
+
+## 🔎 Optional: Browse the Database from VS Code (SQLTools)
+
+You don't need this to build or run the app, but it's handy for looking at the `users` table while you test registration, without opening the portal. It uses the **SQLTools** extension and its **SQLTools MySQL/MariaDB/TiDB** driver (suggested in Sprint 1; VS Code offers them when you open this repo). It connects from **your** computer, so it needs the firewall rule from the prerequisites.
+
+1. Click the **SQLTools** icon (a database cylinder) in VS Code's left sidebar → **Add New Connection** → **MySQL**.
+2. Fill in the form:
+
+   | Field | Value |
+   |---|---|
+   | Connection name | anything, e.g. `xPostForecast Azure` |
+   | Connect using | **Server and Port** |
+   | Server Address | your `DB_HOST`, e.g. `<your-server>.mysql.database.azure.com` |
+   | Port | `3306` |
+   | Database | `authdb` |
+   | Username | your `DB_USER` |
+   | **Password mode** | **SQLTools Driver Credentials** (the default) or **Ask on connect**. **Never "Save as plaintext in settings"**; see the box below. |
+   | MySQL driver specific options → SSL | **Enabled**, with **Certificate Authority (CA) Certificate File** set to `backend/config/DigiCertGlobalRootG2.crt.pem` |
+
+3. Click **Test Connection**, then **Save Connection**, then connect to it from the SQLTools sidebar. If the test times out, add your current IP address in Azure → MySQL server → **Networking**.
+4. Open a new SQL file (or use the query editor SQLTools opens) and run:
+
+   ```sql
+   SELECT CURRENT_USER();
+   SELECT id, email, username, created_at FROM users;
+   ```
+
+   Run a query by placing the cursor in it and pressing **Ctrl+E Ctrl+E** (**Cmd+E Cmd+E** on macOS), or with the **Run on active connection** link SQLTools shows above the query. The table is empty until someone registers (step 6).
+
+These are the same `DB_HOST` / `DB_USER` / `DB_PASSWORD` values as in `.env`. SQLTools can also run the schema if Cloud Shell isn't available: connect with **Database** set to `mysql` (since `authdb` doesn't exist yet), open `db/schema.sql`, select all (**Ctrl+A**), and run it (**Ctrl+E Ctrl+E**).
+
+> ### 🔐 Where SQLTools keeps your connection (read this)
+>
+> SQLTools saves the connection in **`.vscode/settings.json`** inside your project. What it saves depends on **Password mode**:
+>
+> - **SQLTools Driver Credentials**: the password goes into VS Code's secure credential storage, not the file.
+> - **Ask on connect**: the password isn't stored anywhere; you type it each time.
+> - **Save as plaintext in settings**: the password is written **in plain text** into `.vscode/settings.json`.
+>
+> If that file is ever committed, everyone who can see the repository, now or later, can read the password, and removing the file in a later commit doesn't help: it stays in the git history. **This reference repository made exactly this mistake once**: a database password saved by SQLTools was committed and stayed visible in the history until the history was rewritten.
+>
+> Two layers of protection, use both:
+> 1. Choose a password mode that doesn't write the password to the file.
+> 2. Keep `.vscode/settings.json` out of git. This repo's `.gitignore` does that while still sharing `extensions.json`:
+>
+>    ```gitignore
+>    .vscode/*
+>    !.vscode/extensions.json
+>    ```
+>
+> Check with `git status` before every commit: `.vscode/settings.json` should never appear. If a password does get pushed, assume it's compromised: **change it in Azure first**, then clean up the repository.
+
+<details>
+<summary>Prefer the command line? The <code>mysql</code> client works too</summary>
+
+Install it (Windows: `winget install Oracle.MySQL`, then fully restart VS Code; macOS: `brew install mysql-client`; Debian/Ubuntu: `sudo apt install mysql-client`), then from the `backend/` folder:
+
+```bash
+mysql -h <your-server>.mysql.database.azure.com -u <your-admin-user> -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem
+```
+
+To run the schema with it instead of the portal: add `< db/schema.sql` to the end of that command.
+
+</details>
 
 ---
 
