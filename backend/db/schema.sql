@@ -1,7 +1,8 @@
 -- Database schema for xPostForecast (Sprint 2 onward).
--- Run once against your Azure Database for MySQL server: open this file in VS Code with your
--- SQLTools connection active, select all (Ctrl+A), and run it (Ctrl+E Ctrl+E).
--- Or with the mysql client, from the backend/ folder:
+-- Run once against your Azure Database for MySQL server. Easiest: Azure Portal -> your server ->
+-- Connect -> Cloud Shell, run the mysql command it shows, and paste this whole file at the mysql> prompt.
+-- Or open this file in VS Code with your SQLTools connection active, select all (Ctrl+A), and run it
+-- (Ctrl+E Ctrl+E). Or with the mysql client, from the backend/ folder:
 --   mysql -h <your-server>.mysql.database.azure.com -u <your-admin-user> -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem < db/schema.sql
 
 CREATE DATABASE IF NOT EXISTS authdb;

@@ -105,9 +105,45 @@ mv ~/Downloads/DigiCertGlobalRootG2.crt.pem backend/config/DigiCertGlobalRootG2.
 
 ---
 
-## 4) Connect with SQLTools
+## 4) Create the Database and `users` Table (Azure Portal)
 
-Before wiring up the code, confirm you can reach the database from VS Code with the **SQLTools** extension and its **SQLTools MySQL/MariaDB/TiDB** driver (installed in Sprint 1; VS Code suggests them when you open this repo).
+The quickest way to create the schema is from the Azure Portal itself: its **Connect** page opens a MySQL session in **Azure Cloud Shell**, a terminal in your browser, so there's nothing to install and no firewall rule to add for your own computer.
+
+1. **Azure Portal** → your **MySQL Flexible Server** → **Connect** (on the **Overview** toolbar, or under **Settings**).
+2. Open **Cloud Shell** from the Connect page. The first time, choose **Bash**; if it asks about storage, choose **No storage account required**.
+3. Run the `mysql` command the Connect page shows (your server name and admin user are already filled in), and type your admin password when asked. You're connected when you see the `mysql>` prompt.
+4. Open [`db/schema.sql`](./db/schema.sql) in VS Code, copy all of it, and paste it at the `mysql>` prompt (right-click → **Paste**, or **Shift+Insert**). Each statement prints `Query OK`.
+5. Check the result, then leave:
+
+   ```sql
+   SHOW TABLES FROM authdb;
+   DESCRIBE authdb.users;
+   exit
+   ```
+
+The schema creates the `authdb` database and this table:
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+The `UNIQUE` constraints are what stop two accounts from sharing a username or email; the backend turns that database error into a `409` response. Running the file again is harmless: `IF NOT EXISTS` skips anything that's already there.
+
+> **Type the password at the prompt, never on the command line.** `mysql -p` asks for it without showing it. Writing it into the command (`-pMyPassword`) saves it in the shell's history, where anyone using that shell later can read it.
+
+If Cloud Shell can't connect (`ERROR 2002 (HY000): Can't connect to MySQL server`), the server isn't allowing connections from Azure services. Ask your instructor to turn on **Allow public access from any Azure service within Azure to this server** in **Networking**, or use SQLTools (step 5) to run the file instead.
+
+---
+
+## 5) Connect from VS Code with SQLTools
+
+Cloud Shell runs inside Azure. Your backend runs on **your** computer, so also confirm your computer can reach the database, using the **SQLTools** extension and its **SQLTools MySQL/MariaDB/TiDB** driver (installed in Sprint 1; VS Code suggests them when you open this repo). You'll use this connection to look at the `users` table while you test registration.
 
 1. Click the **SQLTools** icon (a database cylinder) in VS Code's left sidebar → **Add New Connection** → **MySQL**.
 2. Fill in the form:
@@ -118,22 +154,22 @@ Before wiring up the code, confirm you can reach the database from VS Code with 
    | Connect using | **Server and Port** |
    | Server Address | your `DB_HOST`, e.g. `<your-server>.mysql.database.azure.com` |
    | Port | `3306` |
-   | Database | `mysql` for now (`authdb` doesn't exist until step 5) |
+   | Database | `authdb` |
    | Username | your `DB_USER` |
    | **Password mode** | **SQLTools Driver Credentials** (the default) or **Ask on connect**. **Never "Save as plaintext in settings"**; see the box below. |
    | MySQL driver specific options → SSL | **Enabled**, with **Certificate Authority (CA) Certificate File** set to `backend/config/DigiCertGlobalRootG2.crt.pem` |
 
-3. Click **Test Connection**, then **Save Connection**, then connect to it from the SQLTools sidebar.
+3. Click **Test Connection**, then **Save Connection**, then connect to it from the SQLTools sidebar. If the test times out, add your current IP address in Azure → MySQL server → **Networking**.
 4. Open a new SQL file (or use the query editor SQLTools opens) and run:
 
    ```sql
-   SHOW DATABASES;
    SELECT CURRENT_USER();
+   SELECT id, email, username, created_at FROM users;
    ```
 
-   Run a query by placing the cursor in it and pressing **Ctrl+E Ctrl+E** (**Cmd+E Cmd+E** on macOS), or with the **Run on active connection** link SQLTools shows above the query.
+   Run a query by placing the cursor in it and pressing **Ctrl+E Ctrl+E** (**Cmd+E Cmd+E** on macOS), or with the **Run on active connection** link SQLTools shows above the query. The table is empty until someone registers in step 7.
 
-These are the same `DB_HOST` / `DB_USER` / `DB_PASSWORD` values as in `.env`: if SQLTools connects, the app's connection will work too.
+These are the same `DB_HOST` / `DB_USER` / `DB_PASSWORD` values as in `.env`: if SQLTools connects, the app's connection will work too. (If you skipped step 4, open `db/schema.sql` with this connection active, select the whole file with **Ctrl+A**, and run it with **Ctrl+E Ctrl+E**. Set **Database** to `mysql` for that first connection, since `authdb` doesn't exist yet.)
 
 > ### 🔐 Where SQLTools keeps your connection (read this)
 >
@@ -165,31 +201,9 @@ Install it (Windows: `winget install Oracle.MySQL`, then fully restart VS Code; 
 mysql -h <your-server>.mysql.database.azure.com -u <your-admin-user> -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem
 ```
 
+To run the schema with it instead of step 4: add `< db/schema.sql` to the end of that command.
+
 </details>
-
----
-
-## 5) Create the Database and `users` Table
-
-The schema is in [`db/schema.sql`](./db/schema.sql). Open it in VS Code with your SQLTools connection active, select the whole file (**Ctrl+A**), and run it (**Ctrl+E Ctrl+E**).
-
-(With the `mysql` client instead, from the `backend/` folder: `mysql -h <your-server>.mysql.database.azure.com -u <your-admin-user> -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem < db/schema.sql`.)
-
-Afterwards, refresh the connection in the SQLTools sidebar: `authdb` with its `users` table should appear. You can edit the connection's **Database** to `authdb` from now on.
-
-It creates the `authdb` database and this table:
-
-```sql
-CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  username VARCHAR(255) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-The `UNIQUE` constraints are what stop two accounts from sharing a username or email; the backend turns that database error into a `409` response.
 
 ---
 
@@ -296,9 +310,10 @@ fetch(`${API_URL}/auth/test`, { credentials: 'include' });           // fetch
 | CORS error, or cookie not set | Wrong `FRONTEND_URL`, or missing `credentials` on either side | `FRONTEND_URL` must match the frontend's address exactly (`http://localhost:5173`, no trailing slash) |
 | `409` on register | Username or email already exists | Choose another, or delete the row in MySQL |
 | `429 Too Many Requests` | Rate limit reached | Wait 15 minutes, or restart the backend (the counter is in memory) |
+| Cloud Shell: `ERROR 2002 (HY000): Can't connect to MySQL server` | Server doesn't allow connections from Azure services | Ask your instructor to enable **Allow public access from any Azure service within Azure to this server** (Networking), or run the schema with SQLTools |
 | `MySQL connection failed on startup` + `ETIMEDOUT` / `ERROR 2002` | Firewall rule missing or wrong host | Add your current IP in Azure → Networking; check `DB_HOST` |
 | `Access denied for user` | Wrong username or password | Check `DB_USER` / `DB_PASSWORD` against the **Connect** page in the Azure Portal |
-| `ER_BAD_DB_ERROR: Unknown database 'authdb'` | Schema not created | Run `db/schema.sql` (step 5) |
+| `ER_BAD_DB_ERROR: Unknown database 'authdb'` | Schema not created | Run `db/schema.sql` (step 4) |
 | Backend TLS/SSL errors (`self-signed certificate`, `ERROR 2026` in the CLI) | Wrong or missing CA file | Make sure `config/DigiCertGlobalRootG2.crt.pem` is the certificate downloaded from Azure |
 | SQLTools: **Test Connection** fails with a timeout | Firewall rule missing for your current IP | Azure → MySQL server → Networking → add your IP (it changes between home, campus, and hotspots) |
 | SQLTools: certificate or SSL error | SSL disabled or CA file path wrong | Set SSL to **Enabled** and point **Certificate Authority (CA) Certificate File** at `backend/config/DigiCertGlobalRootG2.crt.pem` |
