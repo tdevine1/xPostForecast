@@ -133,7 +133,8 @@ git switch main          # back to the finished app</code></pre>
           <li>Clone the project repository and open it in VS Code.</li>
           <li>Allow your public IP address in the Azure MySQL server's <strong>Networking</strong> firewall rules.</li>
           <li>Install backend dependencies and create <code>backend/.env</code> from <code>.env.example</code>.</li>
-          <li>Connect to Azure MySQL with SQLTools (SSL enabled, CA file <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>, a Password mode other than plaintext), run <code>backend/db/schema.sql</code>, then run the backend.</li>
+          <li>Create the schema from the Azure Portal: MySQL server → <strong>Connect</strong> → Cloud Shell, run the <code>mysql</code> command shown, and paste <code>backend/db/schema.sql</code> at the <code>mysql&gt;</code> prompt. This works without a firewall rule for your IP, because Cloud Shell runs inside Azure.</li>
+          <li>Connect to Azure MySQL with SQLTools (SSL enabled, CA file <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>, a Password mode other than plaintext) to confirm your own computer can reach it, then run the backend.</li>
           <li>Install frontend dependencies, create <code>frontend/.env</code>, run Vite, and test the login flow.</li>
         </ol>
         <pre><code># Example using the reference repository (main branch)
@@ -144,7 +145,8 @@ cd xPostForecast
 cd backend
 npm install
 cp .env.example .env          # then fill in the values (table below)
-# create the schema: open db/schema.sql in VS Code, select all, run with SQLTools (Ctrl+E Ctrl+E)
+# create the schema once: Azure Portal -> MySQL server -> Connect -> Cloud Shell, paste db/schema.sql
+#   (or open it in VS Code, select all, run with SQLTools: Ctrl+E Ctrl+E)
 npm run dev                   # http://localhost:5175
 
 # frontend (in another terminal, from the repository root)
@@ -222,7 +224,7 @@ npm run dev                   # http://localhost:5173</code></pre>
 
       <section class="section">
         <h3>Database Bootstrap SQL</h3>
-        <p>The schema is in <code>backend/db/schema.sql</code> (run it with SQLTools as described above). It contains:</p>
+        <p>The schema is in <code>backend/db/schema.sql</code> (run it from the portal's Connect page or with SQLTools, as described above). It contains:</p>
         <pre><code>CREATE DATABASE IF NOT EXISTS authdb;
 USE authdb;
 

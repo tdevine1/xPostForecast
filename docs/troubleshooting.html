@@ -130,6 +130,11 @@
               <td>Enable "Allow public access from any Azure service" on the MySQL server, or escalate to WVU cloud support.</td>
             </tr>
             <tr>
+              <td>Portal <strong>Connect</strong> → Cloud Shell: <code>ERROR 2002 (HY000): Can't connect to MySQL server</code></td>
+              <td>Server networking doesn't allow Azure services</td>
+              <td>Enable "Allow public access from any Azure service within Azure to this server" in the MySQL server's Networking page.</td>
+            </tr>
+            <tr>
               <td>Cannot connect from local tools</td>
               <td>Client IP not allowed</td>
               <td>Add or update the Azure MySQL firewall rule for your public IP.</td>
