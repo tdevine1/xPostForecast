@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="West Virginia University cloud deployment documentation for faculty and staff." />
-  <title>WVU Cloud Deployment Docs</title>
+  <meta name="description" content="Guides for the WVU CS 330 full-stack project: an instructor setup and deployment runbook, and student guides." />
+  <title>CS 330 Project Guides | WVU</title>
   <link rel="stylesheet" href="site.css" />
 </head>
 <body>
@@ -12,106 +12,64 @@
     <div class="container topbar-inner">
       <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
       <div>
-        <h1>WVU Cloud Deployment Documentation</h1>
-        <p>Complete faculty and staff guide for project setup, Azure deployment, and support workflows.</p>
+        <h1>CS 330 Project Guides</h1>
+        <p>Building, deploying, and learning with the xPostForecast reference app.</p>
       </div>
     </div>
   </header>
 
-  <div class="container layout">
-    <aside class="sidebar">
-      <h2>Guide Navigation</h2>
-      <ul>
-        <li><a class="active-link" aria-current="page" href="index.html">Home</a></li>
-        <li><a href="getting-started.html">1. Getting Started</a></li>
-        <li><a href="github-setup.html">2. GitHub Setup</a></li>
-        <li><a href="azure-basics.html">3. Azure Basics</a></li>
-        <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
-        <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
-      </ul>
-    </aside>
-
+  <div class="container landing">
     <main class="main">
       <section class="hero">
-        <h2>Welcome</h2>
+        <h2>Choose your guide</h2>
         <p>
-          This website is the WVU instructor and staff handbook for deploying the xPostForecast full-stack
-          application from local development to Microsoft Azure cloud hosting.
-        </p>
-        <p>
-          It reorganizes the project's README files into a single step-by-step flow so a professor can go from
-          initial setup through final production validation, and it adds the instructor-only steps (provisioning
-          Azure resources each semester) that the student guides leave out.
-        </p>
-        <div class="notice">
-          <strong>WVU note:</strong> For WVU courses, resource groups are not self-created by project teams.
-          Submit a request to <strong>Statler ITS</strong> to have resource groups created or updated.
-        </div>
-        <div class="button-row">
-          <a class="button gold" href="getting-started.html">Start Here</a>
-          <a class="button" href="deployment-steps.html">View End-to-End Runbook</a>
-        </div>
-      </section>
-
-      <section class="section">
-        <h3>How to use this documentation</h3>
-        <p>
-          If you are new to cloud deployment support, follow these pages in order. Each page explains what to verify,
-          why the step matters, and what success should look like before moving to the next stage.
-        </p>
-        <ol>
-          <li>Read <a href="getting-started.html">Getting Started</a> for prerequisites and required access.</li>
-          <li>Use <a href="github-setup.html">GitHub Setup</a> to configure repo workflows and secrets.</li>
-          <li>Use <a href="azure-basics.html">Azure Basics</a> to confirm Azure resources and settings.</li>
-          <li>Follow <a href="deployment-steps.html">Deployment Steps</a> from first local run to production, including the per-semester setup checklist.</li>
-          <li>Use <a href="troubleshooting.html">Troubleshooting</a> for common errors and quick fixes.</li>
-        </ol>
-      </section>
-
-      <section class="section">
-        <h3>How the course repository is organized</h3>
-        <p>
-          <a href="https://github.com/tdevine1/xPostForecast">xPostForecast</a> keeps each sprint on its own branch,
-          with the app's <code>frontend/</code> and <code>backend/</code> folders at the top level of every branch:
-        </p>
-        <table>
-          <thead>
-            <tr><th>Branch</th><th>Sprint</th><th>Adds</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><code>sprint-1</code></td><td>1</td><td>React (Vite) frontend: Leaflet map and month/year selector</td></tr>
-            <tr><td><code>sprint-2</code></td><td>2</td><td>Express backend, Azure MySQL, login with JWT cookies</td></tr>
-            <tr><td><code>sprint-3</code></td><td>3</td><td>NOAA temperature data from the Planetary Computer STAC API</td></tr>
-            <tr><td><code>main</code></td><td>4</td><td>Deployment to Azure with GitHub Actions; also holds this site in <code>docs/</code></td></tr>
-          </tbody>
-        </table>
-        <p>
-          GitHub's compare view shows exactly what each sprint changed, for example
-          <a href="https://github.com/tdevine1/xPostForecast/compare/sprint-2...sprint-3">sprint-2...sprint-3</a>.
+          CS 330 teams build a full-stack web app (React and Vite, Node.js and Express, Azure Database for MySQL) and
+          deploy it to Microsoft Azure over four sprints. The
+          <a href="https://github.com/tdevine1/xPostForecast">xPostForecast reference app</a> shows what each finished
+          sprint looks like.
         </p>
       </section>
 
-      <section class="section">
-        <h3>What these guides cover</h3>
-        <ul>
-          <li>Local project setup with Vite, React, Node.js, Express, and MySQL.</li>
-          <li>Authentication with JWT in HTTP-only cookies and protected routes.</li>
-          <li>Azure MySQL connection using a CA certificate and environment variables.</li>
-          <li>STAC climate data integration through Microsoft Planetary Computer APIs.</li>
-          <li>Cloud deployment via Azure App Service, Azure Static Web Apps, and GitHub Actions.</li>
-          <li>Validation steps, health checks, and production troubleshooting.</li>
-        </ul>
-        <p>
-          This site is published with GitHub Pages from the <code>docs/</code> folder of the
-          <code>main</code> branch. Update it in the same commit as any code change it describes.
-        </p>
-      </section>
+      <div class="audience-grid">
+        <section class="audience-card">
+          <span class="tag">Faculty and staff</span>
+          <h3>Instructor Guide</h3>
+          <p>Setting up the course, provisioning Azure resources each semester, and deploying the reference app.</p>
+          <ul>
+            <li>Getting started and GitHub setup</li>
+            <li>Azure resources and settings</li>
+            <li>End-to-end deployment runbook</li>
+            <li>Troubleshooting</li>
+          </ul>
+          <div class="button-row">
+            <a class="button" href="instructors.html">Open the Instructor Guide</a>
+          </div>
+        </section>
+
+        <section class="audience-card students">
+          <span class="tag">Students</span>
+          <h3>Developing with AI</h3>
+          <p>
+            How to use AI tools the way professional developers do, while still learning the skills that make you
+            worth hiring.
+          </p>
+          <ul>
+            <li>Learning mode and building mode</li>
+            <li>Keeping secrets out of AI chats</li>
+            <li>Checking AI suggestions against this stack</li>
+            <li>A prompt builder for getting explanations, not just answers</li>
+          </ul>
+          <div class="button-row">
+            <a class="button gold" href="students/ai-guide.html">Open the AI Guide</a>
+          </div>
+        </section>
+      </div>
     </main>
   </div>
 
   <footer>
     <div class="container">
-      <p>WVU Cloud Deployment Docs</p>
+      <p>West Virginia University · CS 330</p>
     </div>
   </footer>
 </body>

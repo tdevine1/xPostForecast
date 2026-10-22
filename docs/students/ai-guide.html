@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="How CS 330 students can use AI tools like professional developers while still learning the fundamentals." />
+  <title>Developing with AI | CS 330 Student Guide</title>
+  <link rel="stylesheet" href="../site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="../WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Developing with AI</h1>
+        <p>CS 330 student guide: use AI like a professional, and keep learning like a student.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="../index.html">All guides</a></li>
+        <li>
+          <a class="active-link" aria-current="page" href="ai-guide.html">Developing with AI</a>
+          <ul class="sub">
+            <li><a href="#mindset">1. The mindset</a></li>
+            <li><a href="#modes">2. Learning and building</a></li>
+            <li><a href="#secrets">3. Never paste secrets</a></li>
+            <li><a href="#verify">4. Check before you trust</a></li>
+            <li><a href="#prompts">5. Prompts that teach</a></li>
+            <li><a href="#builder">6. Prompt builder</a></li>
+            <li><a href="#vscode">7. AI in VS Code</a></li>
+            <li><a href="#teams">8. AI on a team</a></li>
+            <li><a href="#sharp">9. Keep your skills sharp</a></li>
+            <li><a href="#policy">10. Course AI policy</a></li>
+          </ul>
+        </li>
+      </ul>
+      <h2>Project Links</h2>
+      <ul>
+        <li><a href="https://docs.google.com/document/d/1vyCS6Uewgj3mgWshLdnXVeotIK-gSJSuNWwZodgqWp8/edit">01 - Setting up the Frontend</a></li>
+        <li><a href="https://docs.google.com/document/d/1JjCkxgICuXKNKV-50Qk4DA1fjyRPK0scw6ZpWdZ0QRA/edit">02 - Setting up the Backend</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast">Reference app on GitHub</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>AI-savvy and well educated</h2>
+        <p>
+          The developers employers want next use AI tools every day, and they can also read, debug, test, and explain
+          every line they ship. AI makes writing code faster. It doesn't decide whether the code is right, secure, or
+          what your team needs. That judgment is the job, and it's what this course teaches.
+        </p>
+        <p>This guide shows how to get both: the speed of AI and the skills that let you trust what it gives you.</p>
+        <div class="notice">
+          <strong>Course rules come first.</strong> Follow the AI policy in the CS 330 syllabus (summarized in
+          <a href="#policy">section 10</a>). If the syllabus and this guide ever disagree, the syllabus wins.
+        </div>
+      </section>
+
+      <section class="section" id="mindset">
+        <h3>1. The mindset</h3>
+        <p>
+          Treat AI like a knowledgeable teammate who is fast, confident, and sometimes wrong. You wouldn't merge a
+          teammate's code without reading it, and you wouldn't let them take your exam. Hold AI to the same standard.
+        </p>
+        <div class="grid-two">
+          <div class="card do-card">
+            <h4>Do: use it as a tutor and a reviewer</h4>
+            <ul>
+              <li>Ask why an error happens, not only how to make it go away.</li>
+              <li>Have it break down unfamiliar code line by line.</li>
+              <li>Ask it to quiz you on a concept before you build with it.</li>
+              <li>Ask it to review code you wrote for bugs and security problems.</li>
+            </ul>
+          </div>
+          <div class="card dont-card">
+            <h4>Don't: use it as a copy-paste machine</h4>
+            <ul>
+              <li>Pasting multi-file solutions you haven't read.</li>
+              <li>Committing code you haven't run locally.</li>
+              <li>Asking it to do the assignment instead of helping you learn it.</li>
+              <li>Pasting secrets or private data into a chat (see <a href="#secrets">section 3</a>).</li>
+            </ul>
+          </div>
+        </div>
+        <div class="notice">
+          <strong>The Explain It Back rule:</strong> before you commit code an AI wrote or fixed, explain every line to a
+          teammate without looking at the chat. If you can't, ask: <em>"Explain lines 5 to 12 in plain English, and
+          tell me what would break if I removed each one."</em> You own everything you commit, including its bugs.
+        </div>
+      </section>
+
+      <section class="section" id="modes">
+        <h3>2. Learning mode and building mode</h3>
+        <p>How you use AI should depend on whether you already understand what you're building.</p>
+        <div class="grid-two">
+          <div class="card">
+            <h4>Learning mode: the topic is new to you</h4>
+            <p>Examples: your first Express route, your first JWT, your first SQL join.</p>
+            <ul>
+              <li>Ask for explanations, analogies, hints, and quizzes.</li>
+              <li>Write the code yourself, even if it's slower.</li>
+              <li>Ask the AI to review your attempt instead of writing its own.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Building mode: you understand it already</h4>
+            <p>Examples: your fifth route, a form like the one you built last week, test cases.</p>
+            <ul>
+              <li>Let AI draft code, tests, and repetitive setup.</li>
+              <li>Review the draft as carefully as a teammate's pull request.</li>
+              <li>Run it, test it, and make sure you can explain it.</li>
+            </ul>
+          </div>
+        </div>
+        <p>
+          <strong>Rule of thumb:</strong> if you couldn't write a rough version yourself, you're in learning mode. Skipping
+          learning mode feels faster now and costs you later, in debugging, in code review, and in interviews.
+        </p>
+      </section>
+
+      <section class="section" id="secrets">
+        <h3>3. Never paste secrets</h3>
+        <p>
+          Anything you paste into an AI chat leaves your computer. Depending on the tool and its settings, it can be
+          stored, reviewed, or used for training. Treat a chat box like a public forum.
+        </p>
+        <div class="danger-note">
+          <strong>Never paste or upload:</strong>
+          <ul>
+            <li>the contents of any <code>.env</code> file;</li>
+            <li><code>DB_PASSWORD</code>, <code>JWT_SECRET</code>, API keys, or connection strings;</li>
+            <li>Azure publish profiles or Static Web Apps deployment tokens;</li>
+            <li>screenshots of the Azure Portal, a terminal, or VS Code that show any of the above;</li>
+            <li>teammates' or users' personal information.</li>
+          </ul>
+        </div>
+        <p>
+          Before you paste a stack trace or a file, read it and replace anything secret with a placeholder like
+          <code>&lt;DB_PASSWORD&gt;</code>. The AI doesn't need real values to help you.
+        </p>
+        <p>
+          AI tools inside your editor can read the files you have open and, in agent mode, other files in your project.
+          Close <code>.env</code> before you chat, and read every command an agent wants to run before you allow it.
+        </p>
+        <div class="notice">
+          <strong>This has happened in this course.</strong> The reference app's own repository once exposed a database
+          password through a committed editor settings file. If a secret ever ends up in a chat or a commit, treat it as
+          public: change it in Azure first, then tell your team.
+        </div>
+      </section>
+
+      <section class="section" id="verify">
+        <h3>4. Check before you trust</h3>
+        <p>
+          AI tools learned from years of older code, so they often suggest patterns this project doesn't use. When a
+          suggestion doesn't match the course stack, the suggestion is usually what's out of date.
+        </p>
+        <table>
+          <thead>
+            <tr><th scope="col">AI often suggests</th><th scope="col">This project uses</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Create React App (<code>npx create-react-app</code>)</td><td>Vite: <code>npm create vite@latest</code></td></tr>
+            <tr><td><code>require()</code> and <code>module.exports</code></td><td>ES modules: <code>import</code> and <code>export</code>, with <code>"type": "module"</code> in <code>package.json</code></td></tr>
+            <tr><td>The <code>dotenv</code> package</td><td>Node 24's built-in <code>process.loadEnvFile()</code></td></tr>
+            <tr><td>Ports 3000 and 5000</td><td>Frontend on 5173, backend on 5175</td></tr>
+            <tr><td>Storing the JWT in <code>localStorage</code></td><td>An HTTP-only cookie set by the backend, which page JavaScript can't read</td></tr>
+            <tr><td><code>cors()</code> with no options, or <code>origin: '*'</code></td><td><code>origin: FRONTEND_URL</code> with <code>credentials: true</code> (browsers reject <code>*</code> when cookies are sent)</td></tr>
+            <tr><td>SQL built by joining strings, or the old <code>mysql</code> package</td><td><code>mysql2/promise</code> with <code>?</code> placeholders</td></tr>
+            <tr><td>Express 4 patterns such as <code>app.get('*', …)</code></td><td>Express 5, where a wildcard needs a name: <code>'/*splat'</code></td></tr>
+            <tr><td>Older Node.js versions</td><td>Node.js 24 LTS</td></tr>
+          </tbody>
+        </table>
+        <p>Before you use a suggestion:</p>
+        <ul class="checklist">
+          <li>
+            <strong>Check that every package exists.</strong> Look it up on <a href="https://www.npmjs.com/">npmjs.com</a>:
+            it should have a real repository, recent releases, and many weekly downloads. AI sometimes invents package
+            names, and attackers publish malware under names like those.
+          </li>
+          <li><strong>Check the version.</strong> Ask: <em>"Which version of this library does your answer assume?"</em> Compare it with <code>package.json</code>.</li>
+          <li><strong>Check the official docs</strong> for anything about security, authentication, or deployment.</li>
+          <li><strong>Run it.</strong> Code that looks right isn't tested code. Try it locally, including the error cases.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="prompts">
+        <h3>5. Prompts that teach</h3>
+        <p>
+          Good prompts give context and ask for understanding. Include the stack, what you expected, what happened, the
+          exact error, and what you've already tried. These examples come from problems CS 330 teams hit every semester.
+        </p>
+        <div class="grid-two">
+          <div class="card">
+            <span class="tag">Frontend · React</span>
+            <h4>State vs. props</h4>
+            <p>Not sure where data should live, or how to pass it between components?</p>
+            <p class="prompt">"Explain the difference between React state and props using an analogy of a house and its rooms. Then ask me two questions to check I understood."</p>
+          </div>
+          <div class="card">
+            <span class="tag">Backend · Express</span>
+            <h4>Middleware and routes</h4>
+            <p>Confused about what happens between a request arriving and your handler running?</p>
+            <p class="prompt">"Walk me step by step through how a POST to /auth/login passes through cors(), express.json(), and cookieParser() before it reaches my route handler in Express 5."</p>
+          </div>
+          <div class="card">
+            <span class="tag">Networking · CORS</span>
+            <h4>"Blocked by CORS policy"</h4>
+            <p>Your React app can't reach your backend?</p>
+            <p class="prompt">"My React app on localhost:5173 gets 'blocked by CORS policy' when it calls my Express backend on localhost:5175 with credentials. Explain what the browser is checking and which settings on each side must match. Don't give me the code yet."</p>
+          </div>
+          <div class="card">
+            <span class="tag">Security · Auth</span>
+            <h4>JWTs in cookies</h4>
+            <p>Not sure how the backend knows you're logged in?</p>
+            <p class="prompt">"How does an HTTP-only cookie holding a JWT prove a user is logged in? Walk through login, a page refresh, and logout, and tell me what an attacker could and couldn't do if they stole the cookie."</p>
+          </div>
+          <div class="card">
+            <span class="tag">Database · MySQL</span>
+            <h4>Safe queries</h4>
+            <p>Writing your first query that uses user input?</p>
+            <p class="prompt">"Explain why ? placeholders in mysql2 prevent SQL injection. Show me an injection that would work against a query built by joining strings, and explain why it fails with placeholders."</p>
+          </div>
+          <div class="card">
+            <span class="tag">Deployment · Azure</span>
+            <h4>Works locally, breaks in the cloud</h4>
+            <p>Login works on localhost but not after deploying?</p>
+            <p class="prompt">"Why would a login cookie that works on localhost stop working when my frontend is on azurestaticapps.net and my backend is on azurewebsites.net? Explain SameSite and Secure before suggesting a fix."</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="builder">
+        <h3>6. Prompt builder</h3>
+        <p>
+          Pick what you're working on and the kind of help you want. The builder writes a prompt that gives the AI this
+          project's stack and asks it to teach rather than solve. Copy it into the AI tool you use.
+        </p>
+        <form id="prompt-form" class="card">
+          <div class="form-grid">
+            <div class="field">
+              <label for="gen-topic">What are you working on?</label>
+              <select id="gen-topic">
+                <option>a React component or its state</option>
+                <option>an Express route or middleware</option>
+                <option>a CORS or network error between frontend and backend</option>
+                <option>login, cookies, or JWT authentication</option>
+                <option>a MySQL query or the database schema</option>
+                <option>deploying to Azure or a GitHub Actions workflow</option>
+                <option>Git: a merge conflict, branch, or pull request</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="gen-goal">What kind of help do you want?</label>
+              <select id="gen-goal">
+                <option value="explain">Explain the error without fixing it for me</option>
+                <option value="hint">Give me one hint at a time</option>
+                <option value="quiz">Quiz me before showing any code</option>
+                <option value="analogy">Explain the concept with an analogy</option>
+                <option value="debug">Help me plan how to debug it myself</option>
+                <option value="review">Review code I wrote for bugs and security problems</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="gen-code">Error message or code (optional)</label>
+            <textarea id="gen-code" rows="5" placeholder="TypeError: Cannot read properties of undefined (reading 'map')"></textarea>
+          </div>
+          <div class="field">
+            <label for="gen-tried">What have you tried so far? (optional)</label>
+            <textarea id="gen-tried" rows="2" placeholder="Logged the response in the console; it's an object, not an array."></textarea>
+          </div>
+          <div id="secret-warning" class="danger-note" role="alert" hidden>
+            <strong>This looks like it contains a secret</strong> (a password, key, token, or <code>.env</code> line).
+            Replace it with a placeholder such as <code>&lt;DB_PASSWORD&gt;</code> before you paste the prompt anywhere.
+          </div>
+          <div class="button-row">
+            <button type="submit" class="button gold">Build my prompt</button>
+            <button type="button" id="copy-btn" class="button">Copy prompt</button>
+            <span id="copy-status" class="status" aria-live="polite"></span>
+          </div>
+        </form>
+        <p id="gen-output-label" class="tag output-label">Your prompt</p>
+        <pre id="gen-output" class="prompt-output" tabindex="0" aria-labelledby="gen-output-label">Choose your options above, then select "Build my prompt".</pre>
+      </section>
+
+      <section class="section" id="vscode">
+        <h3>7. AI in VS Code</h3>
+        <div class="stacked-cards">
+          <div class="card">
+            <h4>Get GitHub Copilot</h4>
+            <p>
+              Verified students can use GitHub Copilot at no cost through
+              <a href="https://education.github.com/">GitHub Education</a>. After your student status is approved, install
+              the <strong>GitHub Copilot</strong> extension in VS Code and sign in with the same GitHub account.
+            </p>
+          </div>
+          <div class="card">
+            <h4>Ask about the code in front of you</h4>
+            <ul>
+              <li>Open the chat with <strong>Ctrl+Alt+I</strong> (<strong>Ctrl+Cmd+I</strong> on macOS).</li>
+              <li>Select confusing code and type <code>/explain</code> in the chat to get a walkthrough.</li>
+              <li>Write a comment saying what you <em>think</em> a block does, then ask Copilot whether you're right.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Use agent mode carefully</h4>
+            <ul>
+              <li><strong>Commit first</strong>, so you can undo everything with one click if the changes go wrong.</li>
+              <li>Ask for one small change at a time, and read every changed file before you keep it.</li>
+              <li>Read each terminal command before you allow it to run.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Turn off autocomplete while you learn</h4>
+            <p>
+              Inline suggestions finish your thought before you've had it. When you're in learning mode, use the Copilot
+              menu in the status bar to turn off inline suggestions, and turn them back on when you're building.
+            </p>
+          </div>
+          <div class="card">
+            <h4>Give Copilot your team's rules</h4>
+            <p>
+              Copilot reads a file named <code>.github/copilot-instructions.md</code> in your repository and follows it in
+              every chat. Your team can use it to keep Copilot in tutor mode:
+            </p>
+            <pre><code>This is a CS 330 student project: React 19 + Vite frontend, Express 5 backend
+on Node 24 (ES modules), MySQL on Azure through mysql2, and login with a JWT in
+an HTTP-only cookie.
+
+- Explain the concept before showing code, and keep code examples short.
+- When I share an error, help me find the cause instead of rewriting my file.
+- Point out anything that depends on a specific library version.
+- Never ask me for passwords, keys, tokens, or the contents of .env files.</code></pre>
+          </div>
+          <div class="card">
+            <h4>Share errors the right way</h4>
+            <p>
+              When Express or Node crashes, copy the <strong>whole</strong> error from the terminal, including the stack
+              trace and line numbers, plus the code it points to. Read it for secrets first (<a href="#secrets">section 3</a>).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="teams">
+        <h3>8. AI on a team</h3>
+        <ul>
+          <li><strong>You can explain what you open a pull request for.</strong> Every line, whether you or an AI typed it.</li>
+          <li><strong>Reviewers ask.</strong> "Walk me through this function" is a normal, friendly review question.</li>
+          <li><strong>Say when AI wrote a significant part.</strong> A line in the pull request description is enough, for example: "Copilot drafted the tests; I checked and edited them."</li>
+          <li><strong>Agree as a team</strong> on which tools you use and how, so nobody is surprised in code review.</li>
+          <li><strong>Report your contribution honestly</strong> on each milestone's contribution allocation sheet.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="sharp">
+        <h3>9. Keep your skills sharp</h3>
+        <p>
+          Technical interviews, exams, and production outages often happen without an AI assistant. Make sure you can do
+          these on your own:
+        </p>
+        <ul>
+          <li>read a stack trace and find the line that failed;</li>
+          <li>use the browser's developer tools (Console and Network tabs) to see what a request sent and got back;</li>
+          <li>write a simple SQL query, route, and React component from memory;</li>
+          <li>explain how CORS, cookies, and JWT login work in this project;</li>
+          <li>resolve a Git merge conflict.</li>
+        </ul>
+        <p>
+          A good habit: once a week, solve one small problem without AI, then ask an AI to review your solution. You'll
+          see how much you've learned, and what to practice next.
+        </p>
+      </section>
+
+      <section class="section" id="policy">
+        <h3>10. Course AI policy</h3>
+        <p>
+          The CS 330 syllabus on eCampus sets the rules for AI use in this course, including what's allowed on each
+          assignment and how to disclose AI use. Read it before your first sprint, and ask your instructor if anything is
+          unclear. When the syllabus and this guide disagree, follow the syllabus.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University · CS 330</p>
+    </div>
+  </footer>
+
+  <script>
+    const STACK =
+      "React 19 + Vite frontend, Express 5 backend on Node.js 24 (ES modules), " +
+      "MySQL on Azure through mysql2, and login with a JWT in an HTTP-only cookie";
+
+    const GOALS = {
+      explain: "Explain what this error means and what is causing it, step by step. Don't write the fix for me.",
+      hint: "Give me one hint at a time, and wait for my reply before giving the next one.",
+      quiz: "Ask me a few questions to check that I understand the concept before you show any code.",
+      analogy: "Explain the underlying concept with a simple real-world analogy, then connect it back to my code.",
+      debug: "Help me plan how to debug this myself: what to log, what to check in the browser's developer tools, and in what order.",
+      review: "Review the code I wrote for bugs, security problems, and unclear parts. Explain each issue, and don't rewrite my code.",
+    };
+
+    // Lines that look like secrets: .env assignments, private keys, tokens, connection strings
+    const SECRET_PATTERNS = [
+      /(PASSWORD|SECRET|TOKEN|API_KEY|PRIVATE_KEY)\s*[=:]\s*\S+/i,
+      /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+      /<publishProfile|userPWD=/i,
+      /mysql:\/\/[^\s:]+:[^\s@]+@/i,
+      /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\./,
+    ];
+
+    const form = document.getElementById("prompt-form");
+    const output = document.getElementById("gen-output");
+    const status = document.getElementById("copy-status");
+    const warning = document.getElementById("secret-warning");
+    let built = false;
+
+    function buildPrompt() {
+      const topic = document.getElementById("gen-topic").value;
+      const goal = GOALS[document.getElementById("gen-goal").value];
+      const code = document.getElementById("gen-code").value.trim();
+      const tried = document.getElementById("gen-tried").value.trim();
+
+      let text = "I'm a student in a software engineering course building a full-stack web app: " + STACK + ".\n\n";
+      text += "I'm working on " + topic + ".\n\n";
+      text += "What I want from you: " + goal + "\n\n";
+      if (code) text += "Here is my error message or code:\n```\n" + code + "\n```\n\n";
+      if (tried) text += "What I've tried so far: " + tried + "\n\n";
+      text +=
+        "Please teach rather than solve: explain the underlying concept, check my understanding with questions, " +
+        "and only show complete code if I ask for it. Point out anything in your answer that depends on a " +
+        "specific library version.";
+
+      warning.hidden = !SECRET_PATTERNS.some((p) => p.test(code + "\n" + tried));
+      output.textContent = text;
+      status.textContent = "";
+      built = true;
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      buildPrompt();
+    });
+
+    document.getElementById("copy-btn").addEventListener("click", async () => {
+      if (!built) buildPrompt();
+      try {
+        await navigator.clipboard.writeText(output.textContent);
+        status.textContent = "Copied.";
+      } catch {
+        status.textContent = "Couldn't copy automatically: select the prompt and copy it by hand.";
+      }
+    });
+  </script>
+</body>
+</html>

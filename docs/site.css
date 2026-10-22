@@ -313,3 +313,174 @@ footer p {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Landing page and student guide ---------- */
+
+.audience-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.3rem;
+  margin-top: 1.3rem;
+}
+
+.audience-card {
+  border: 1px solid var(--border);
+  border-top: 6px solid var(--wvu-blue);
+  border-radius: 10px;
+  padding: 1.4rem 1.5rem;
+  background: var(--light);
+  display: flex;
+  flex-direction: column;
+}
+
+.audience-card.students {
+  border-top-color: var(--wvu-gold);
+}
+
+.audience-card h3 {
+  margin-top: 0;
+  color: var(--wvu-blue);
+}
+
+.audience-card ul {
+  padding-left: 1.1rem;
+}
+
+.audience-card .button-row {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.sidebar .sub {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+  font-size: 0.95rem;
+}
+
+.sidebar .sub li {
+  margin-bottom: 0.35rem;
+}
+
+.sidebar h2 + ul + h2,
+.sidebar ul + h2 {
+  margin-top: 1.3rem;
+}
+
+.do-card {
+  border-left: 5px solid #2e7d32;
+}
+
+.dont-card {
+  border-left: 5px solid #b42318;
+}
+
+.card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.prompt {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--wvu-gold);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.6rem 0 0;
+  font-style: italic;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field label {
+  display: block;
+  font-weight: 700;
+  color: var(--wvu-blue);
+  margin-bottom: 0.35rem;
+}
+
+.field select,
+.field textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--text);
+}
+
+.field textarea {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.92rem;
+}
+
+.field select:focus,
+.field textarea:focus,
+.button:focus-visible {
+  outline: 3px solid var(--wvu-gold);
+  outline-offset: 1px;
+}
+
+.field + .field,
+.form-grid + .field {
+  margin-top: 1rem;
+}
+
+button.button {
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.prompt-output {
+  white-space: pre-wrap;
+  min-height: 6rem;
+}
+
+.status {
+  font-weight: 700;
+  color: #2e7d32;
+  align-self: center;
+}
+
+@media (max-width: 960px) {
+  .audience-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.landing {
+  padding: 2rem 0 3rem;
+  flex: 1;
+}
+
+.output-label {
+  margin: 1rem 0 0;
+}
+
+/* Let cards shrink inside grids so wide code blocks scroll instead of widening the page */
+.card {
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  th,
+  td {
+    overflow-wrap: anywhere;
+  }
+}
