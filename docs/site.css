@@ -1,6 +1,6 @@
 :root {
   --wvu-blue: #002855;
-  --wvu-gold: #eaaa00;
+  --wvu-gold: #eeaa00; /* WVU Gold, web-optimized value from the brand guide */
   --white: #ffffff;
   --light: #f7f8fa;
   --light-blue: #eef3fa;
@@ -23,7 +23,8 @@ body {
 }
 
 body {
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  /* The WVU brand serif (Antonia) isn't installed on most computers; Palatino Linotype (Windows) and Palatino (macOS) are close substitutes */
+  font-family: "Palatino Linotype", Palatino, "Book Antiqua", "URW Palladio L", Georgia, serif;
   background: var(--white);
   color: var(--text);
   line-height: 1.6;
