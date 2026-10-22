@@ -15,7 +15,7 @@ A reference full-stack web app used to teach CS 330 at West Virginia University.
 
 Switch sprints with the branch dropdown on GitHub, or locally with `git switch sprint-2`. The **What changed** links show every file a sprint added or modified.
 
-**Instructors:** the setup and deployment runbook is at **<https://tdevine1.github.io/xPostForecast/>** (source in [`docs/`](https://github.com/tdevine1/xPostForecast/tree/main/docs) on `main`).
+**Guides site:** **<https://tdevine1.github.io/xPostForecast/>** (source in [`docs/`](https://github.com/tdevine1/xPostForecast/tree/main/docs) on `main`) has the [instructor setup and deployment runbook](https://tdevine1.github.io/xPostForecast/instructors.html) and a student guide to [developing with AI](https://tdevine1.github.io/xPostForecast/students/ai-guide.html).
 
 ---
 
