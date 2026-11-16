@@ -29,6 +29,8 @@
         <li><a href="azure-basics.html">3. Azure Basics</a></li>
         <li><a class="active-link" aria-current="page" href="deployment-steps.html">4. Deployment Steps</a></li>
         <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
+
+        <li><a href="azure-scripts.html">6. Azure Scripts</a></li>
       </ul>
     </aside>
 
@@ -71,6 +73,7 @@
         <p>
           The reference app's Azure resources are torn down and rebuilt each semester. To bring the demo back up:
         </p>
+        <p>For a whole class, the <a href="azure-scripts.html">Azure Scripts</a> page has PowerShell scripts that create the servers, backends, and frontends for every group at once.</p>
         <ol class="step-list">
           <li>Request the resource group through Statler ITS.</li>
           <li><strong>MySQL Flexible Server:</strong> create it; in <strong>Networking</strong> add your IP and enable access from Azure services. Run <code>backend/db/schema.sql</code>: <strong>Connect</strong> → Cloud Shell, run the <code>mysql</code> command shown, and paste the file at the <code>mysql&gt;</code> prompt (or run it with SQLTools).</li>

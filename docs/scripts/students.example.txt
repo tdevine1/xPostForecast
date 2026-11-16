@@ -1,0 +1,4 @@
+# One e-mail address per line. Lines starting with # and blank lines are ignored.
+# Copy this file, put the real addresses in the copy, and keep the copy out of Git.
+student.one@example.edu
+student.two@example.edu

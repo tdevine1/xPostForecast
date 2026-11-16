@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PowerShell scripts for provisioning and tearing down CS 330 group Azure resources each semester." />
+  <title>Azure Scripts | WVU Cloud Deployment Docs</title>
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>WVU Cloud Deployment Documentation</h1>
+        <p>Scripts for creating, sharing, and removing a semester's group Azure resources.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Instructor Guide</h2>
+      <ul>
+        <li><a href="index.html">All guides</a></li>
+        <li><a href="instructors.html">Instructor Home</a></li>
+        <li><a href="getting-started.html">1. Getting Started</a></li>
+        <li><a href="github-setup.html">2. GitHub Setup</a></li>
+        <li><a href="azure-basics.html">3. Azure Basics</a></li>
+        <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
+        <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
+        <li><a class="active-link" aria-current="page" href="azure-scripts.html">6. Azure Scripts</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Azure scripts</h2>
+        <p>
+          Setting up ten team resource groups by clicking through the portal is slow and error-prone. These
+          PowerShell scripts do the repetitive parts for every group at once: servers, backends, frontends,
+          access, and end-of-semester cleanup. Run them from your own computer or from Azure Cloud Shell.
+        </p>
+        <div class="notice">
+          <strong>Resource groups come first.</strong> For WVU courses, request them through Statler ITS. The scripts
+          create resources <em>inside</em> resource groups that already exist and skip any that don't.
+        </div>
+      </section>
+
+      <section class="section" id="naming">
+        <h3>Names the scripts use</h3>
+        <p>Every script builds names from the term code, section, and CRN, so resources are easy to find and to delete together:</p>
+        <table>
+          <thead>
+            <tr><th>Resource</th><th>Name pattern</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Resource group (from ITS)</td><td><code>&lt;term&gt;-CS330-&lt;section&gt;-&lt;crn&gt;-GroupNN</code></td><td><code>202608-CS330-001-84715-Group01</code></td></tr>
+            <tr><td>MySQL server</td><td><code>&lt;resource group, lower case&gt;-mysql-db</code></td><td><code>202608-cs330-001-84715-group01-mysql-db</code></td></tr>
+            <tr><td>App Service plan</td><td><code>&lt;resource group, lower case&gt;-plan</code></td><td><code>202608-cs330-001-84715-group01-plan</code></td></tr>
+            <tr><td>Backend web app</td><td><code>&lt;resource group, lower case&gt;-backend</code></td><td><code>202608-cs330-001-84715-group01-backend</code></td></tr>
+            <tr><td>Frontend Static Web App</td><td><code>&lt;resource group, lower case&gt;-frontend</code></td><td><code>202608-cs330-001-84715-group01-frontend</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="before">
+        <h3>Before you run anything</h3>
+        <ol class="step-list">
+          <li>
+            Install the Az PowerShell module once (Cloud Shell already has it):
+            <pre><code>Install-Module Az -Scope CurrentUser</code></pre>
+          </li>
+          <li>
+            Install the <a href="https://learn.microsoft.com/cli/azure/install-azure-cli">Azure CLI</a>. Only
+            <code>New-GroupAppServices.ps1</code> uses it (Cloud Shell has it too).
+          </li>
+          <li>
+            Sign in. <strong>These are two separate sign-ins</strong>: <code>Connect-AzAccount</code> does not sign in the CLI.
+            <pre><code>Connect-AzAccount
+az login
+Select-AzSubscription -Subscription "&lt;subscription name or id&gt;"
+az account set --subscription "&lt;subscription name or id&gt;"</code></pre>
+          </li>
+          <li>
+            Windows blocks scripts downloaded from the web. After downloading, run
+            <code>Unblock-File .\&lt;script&gt;.ps1</code> and, if needed,
+            <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code>.
+          </li>
+          <li>
+            <strong>Always run with <code>-WhatIf</code> first.</strong> Every script supports it and prints what it
+            would do without changing anything.
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="order">
+        <h3>The semester in order</h3>
+        <table>
+          <thead>
+            <tr><th>When</th><th>Script</th><th>What it does</th><th>Download</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>After ITS creates the groups</td><td><code>New-GroupMySqlServers.ps1</code></td><td>One MySQL Flexible Server per group</td><td><a href="scripts/New-GroupMySqlServers.ps1" download>.ps1</a></td></tr>
+            <tr><td>Sprint 4 setup</td><td><code>New-GroupAppServices.ps1</code></td><td>App Service plan and Node 24 backend per group, with publish-profile access on</td><td><a href="scripts/New-GroupAppServices.ps1" download>.ps1</a></td></tr>
+            <tr><td>Sprint 4 setup</td><td><code>New-GroupStaticWebApps.ps1</code></td><td>One Static Web App (Free plan) per group</td><td><a href="scripts/New-GroupStaticWebApps.ps1" download>.ps1</a></td></tr>
+            <tr><td>When teams form</td><td><code>Add-UsersToResourceGroup.ps1</code></td><td>Gives each team's members a role on their resource group</td><td><a href="scripts/Add-UsersToResourceGroup.ps1" download>.ps1</a> · <a href="scripts/students.example.txt" download>example list</a></td></tr>
+            <tr><td>End of semester</td><td><code>Remove-GroupResourceGroups.ps1</code></td><td>Deletes the groups' resource groups after a typed confirmation</td><td><a href="scripts/Remove-GroupResourceGroups.ps1" download>.ps1</a></td></tr>
+          </tbody>
+        </table>
+        <p>Each script also has full built-in help: <code>Get-Help .\New-GroupMySqlServers.ps1 -Full</code>.</p>
+      </section>
+
+      <section class="section" id="mysql">
+        <h3>New-GroupMySqlServers.ps1</h3>
+        <p>Creates <code>&lt;group&gt;-mysql-db</code> in each existing group resource group, as the <code>mysqladmin</code> user.</p>
+        <pre><code>.\New-GroupMySqlServers.ps1 -Semester 202608 -Crn 84715 -LastGroup 10 -WhatIf
+.\New-GroupMySqlServers.ps1 -Semester 202608 -Crn 84715 -LastGroup 10</code></pre>
+        <ul>
+          <li>You are <strong>prompted for the administrator password</strong> (typing is hidden). It is never stored in the script. Pass <code>-AdminPassword</code> (a SecureString) to skip the prompt.</li>
+          <li>Use a new password each semester and don't build it from a pattern: anyone who learns the pattern knows every semester's password.</li>
+          <li>Defaults: region <code>eastus</code>, size <code>Standard_B1ms</code>. Keep the database in the same region as the backend.</li>
+          <li>Afterwards, for each server: allow access from Azure services, add student IPs, and create <code>authdb</code> and the schema (see <a href="deployment-steps.html">Deployment Steps</a> and <a href="azure-basics.html">Azure Basics</a>).</li>
+        </ul>
+      </section>
+
+      <section class="section" id="appservices">
+        <h3>New-GroupAppServices.ps1</h3>
+        <p>Uses the Azure CLI to create a Linux plan, a Node 24 LTS web app on it, and turns on publish-profile access.</p>
+        <pre><code>.\New-GroupAppServices.ps1 -Semester 202608 -Crn 84715 -LastGroup 10 -WhatIf
+.\New-GroupAppServices.ps1 -Semester 202608 -Crn 84715 -LastGroup 10
+
+# One named group (for example the demo), reusing a plan that already exists:
+.\New-GroupAppServices.ps1 -ResourceGroupName 202608-CS330-001-84715-DEMO -PlanName &lt;existing-plan&gt;</code></pre>
+        <ul>
+          <li><strong>Plain host names.</strong> Apps created with the CLI get <code>&lt;name&gt;.azurewebsites.net</code>. The portal's create form adds a random suffix and region to the host name, which breaks every doc that assumes a plain one.</li>
+          <li><strong>Publish-profile access.</strong> New apps have SCM basic authentication switched off, which greys out <em>Download publish profile</em>. The script switches it on, as the runbook requires.</li>
+          <li><strong>Cost.</strong> The default plan is <code>B1</code>, the cheapest Basic tier. The portal's create form defaults to a much larger Premium plan, so check the size if you create plans by hand. A plan is billed while it exists, even with no app on it, so delete unused plans.</li>
+          <li><strong>Runtime.</strong> Defaults to <code>NODE:24-lts</code> to match the workflows. See what is currently offered with <code>az webapp list-runtimes --os linux</code>.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="swas">
+        <h3>New-GroupStaticWebApps.ps1</h3>
+        <p>Creates <code>&lt;group&gt;-frontend</code> without connecting a repository. Teams connect their own, or deploy with their workflow and the app's deployment token.</p>
+        <pre><code>.\New-GroupStaticWebApps.ps1 -Semester 202608 -Crn 84715 -LastGroup 10 -WhatIf
+.\New-GroupStaticWebApps.ps1 -Semester 202608 -Crn 84715 -LastGroup 10</code></pre>
+        <ul>
+          <li><strong>Free by default.</strong> <code>-SkuName Standard</code> is a paid plan and is only used if you ask for it. The portal's create form defaults to Standard.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="users">
+        <h3>Add-UsersToResourceGroup.ps1</h3>
+        <p>Gives people a role (default <strong>Contributor</strong>) on one resource group. Run it once per team.</p>
+        <pre><code>.\Add-UsersToResourceGroup.ps1 -ResourceGroupName 202608-CS330-001-84715-Group01 -EmailsFile .\group01.txt -WhatIf</code></pre>
+        <ul>
+          <li>The e-mail file has one address per line; blank lines and lines starting with <code>#</code> are ignored. Start from <a href="scripts/students.example.txt" download><code>students.example.txt</code></a>.</li>
+          <li><div class="danger-note" style="margin:0"><strong>Keep the e-mail file out of Git.</strong> Student addresses are personal data. The script reads them from a file you control, so none are stored in the script or on this site.</div></li>
+          <li>People who already have the role are skipped, so you can re-run it safely. Use <code>-Role</code> for something narrower than Contributor.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="remove">
+        <h3>Remove-GroupResourceGroups.ps1</h3>
+        <p>Deletes a semester's group resource groups, and <strong>everything inside them</strong>. This cannot be undone.</p>
+        <pre><code>.\Remove-GroupResourceGroups.ps1 -Semester 202608 -Crn 84715 -LastGroup 10 -WhatIf
+.\Remove-GroupResourceGroups.ps1 -Semester 202608 -Crn 84715 -LastGroup 10</code></pre>
+        <ul>
+          <li>You must give the semester and CRN: nothing is hardcoded, so it can't act on last term's names by accident.</li>
+          <li>It lists each resource group that exists with its resource count, then asks you to <strong>type the semester code</strong> before deleting anything.</li>
+          <li>The <code>DEMO</code> resource group is only included with <code>-IncludeDemo</code>.</li>
+          <li>After deleting, set <code>DEPLOY_TO_AZURE</code> to <code>false</code> and remove the old secrets in the reference repository (see <a href="deployment-steps.html">Deployment Steps</a>).</li>
+        </ul>
+      </section>
+
+      <section class="section" id="trouble">
+        <h3>Troubleshooting</h3>
+        <table>
+          <thead>
+            <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>az</code> commands fail with "Please run 'az login'" after <code>Connect-AzAccount</code> worked</td>
+              <td>The CLI and Az PowerShell have separate sign-ins</td>
+              <td>Run <code>az login</code> and <code>az account set --subscription ...</code></td>
+            </tr>
+            <tr>
+              <td>"Resource group ... does not exist. Skipping."</td>
+              <td>Wrong semester, section, or CRN, or the group isn't created yet</td>
+              <td>Check the names in the portal, or request the group from Statler ITS</td>
+            </tr>
+            <tr>
+              <td>"File ... cannot be loaded because running scripts is disabled"</td>
+              <td>PowerShell execution policy, or a downloaded (blocked) file</td>
+              <td><code>Unblock-File</code> the script; <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code></td>
+            </tr>
+            <tr>
+              <td>"Download publish profile" is greyed out on a backend</td>
+              <td>SCM basic authentication is off (the default for new apps)</td>
+              <td>Turn it on under Settings &rarr; Configuration &rarr; General settings, or run the <code>az resource update</code> command from <code>New-GroupAppServices.ps1</code> for that app</td>
+            </tr>
+            <tr>
+              <td>A user is "not found in Entra ID"</td>
+              <td>Typo in the address, or the person is a guest with a different sign-in name</td>
+              <td>Check the address in Entra ID and use the exact user principal name</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="button-row">
+          <a class="button gold" href="deployment-steps.html">Back to Deployment Steps</a>
+          <a class="button" href="instructors.html">Back to Instructor Home</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>WVU Cloud Deployment Docs | Azure scripts for instructors.</p>
+    </div>
+  </footer>
+</body>
+</html>
