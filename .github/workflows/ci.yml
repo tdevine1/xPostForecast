@@ -43,3 +43,42 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test   # uses a mocked database, so no MySQL server is needed
+
+  # Code quality and coverage analysis with SonarQube Cloud. It stays off until a team opts in:
+  # add the SONAR_TOKEN secret and set the repository variable SONAR_ENABLED to true
+  # (steps: https://tdevine1.github.io/xPostForecast/students/sonarqube.html).
+  sonar:
+    if: ${{ vars.SONAR_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # full history lets SonarQube tell which code is new
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Frontend tests with coverage
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:coverage
+
+      - name: Backend tests with coverage
+        working-directory: backend
+        run: |
+          npm ci
+          npm run test:coverage
+
+      # Each lcov report lists files relative to its own folder (src/App.jsx). SonarQube resolves them
+      # from the repository root, so add the folder name to every path.
+      - name: Make coverage paths relative to the repository root
+        run: |
+          sed -i 's#^SF:#SF:frontend/#' frontend/coverage/lcov.info
+          sed -i 's#^SF:#SF:backend/#' backend/coverage/lcov.info
+
+      - name: SonarQube Cloud scan
+        uses: SonarSource/sonarqube-scan-action@v8.5.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

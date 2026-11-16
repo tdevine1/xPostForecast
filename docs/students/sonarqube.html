@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="How CS 330 teams connect their GitHub repository to SonarQube Cloud for automated code quality, security, and test coverage analysis." />
+  <title>Testing with SonarQube Cloud | CS 330 Student Guide</title>
+  <link rel="stylesheet" href="../site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="../WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Testing with SonarQube Cloud</h1>
+        <p>CS 330 student guide: automated code quality, security, and coverage reports for your team's repository.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="../index.html">All guides</a></li>
+        <li><a href="ai-guide.html">Developing with AI</a></li>
+        <li>
+          <a class="active-link" aria-current="page" href="sonarqube.html">Testing with SonarQube Cloud</a>
+          <ul class="sub">
+            <li><a href="#what">1. What you get</a></li>
+            <li><a href="#before">2. Before you start</a></li>
+            <li><a href="#limits">3. Free plan limits</a></li>
+            <li><a href="#connect">4. Connect your organization</a></li>
+            <li><a href="#project">5. Create the project</a></li>
+            <li><a href="#token">6. Token and variable</a></li>
+            <li><a href="#files">7. Add the files</a></li>
+            <li><a href="#run">8. Run it and read it</a></li>
+            <li><a href="#report">9. Use it in your report</a></li>
+            <li><a href="#trouble">10. Troubleshooting</a></li>
+            <li><a href="#links">11. References</a></li>
+          </ul>
+        </li>
+      </ul>
+      <h2>Project Links</h2>
+      <ul>
+        <li><a href="https://docs.google.com/document/d/1vyCS6Uewgj3mgWshLdnXVeotIK-gSJSuNWwZodgqWp8/edit">01 - Setting up the Frontend</a></li>
+        <li><a href="https://docs.google.com/document/d/1JjCkxgICuXKNKV-50Qk4DA1fjyRPK0scw6ZpWdZ0QRA/edit">02 - Setting up the Backend</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast">Reference app on GitHub</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Let a tool review every push</h2>
+        <p>
+          SonarQube Cloud reads your code and your test results on every push and reports bugs, security problems,
+          maintainability issues, duplicated code, and how much of your code your tests actually run. This guide connects
+          it to your team's GitHub repository and your existing GitHub Actions workflow.
+        </p>
+        <p>
+          The reference app already does this: see <code>sonar-project.properties</code> and the <code>sonar</code> job in
+          <a href="https://github.com/tdevine1/xPostForecast/blob/main/.github/workflows/ci.yml"><code>.github/workflows/ci.yml</code></a>
+          on the <code>main</code> branch. You build the equivalent in your own repository.
+        </p>
+        <div class="notice">
+          <strong>Scope:</strong> this guide covers the SonarQube part of Milestone 6. Your assignment instructions decide
+          what else is required (unit testing documents, Selenium, the testing report). If they and this guide ever
+          disagree, the assignment wins.
+        </div>
+      </section>
+
+      <section class="section" id="what">
+        <h3>1. What you get</h3>
+        <ul>
+          <li><strong>Reliability:</strong> likely bugs, such as a promise that is never awaited.</li>
+          <li><strong>Security:</strong> vulnerabilities, plus <em>security hotspots</em>: code that is only a problem depending on how it is used, so a person has to review it.</li>
+          <li><strong>Maintainability:</strong> "code smells" such as overly complex functions or unused code.</li>
+          <li><strong>Coverage:</strong> the share of your code that your automated tests run, file by file.</li>
+          <li><strong>Duplications:</strong> copy-pasted blocks.</li>
+          <li><strong>Quality Gate:</strong> a pass/fail verdict on the code you changed recently. The default gate ("Sonar way") looks at new code only: coverage, duplication, and the ratings above.</li>
+        </ul>
+        <p>
+          It is <em>static analysis</em>: it reads your code without running it. It finds a different class of problems than
+          your Vitest tests (which check behavior) or Selenium (which drives a real browser), so it complements them
+          rather than replacing either.
+        </p>
+      </section>
+
+      <section class="section" id="before">
+        <h3>2. Before you start</h3>
+        <ul class="checklist">
+          <li>Your team's repository lives in your group's GitHub organization, and every teammate has been added (see Sprint 1).</li>
+          <li><code>npm test</code> passes in <code>frontend/</code> and <code>backend/</code>, and your CI workflow is green.</li>
+          <li>You use <strong>Node 24</strong> locally (<code>node -v</code>). Older versions fail with "Cannot find native binding" (see <a href="#trouble">troubleshooting</a>).</li>
+          <li>You know who your repository <strong>Admin</strong> is.</li>
+        </ul>
+        <div class="notice">
+          <strong>Who does what (least privilege):</strong> the steps in sections 4 to 6 need organization-owner or
+          repository-Admin rights, so <strong>one person</strong> does them. Everyone else just pushes code with Write
+          access and reads the results. Don't make teammates Admins to "help".
+        </div>
+      </section>
+
+      <section class="section" id="limits">
+        <h3>3. Free plan limits</h3>
+        <p>SonarQube Cloud's Free plan is enough for this project, with a few limits to know about:</p>
+        <ul>
+          <li><strong>Private repositories:</strong> up to 50,000 lines of code <em>per SonarQube organization</em>. The reference app is roughly 1,100 lines of source, so you have plenty of room. Because each group has its own organization, you don't share this limit with other groups.</li>
+          <li><strong>Members:</strong> up to five per organization on the Free plan. If your team has more than five people, tell your instructor before you start.</li>
+          <li><strong>Public repositories</strong> have no line limit.</li>
+        </ul>
+        <p>
+          Plans and limits change, so check the current
+          <a href="https://docs.sonarsource.com/sonarqube-cloud/administering-sonarcloud/managing-subscription/subscription-plans">subscription plans page</a>
+          if something here doesn't match what you see.
+        </p>
+      </section>
+
+      <section class="section" id="connect">
+        <h3>4. Connect your GitHub organization</h3>
+        <p>Do this once per team. Menu names may differ slightly from the wording here; follow the on-screen prompts.</p>
+        <ol class="step-list">
+          <li>Go to <a href="https://sonarcloud.io">sonarcloud.io</a> and choose <strong>Log in with GitHub</strong>.</li>
+          <li>Choose <strong>Import an organization from GitHub</strong> and select your group's organization.</li>
+          <li>GitHub asks you to install the <strong>SonarQube Cloud</strong> app on that organization. Only an organization owner can approve this. Choose <strong>Only select repositories</strong> and pick your team's repository, rather than giving the app access to everything.</li>
+          <li>Choose the <strong>Free</strong> plan and create the organization. Note the <strong>organization key</strong> shown for it; you'll need it in section 7.</li>
+          <li>Invite your teammates to the SonarQube Cloud organization so they can see the results (remember the five-member limit).</li>
+        </ol>
+      </section>
+
+      <section class="section" id="project">
+        <h3>5. Create the project</h3>
+        <ol class="step-list">
+          <li>In SonarQube Cloud choose <strong>Analyze new project</strong> and select your team's repository.</li>
+          <li>When it asks how to analyze, choose <strong>With GitHub Actions</strong>. The page shows a snippet; you'll use a version of it in section 7.</li>
+          <li>Open the project's <strong>Information</strong> page and copy its <strong>project key</strong> (usually <code>&lt;organization&gt;_&lt;repository&gt;</code>).</li>
+          <li>Under <strong>Administration &rarr; Analysis Method</strong>, make sure <strong>Automatic Analysis is turned off</strong>. Automatic Analysis can't read your test coverage reports, and running both causes an error.</li>
+        </ol>
+      </section>
+
+      <section class="section" id="token">
+        <h3>6. Token and variable</h3>
+        <p>Your workflow proves to SonarQube Cloud who it is with an access token, stored as a GitHub secret.</p>
+        <ol class="step-list">
+          <li>In SonarQube Cloud open <strong>My Account &rarr; Security</strong>, generate a token named something like <code>github-actions</code>, and copy it right away. It is shown only once.</li>
+          <li>In your GitHub repository go to <strong>Settings &rarr; Secrets and variables &rarr; Actions</strong> (visible to the repository Admin only).</li>
+          <li><strong>Secrets</strong> tab &rarr; <strong>New repository secret</strong>: name <code>SONAR_TOKEN</code>, value the token.</li>
+          <li><strong>Variables</strong> tab &rarr; <strong>New repository variable</strong>: name <code>SONAR_ENABLED</code>, value <code>true</code>. The workflow's <code>sonar</code> job only runs when this is set, so teams that haven't finished setup still get a green build.</li>
+        </ol>
+        <div class="danger-note">
+          <strong>A token works like a password.</strong> Never commit it, put it in a file, send it in a chat, or paste it
+          into an AI tool (see <a href="ai-guide.html#secrets">Never paste secrets</a>). If it leaks, revoke it on the same
+          Security page and generate a new one.
+        </div>
+      </section>
+
+      <section class="section" id="files">
+        <h3>7. Add the files to your repository</h3>
+        <p>
+          Your repository should have <code>frontend/</code> and <code>backend/</code> side by side, as in Sprint 1. Each
+          piece below has a working copy in the reference app to compare with.
+        </p>
+
+        <h4>a. Coverage reports</h4>
+        <p>
+          SonarQube can't measure coverage itself; it reads a report your test tool produces. In <em>each</em> of
+          <code>frontend/</code> and <code>backend/</code>, install the coverage plugin at the <strong>same version as your Vitest</strong>:
+        </p>
+        <pre><code>npm ls vitest                              # note the version, for example 5.0.3
+npm install --save-dev @vitest/coverage-v8@5.0.3</code></pre>
+        <p>Add a script to that folder's <code>package.json</code>:</p>
+        <pre><code>"test:coverage": "vitest run --coverage"</code></pre>
+        <p>
+          Then tell Vitest what to report on. In <code>frontend/vite.config.js</code>, inside the existing <code>test</code> block:
+        </p>
+        <pre><code>coverage: {
+  provider: 'v8',
+  reporter: ['text', 'lcov'],
+  include: ['src/**/*.{js,jsx}'],
+  exclude: ['src/**/*.test.{js,jsx}', 'src/main.jsx'],
+},</code></pre>
+        <p>For the backend, create <code>backend/vitest.config.js</code>:</p>
+        <pre><code>import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    environment: 'node',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['**/*.js'],
+      exclude: ['tests/**', 'server.js', 'vitest.config.js', 'coverage/**'],
+    },
+  },
+})</code></pre>
+        <p>
+          Run <code>npm run test:coverage</code> in each folder. You should see a coverage table, and a
+          <code>coverage/lcov.info</code> file appear (it is already git-ignored by the repo's <code>.gitignore</code>).
+        </p>
+
+        <h4>b. <code>sonar-project.properties</code></h4>
+        <p>Create this file at the <strong>top level</strong> of the repository, using the organization key and project key from sections 4 and 5:</p>
+        <pre><code>sonar.organization=your-organization-key
+sonar.projectKey=your-organization-key_your-repository
+
+sonar.sources=frontend/src,backend
+sonar.tests=frontend/src,backend/tests
+sonar.test.inclusions=**/*.test.js,**/*.test.jsx,backend/tests/**
+sonar.exclusions=**/node_modules/**,**/coverage/**,**/dist/**,**/*.test.js,**/*.test.jsx,backend/tests/**
+
+sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info</code></pre>
+        <p>
+          Project keys and organization keys aren't secrets, so committing this file is fine. Never put the token in it.
+        </p>
+
+        <h4>c. The workflow job</h4>
+        <p>Add a <code>sonar</code> job to your existing <code>.github/workflows/ci.yml</code>, alongside your test jobs:</p>
+        <pre><code>  sonar:
+    if: ${{ vars.SONAR_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Frontend tests with coverage
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:coverage
+
+      - name: Backend tests with coverage
+        working-directory: backend
+        run: |
+          npm ci
+          npm run test:coverage
+
+      - name: Make coverage paths relative to the repository root
+        run: |
+          sed -i 's#^SF:#SF:frontend/#' frontend/coverage/lcov.info
+          sed -i 's#^SF:#SF:backend/#' backend/coverage/lcov.info
+
+      - name: SonarQube Cloud scan
+        uses: SonarSource/sonarqube-scan-action@v8.5.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}</code></pre>
+        <ul>
+          <li><code>fetch-depth: 0</code> downloads the full Git history so SonarQube can tell which code is new.</li>
+          <li>
+            <strong>The path step matters.</strong> Each coverage report lists files relative to its own folder
+            (<code>routes/auth.js</code>), but SonarQube looks for them from the repository root
+            (<code>backend/routes/auth.js</code>). Without the step, the scan succeeds but coverage shows 0%.
+          </li>
+          <li>Check the <a href="https://github.com/SonarSource/sonarqube-scan-action">scan action's page</a> for the newest version number before you copy this.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="run">
+        <h3>8. Run it and read it</h3>
+        <ol class="step-list">
+          <li>Commit the files and push. Before you <code>git add</code>, run <code>git status</code> and confirm no <code>.env</code> file or token is listed.</li>
+          <li>On GitHub open the <strong>Actions</strong> tab and watch the <strong>CI</strong> run. The <code>sonar</code> job should go green.</li>
+          <li>Open your project in SonarQube Cloud. Start with these views:
+            <ul>
+              <li><strong>Overview:</strong> the Quality Gate verdict and headline numbers. Look at both <strong>New Code</strong> (recent changes) and <strong>Overall Code</strong> (everything).</li>
+              <li><strong>Issues:</strong> filter by Reliability, Security, or Maintainability. Click one to see the exact line and an explanation of why it matters and how to fix it.</li>
+              <li><strong>Security Hotspots:</strong> each needs a person to mark it <em>Safe</em> or fix it.</li>
+              <li><strong>Measures &rarr; Coverage:</strong> per-file coverage. Low-coverage files show where your tests have gaps.</li>
+              <li><strong>Duplications:</strong> repeated code blocks.</li>
+            </ul>
+          </li>
+          <li>Pick one real issue and fix it. Push, wait for the next run, and confirm it disappears. This before-and-after is a good example for your report.</li>
+        </ol>
+        <p>
+          Once connected, SonarQube Cloud also reports the Quality Gate on your pull requests, so a reviewer can see it
+          before merging.
+        </p>
+        <div class="notice">
+          <strong>Don't chase a perfect score.</strong> Read each finding before acting. Some are real bugs, some are
+          style preferences, and some are false alarms. Deciding which is which, and writing down why, is the skill.
+        </div>
+      </section>
+
+      <section class="section" id="report">
+        <h3>9. Use it in your testing report</h3>
+        <p>Useful evidence to capture for your Milestone 6 report, with screenshots:</p>
+        <ul>
+          <li>The Overview page showing the Quality Gate result and coverage from your first successful scan (<strong>Initial Results</strong>).</li>
+          <li>The Issues list for your first scan, and the same list after your fixes (<strong>Initial Results</strong>, <strong>Lessons Learned</strong>).</li>
+          <li>The per-file Coverage view, with a note on which components are least covered and why (<strong>Scope</strong> and limitations).</li>
+          <li>A short description of the workflow: it runs on every push and pull request, which is your automated regression check, and a failing run is how you find out a change broke something (<strong>Testing Strategy</strong>).</li>
+        </ul>
+        <p>
+          Remember what it can't do: it doesn't click through your app or check that features behave correctly. Say so in
+          your limitations, and pair it with your unit tests and browser tests.
+        </p>
+      </section>
+
+      <section class="section" id="trouble">
+        <h3>10. Troubleshooting</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Symptom</th>
+              <th>Likely cause</th>
+              <th>Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>The <code>sonar</code> job shows as skipped</td>
+              <td><code>SONAR_ENABLED</code> isn't set to <code>true</code></td>
+              <td>Add it as a repository <strong>variable</strong> (not a secret), section 6.</td>
+            </tr>
+            <tr>
+              <td>Scan fails with "Not authorized" or "project not found"</td>
+              <td>Wrong or missing <code>SONAR_TOKEN</code>, or a typo in <code>sonar.organization</code> / <code>sonar.projectKey</code></td>
+              <td>Re-check the keys on the project's Information page; generate a new token and replace the secret.</td>
+            </tr>
+            <tr>
+              <td>Error mentioning Automatic Analysis, or "already analyzed"</td>
+              <td>Automatic Analysis is still on</td>
+              <td>Turn it off under <strong>Administration &rarr; Analysis Method</strong>.</td>
+            </tr>
+            <tr>
+              <td>Scan succeeds but coverage is 0% or missing</td>
+              <td>The path-prefix step is missing, a report wasn't produced, or <code>sonar.javascript.lcov.reportPaths</code> is wrong</td>
+              <td>Confirm <code>npm run test:coverage</code> creates <code>coverage/lcov.info</code> in both folders; keep the <code>sed</code> step; match the report paths in the properties file.</td>
+            </tr>
+            <tr>
+              <td>The coverage step fails with "Cannot find native binding" (locally or in CI)</td>
+              <td>Node older than 24</td>
+              <td>Run <code>node -v</code>. Install Node 24 LTS, delete <code>node_modules</code>, and run <code>npm ci</code> again. CI must use <code>node-version: '24'</code>.</td>
+            </tr>
+            <tr>
+              <td>Analysis fails saying the organization reached its maximum lines</td>
+              <td>Free plan private-code limit (50,000 lines)</td>
+              <td>Exclude generated or vendored code in <code>sonar.exclusions</code>, or ask your instructor.</td>
+            </tr>
+            <tr>
+              <td>Quality Gate fails even though the build is green</td>
+              <td>New code doesn't meet the gate, often coverage on new code</td>
+              <td>Open the failed condition on the Overview page. Add tests for the new code or, for a justified exception, discuss it in your report.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="links">
+        <h3>11. References</h3>
+        <ul>
+          <li><a href="https://docs.sonarsource.com/sonarqube-cloud/analyzing-source-code/ci-based-analysis/github-actions-for-sonarcloud">SonarQube Cloud: GitHub Actions setup</a></li>
+          <li><a href="https://docs.sonarsource.com/sonarqube-cloud/analyzing-source-code/test-coverage/javascript-typescript-test-coverage/">SonarQube Cloud: JavaScript and TypeScript test coverage</a></li>
+          <li><a href="https://github.com/SonarSource/sonarqube-scan-action">SonarQube scan action (GitHub)</a></li>
+          <li><a href="https://docs.sonarsource.com/sonarqube-cloud/administering-sonarcloud/managing-subscription/subscription-plans">SonarQube Cloud subscription plans</a></li>
+          <li><a href="https://vitest.dev/guide/coverage">Vitest: coverage</a></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University · CS 330</p>
+    </div>
+  </footer>
+</body>
+</html>

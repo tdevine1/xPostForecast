@@ -113,6 +113,12 @@ Worked examples of the course's design deliverables for this app are in [`design
 
 ---
 
+## 🧪 Code Quality and Coverage (Milestone 6)
+
+CI can also send the code and its test-coverage reports to [SonarQube Cloud](https://sonarcloud.io). The pieces are [`sonar-project.properties`](./sonar-project.properties), the `sonar` job in [`.github/workflows/ci.yml`](./.github/workflows/ci.yml), and `npm run test:coverage` in `frontend/` and `backend/`. The job is off until the repository variable `SONAR_ENABLED` is `true` and a `SONAR_TOKEN` secret exists. Students follow the [SonarQube guide](https://tdevine1.github.io/xPostForecast/students/sonarqube.html) to build the equivalent in their own repository.
+
+---
+
 ## 🔧 Maintaining This Repo (Instructors)
 
 **Per-semester Azure setup** for this reference deployment (resources, GitHub secrets and variables) is in the [instructor runbook](https://tdevine1.github.io/xPostForecast/deployment-steps.html). The deploy workflows only run while the repository variable `DEPLOY_TO_AZURE` is `true`; the rest of the year they show as skipped, and CI still tests every push.

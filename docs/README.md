@@ -9,7 +9,7 @@ Published with GitHub Pages at **<https://tdevine1.github.io/xPostForecast/>** (
 The site has two audiences, chosen from the landing page (`index.html`):
 
 - **Instructors** (`instructors.html` and the numbered pages it links to): a step-by-step reference for WVU professors, instructors, and staff covering project setup, GitHub configuration, Azure deployment, and troubleshooting for CS 330.
-- **Students** (`students/`): `ai-guide.html`, on using AI tools like a professional developer while still learning the fundamentals. Its sidebar also links to the Google Doc setup guides.
+- **Students** (`students/`): `ai-guide.html`, on using AI tools like a professional developer while still learning the fundamentals, and `sonarqube.html`, a tutorial for connecting a team repository to SonarQube Cloud (Milestone 6). Their sidebars also link to the Google Doc setup guides.
 
 ## Layout
 | File | Purpose |
@@ -18,6 +18,7 @@ The site has two audiences, chosen from the landing page (`index.html`):
 | `instructors.html` | Instructor home |
 | `getting-started.html`, `github-setup.html`, `azure-basics.html`, `deployment-steps.html`, `troubleshooting.html` | Instructor guide pages |
 | `students/ai-guide.html` | Student guide: developing with AI (includes a small prompt builder written in plain JavaScript) |
+| `students/sonarqube.html` | Student guide: SonarQube Cloud setup, coverage reports, the CI job, and using the results in the Milestone 6 report. Matches `sonar-project.properties` and the `sonar` job in `.github/workflows/ci.yml` |
 | `site.css` | The one stylesheet every page uses |
 
 ## Editing

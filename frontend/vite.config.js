@@ -9,5 +9,12 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom', // simulated browser DOM for component tests
+    coverage: {
+      // Run with `npm run test:coverage`. SonarQube reads the lcov report (see sonar-project.properties).
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/**/*.{js,jsx}'],
+      exclude: ['src/**/*.test.{js,jsx}', 'src/main.jsx'],
+    },
   },
 })
