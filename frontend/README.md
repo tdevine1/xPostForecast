@@ -1,6 +1,6 @@
 # Sprint 3 Frontend: Fetching and Mapping Real Data
 
-> This is the **reference implementation** for Sprint 3's frontend. Keep building in the `frontend/` you created in earlier sprints; don't clone or fork this one.
+> **Setting up this frontend yourself?** Read on. **Building your own project for CS 330?** Don't copy this one: follow the [Sprint 3 student guide](https://tdevine1.github.io/xPostForecast/students/sprint-3.html), which covers the loading, success, and error states your own pages need, and use this code to see what a finished version looks like.
 
 This React (Vite) frontend provides:
 

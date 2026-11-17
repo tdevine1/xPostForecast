@@ -1,6 +1,6 @@
 # Sprint 3 Backend: Temperature Data API
 
-> This is the **reference implementation** for Sprint 3's backend. Build the equivalent data pipeline in your own project's `backend/`; don't clone or fork this one.
+> **Setting up this backend yourself?** Read on. **Building your own project for CS 330?** Don't copy this one: follow the [Sprint 3 student guide](https://tdevine1.github.io/xPostForecast/students/sprint-3.html), which teaches you to connect your own backend to a data API, and use this code to see what a finished version looks like.
 
 This backend provides:
 
