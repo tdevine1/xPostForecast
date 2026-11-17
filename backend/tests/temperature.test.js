@@ -48,8 +48,8 @@ const ITEM = {
   id: 'nclimgrid-test',
   // tavg is deliberately NOT first: the code must pick it by name
   assets: {
-    prcp: { href: 'https://blob.example/prcp.tif' },
-    tavg: { href: 'https://blob.example/tavg.tif' },
+    prcp: { href: 'https://example.blob.core.windows.net/prcp.tif' },
+    tavg: { href: 'https://example.blob.core.windows.net/tavg.tif' },
   },
 };
 
@@ -116,6 +116,59 @@ describe('GET /temperature/:date', () => {
     vi.stubGlobal('fetch', fakePlanetaryComputer({ features: [], stacStatus: 503 }));
     const res = await request(app).get('/temperature/2020-04-01').set('Cookie', authCookie());
     expect(res.status).toBe(502);
+  });
+});
+
+describe('GET /temperature/:date: untrusted or broken data from Planetary Computer', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  it('returns 502 and downloads nothing when the asset URL is not on Azure Blob Storage', async () => {
+    const evilItem = { id: 'evil', assets: { tavg: { href: 'http://169.254.169.254/latest/meta-data' } } };
+    const fetchSpy = fakePlanetaryComputer({ features: [evilItem] });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const res = await request(app).get('/temperature/2019-01-01').set('Cookie', authCookie());
+
+    expect(res.status).toBe(502);
+    const urls = fetchSpy.mock.calls.map(([url]) => String(url));
+    expect(urls.some((u) => u.includes('/sas/v1/sign'))).toBe(false); // refused before even asking to sign it
+    expect(urls.some((u) => u.startsWith('http://169.254.169.254'))).toBe(false);
+  });
+
+  it('returns 502 when the item has no tavg asset', async () => {
+    const item = { id: 'no-tavg', assets: { prcp: { href: 'https://example.blob.core.windows.net/prcp.tif' } } };
+    vi.stubGlobal('fetch', fakePlanetaryComputer({ features: [item] }));
+    const res = await request(app).get('/temperature/2019-02-01').set('Cookie', authCookie());
+    expect(res.status).toBe(502);
+  });
+
+  it('returns 502 when the GeoTIFF download fails', async () => {
+    const base = fakePlanetaryComputer({ features: [ITEM] });
+    vi.stubGlobal('fetch', vi.fn(async (url) => {
+      if (String(url).includes('/stac/') || String(url).includes('/sas/')) return base(url);
+      return new Response('nope', { status: 500 }); // the download
+    }));
+    const res = await request(app).get('/temperature/2019-03-01').set('Cookie', authCookie());
+    expect(res.status).toBe(502);
+  });
+
+  it('forgets the oldest month once more than 24 months are cached', async () => {
+    const fetchSpy = fakePlanetaryComputer({ features: [ITEM] });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    // 25 different months: the first one (1901-01) is pushed out of the cache
+    for (let i = 0; i < 25; i++) {
+      const month = String((i % 12) + 1).padStart(2, '0');
+      const year = 1901 + Math.floor(i / 12);
+      await request(app).get(`/temperature/${year}-${month}-01`).set('Cookie', authCookie());
+    }
+    const callsBefore = fetchSpy.mock.calls.length;
+
+    await request(app).get('/temperature/1901-01-01').set('Cookie', authCookie());
+
+    expect(fetchSpy.mock.calls.length).toBeGreaterThan(callsBefore); // fetched again, not served from cache
   });
 });
 

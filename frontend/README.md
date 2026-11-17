@@ -79,6 +79,8 @@ export default api;
 - On startup, `api.get('/auth/test')`: success means logged in; any error (`401`, or backend unreachable) means logged out. While it waits, the app shows "Checking your session…".
 - Routes: `/` redirects; `/login` and `/register` redirect to `/map` when logged in; `/map` redirects to `/login` when not.
 
+> **Why `void` appears in front of some calls.** `navigate(...)` and the `verifyAuth()` call in `App.jsx` start background work and return a promise that nothing waits for. A static-analysis tool such as SonarQube Cloud flags an ignored promise, because an error inside it could disappear silently. `void navigate(...)` says "I know this is a background task and I am choosing not to wait". Anything whose result or failure matters is `await`ed inside `try/catch`, as the login request is.
+
 Note the change from Sprint 2: `fetch` resolves for every status (you check `res.ok`), but **axios throws for any non-2xx status**, so "logged in" is decided by whether `api.get` succeeds or throws.
 
 ---
@@ -149,6 +151,8 @@ The backend already converts to °F, so `tavg` is display-ready.
 npm test
 npm run lint
 ```
+
+`Login.test.jsx`, `Register.test.jsx`, `MapPage.test.jsx`, `MapComponent.test.jsx` (Leaflet replaced by stand-ins), and `api.test.js` cover the forms, the empty-month, error, and logout paths, the map colors and popups, and the client's address and cookie setting.
 
 `App.test.jsx` replaces the `api` module with a mock and checks: a valid session stays on `/map` after a refresh; a logged-out visitor is sent to `/login`; Fetch Data requests the chosen month and hands the points to the map; a `404` shows the backend's message; an expired session (`401`) returns to `/login`.
 

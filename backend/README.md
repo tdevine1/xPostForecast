@@ -117,7 +117,7 @@ app.use('/temperature', authMiddleware, stacRoutes);
 
    Each nClimGrid item covers one whole month, so any instant inside the month (here the 15th) finds it. No item means `404`.
 3. **Pick the asset by name.** An item has several assets (`prcp`, `tavg`, `tmax`, `tmin`, …); the code uses `item.assets.tavg`. Picking by name matters: the order of keys in the JSON is not guaranteed.
-4. **Sign the URL** with `sign/sign.js`. The file lives in Azure Blob Storage, which only allows downloads with a short-lived SAS token; the signing endpoint returns the same URL with a token appended.
+4. **Check, then sign the URL** with `sign/sign.js`. The URL comes from another service's JSON, so it is treated as untrusted input: `assertTrustedAssetUrl()` accepts only `https` addresses on `*.blob.core.windows.net` (Azure Blob Storage), before signing and again before downloading. Anything else is refused and the route answers `502`. Without this check, a tampered response could make your server request any address it can reach, which is called a *server-side request forgery* and is what SonarQube Cloud reports as a security issue. The file itself lives in Azure Blob Storage, which only allows downloads with a short-lived SAS token; the signing endpoint returns the same URL with a token appended.
 5. **Read the grid.** The backend downloads the COG (about 1.2 MB for the whole U.S.) and `geotiff` decodes only the window of rows and columns covering West Virginia.
 6. **Convert cells to points.** For each cell: skip "no data" values; compute the cell's **center** (`west + (col + 0.5) × cellWidth`, `north − (row + 0.5) × cellHeight`); keep it only if the center is inside the bounding box; convert °C to °F with `c2f`. The result is capped at 10,000 points as a safety limit.
 7. **Cache and return** the JSON array.
@@ -139,11 +139,11 @@ curl -s http://localhost:5175/temperature/2020-07-01 -b cookies.txt | head -c 30
 ## Tests
 
 ```bash
-npm test        # 25 tests: auth + temperature
+npm test        # auth, temperature, URL-safety (sign), config, and app-mode tests
 npm run lint
 ```
 
-`tests/temperature.test.js` replaces `fetch` with a fake Planetary Computer and `geotiff` with a fake grid, so it runs offline in a couple of seconds. It checks that the route requires login, picks `tavg` by name, converts to °F, uses the cache, and returns `404` and `502` in the right situations; it also checks `samplePoints()` cell-center math directly.
+`tests/temperature.test.js` replaces `fetch` with a fake Planetary Computer and `geotiff` with a fake grid, so it runs offline in a couple of seconds. It checks that the route requires login, picks `tavg` by name, converts to °F, uses the cache, and returns `404` and `502` in the right situations; it also checks `samplePoints()` cell-center math directly, and that a response pointing at a non-Azure address (for example `http://169.254.169.254/...`) is refused without any download. `tests/sign.test.js` checks the URL rules themselves, including look-alike hosts and addresses with embedded credentials.
 
 ---
 

@@ -33,7 +33,7 @@ function MapPage({ setAuthenticated }) {
   /** Session expired or missing: return to the login page. */
   const backToLogin = () => {
     setAuthenticated(false);
-    navigate('/login', { replace: true });
+    void navigate('/login', { replace: true });
   };
 
   /**

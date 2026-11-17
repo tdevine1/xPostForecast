@@ -36,7 +36,7 @@ const Register = () => {
     try {
       await api.post('/auth/register', { email, username, password });
       alert('Registration successful. Please log in.');
-      navigate('/login', { replace: true });
+      void navigate('/login', { replace: true });
     } catch (error) {
       // The backend explains 400 (bad input) and 409 (username/email taken) in `error`
       console.error('Registration failed:', error);

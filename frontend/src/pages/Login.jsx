@@ -34,7 +34,7 @@ const Login = ({ setAuthenticated }) => {
 
       // axios only gets here for 2xx responses; errors jump to catch
       setAuthenticated(true);
-      navigate('/map', { replace: true });
+      void navigate('/map', { replace: true });
     } catch (error) {
       if (error.response?.status === 401) {
         alert('Invalid credentials');
