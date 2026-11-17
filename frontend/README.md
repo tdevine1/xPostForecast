@@ -2,7 +2,7 @@
 
 In **Sprint 2**, the React (Vite) frontend talks to the backend using **cookie-based JWT authentication**. The backend sets an **HTTP-only cookie** on login (page JavaScript cannot read it, and nothing is kept in `localStorage`), and the frontend asks the backend whether the session is valid with `GET /auth/test`.
 
-> This is the **reference implementation**. Keep building in the `frontend/` you created in Sprint 1; don't clone or fork this one.
+> **Setting up this frontend yourself?** Read on. **Building your own project for CS 330?** Don't copy this one: follow the [Sprint 2 student guide](https://tdevine1.github.io/xPostForecast/students/sprint-2.html), which adds login to your own frontend step by step, and use this code to see what a finished version looks like.
 
 ---
 

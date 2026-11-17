@@ -2,7 +2,7 @@
 
 In **Sprint 2**, you build your first backend: an Express server that handles user authentication and connects to an **Azure Database for MySQL** server over **TLS**. This guide matches the code in this folder: ES modules, `mysql2/promise`, JWT login stored in an **HTTP-only cookie**, and **email + username + password** registration.
 
-> This is the **reference implementation**. Build the equivalent `backend/` in your own project repo; don't clone or fork this one.
+> **Setting up this backend yourself?** Read on. **Building your own project for CS 330?** Don't copy this one: follow the [Sprint 2 student guide](https://tdevine1.github.io/xPostForecast/students/sprint-2.html), which builds the same pieces step by step in your own repository, and use this code to see what a finished version looks like.
 
 *Flow: React (Vite) ⇄ cookie-based auth ⇄ Express ⇄ Azure MySQL (TLS)*
 
@@ -38,7 +38,7 @@ backend/
 
 - **Node.js 24 LTS**
 - **VS Code** (the **SQLTools** extensions from Sprint 1 are optional, for browsing the database)
-- An **Azure Database for MySQL – Flexible Server** (your instructor provides the host, admin user, and password)
+- An **Azure Database for MySQL – Flexible Server** and its host, admin user, and password. If you need to create one, the [instructor runbook](https://tdevine1.github.io/xPostForecast/deployment-steps.html#per-semester) lists every setting (choose the smallest *Burstable* size, Standard_B1ms). In a course, your instructor gives you these details
 - Your current public IP address allowed in **Azure Portal → your MySQL server → Networking → Firewall rules**
 
 ![Allow Client IP](../images/azure-networking-firewall.png)
@@ -139,7 +139,7 @@ The `UNIQUE` constraints are what stop two accounts from sharing a username or e
 
 > **Type the password at the prompt, never on the command line.** `mysql -p` asks for it without showing it. Writing it into the command (`-pMyPassword`) saves it in the shell's history, where anyone using that shell later can read it.
 
-If Cloud Shell can't connect (`ERROR 2002 (HY000): Can't connect to MySQL server`), the server isn't allowing connections from Azure services. Ask your instructor to turn on **Allow public access from any Azure service within Azure to this server** in **Networking**, or run the file with SQLTools instead (see **Optional: Browse the Database** below).
+If Cloud Shell can't connect (`ERROR 2002 (HY000): Can't connect to MySQL server`), the server isn't allowing connections from Azure services. Turn on **Allow public access from any Azure service within Azure to this server** in the server's **Networking** page (in a course, your instructor does this), or run the file with SQLTools instead (see **Optional: Browse the Database** below).
 
 ---
 
@@ -316,7 +316,7 @@ fetch(`${API_URL}/auth/test`, { credentials: 'include' });           // fetch
 | CORS error, or cookie not set | Wrong `FRONTEND_URL`, or missing `credentials` on either side | `FRONTEND_URL` must match the frontend's address exactly (`http://localhost:5173`, no trailing slash) |
 | `409` on register | Username or email already exists | Choose another, or delete the row in MySQL |
 | `429 Too Many Requests` | Rate limit reached | Wait 15 minutes, or restart the backend (the counter is in memory) |
-| Cloud Shell: `ERROR 2002 (HY000): Can't connect to MySQL server` | Server doesn't allow connections from Azure services | Ask your instructor to enable **Allow public access from any Azure service within Azure to this server** (Networking), or run the schema with SQLTools |
+| Cloud Shell: `ERROR 2002 (HY000): Can't connect to MySQL server` | Server doesn't allow connections from Azure services | Enable **Allow public access from any Azure service within Azure to this server** (Networking; your instructor does this on course servers), or run the schema with SQLTools |
 | `MySQL connection failed on startup` + `ETIMEDOUT` / `ERROR 2002` | Firewall rule missing or wrong host | Add your current IP in Azure → Networking; check `DB_HOST` |
 | `Access denied for user` | Wrong username or password | Check `DB_USER` / `DB_PASSWORD` against the **Connect** page in the Azure Portal |
 | `ER_BAD_DB_ERROR: Unknown database 'authdb'` | Schema not created | Run `db/schema.sql` (step 4) |
