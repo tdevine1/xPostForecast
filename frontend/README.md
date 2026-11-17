@@ -60,6 +60,8 @@ Open `.github/workflows/azure-static-web-apps-<name>.yml` and find the `Azure/st
 - The generated file also has a `close_pull_request_job`. If VS Code's YAML validation complains that `app_location` is missing there, add the same `app_location: "frontend"` line to its `with:` block.
 - If the Azure build fails with an unsupported Node.js version, switch to option B, where your workflow chooses the Node version.
 
+> **New to workflows?** The [Writing GitHub Workflows guide](https://tdevine1.github.io/xPostForecast/students/github-workflows.html) builds option B from scratch and explains every line. Words like *secret* and *runner* are in the [Glossary](https://tdevine1.github.io/xPostForecast/glossary.html).
+
 ### Option B: build in your own workflow (what this repo does)
 
 Create `.github/workflows/deploy-frontend.yml` (this repo's [`deploy-frontend.yml`](../.github/workflows/deploy-frontend.yml)):
@@ -128,7 +130,7 @@ In your GitHub repo: **Settings → Secrets and variables → Actions → New re
 
 | Name | Value | Needed for |
 |---|---|---|
-| `VITE_BACKEND_API_URL` | `https://<your-backend>.azurewebsites.net` (**no trailing slash**) | A and B |
+| `VITE_BACKEND_API_URL` | `https://` + the backend's **Default domain** from its App Service Overview page (**no trailing slash**). Copy it; don't type it from memory, because apps created in the portal have a random suffix | A and B |
 | `AZURE_STATIC_WEB_APPS_API_TOKEN` | the SWA deployment token | B only (A uses Azure's generated secret) |
 
 ![GitHub Secrets](../images/github-secrets.png)
@@ -152,11 +154,16 @@ SWA serves files. A request for `/map` looks for a file named `map`, finds none,
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": ["/assets/*", "/*.{svg,png,ico,json}"]
+  },
+  "globalHeaders": {
+    "Referrer-Policy": "strict-origin-when-cross-origin"
   }
 }
 ```
 
 Vite copies everything in `public/` into `dist/`, so the file is deployed with the site. `exclude` keeps real files (scripts, images) from being rewritten.
+
+**What `globalHeaders` is for.** Every page request sends the browser a few rules. One, `Referrer-Policy`, decides whether the browser tells *other* websites which page a request came from (the `Referer` header). Azure Static Web Apps otherwise sends `same-origin`, which means "tell nobody else". The map's background tiles come from OpenStreetMap, whose usage policy asks apps to send that header, so with `same-origin` the tiles are refused ("Access blocked"). It works on your own computer because browsers send it by default, so the problem only appears after you deploy. The map component also sets `referrerPolicy` on the `TileLayer` itself, as a second safeguard.
 
 ---
 
@@ -196,6 +203,7 @@ Visit `https://<your-swa>.azurestaticapps.net` with the browser's developer tool
 - **Login**: works, and in the **Network** tab requests go to `https://<your-backend>.azurewebsites.net/auth/...` with no CORS errors.
 - **Refresh on `/map`**: you stay on the map (no 404, no bounce to login).
 - **Fetch Data**: temperatures appear (any month from 1895 to September 2022).
+- **Map background**: a real street map appears under the coloured layer. Grey squares reading "Access blocked" mean the `Referer` fix above is missing.
 - **Logout**: back to `/login`.
 
 ![Browser Login Success](../images/browser-login-success.png)
@@ -214,6 +222,10 @@ Visit `https://<your-swa>.azurestaticapps.net` with the browser's developer tool
 | Workflow error about the deployment token | Wrong or missing token secret | Copy it again from **Manage deployment token** |
 | Deploy step says the app directory location is invalid | Option A: `app_location` doesn't point at the folder with `package.json`. Option B: the build didn't produce `frontend/dist` | Fix the path; for B, check the Build step's log |
 | Every push deploys twice | Both an Azure-generated and your own workflow | Keep one (section 2) |
+| The map background is grey squares: "Access blocked: App is not following the tile usage policy" | The site tells the browser not to send a `Referer`, and OpenStreetMap requires one | Add `globalHeaders` to `staticwebapp.config.json` (step 4) and `referrerPolicy` to the `TileLayer`; redeploy; hard-reload (Ctrl+Shift+R) |
+| Console shows `ERR_NAME_NOT_RESOLVED` for the backend | `VITE_BACKEND_API_URL` is a guessed address | Copy the backend's **Default domain**, update the secret, **redeploy the frontend** (the address is baked in at build time) |
+| Green workflow but the site looks unchanged | The browser cached the old version | Hard-reload (Ctrl+Shift+R) or try a private window |
+| Login is very slow the first time after a deploy | The backend is waking up (cold start) | Wait a minute and try again |
 
 ---
 

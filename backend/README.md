@@ -24,7 +24,7 @@ You have:
 
 The instructor provides:
 
-- The **App Service name** and **URL** (e.g. `https://<your-backend>.azurewebsites.net`)
+- The **App Service name** and **URL** (e.g. `https://<your-backend>.azurewebsites.net`). Always copy the address from the app's **Overview → Default domain** rather than typing it: an app created in the portal gets a random-looking suffix (for example `<name>-gmhxfca6exbhgccd.eastus-01.azurewebsites.net`)
 - The **Static Web App URL** (for `FRONTEND_URL`)
 
 ---
@@ -68,6 +68,8 @@ The publish profile is a password for deploying to your app: it belongs in a **s
 ---
 
 ## 3. Add the Deploy Workflow
+
+> **New to workflows?** The [Writing GitHub Workflows guide](https://tdevine1.github.io/xPostForecast/students/github-workflows.html) builds this file from scratch and explains every line, including what `on:`, `jobs:`, and `steps:` mean. Words like *secret* and *runner* are in the [Glossary](https://tdevine1.github.io/xPostForecast/glossary.html).
 
 Create `.github/workflows/deploy-backend.yml` (this repo's [`deploy-backend.yml`](../.github/workflows/deploy-backend.yml)):
 
@@ -200,6 +202,8 @@ Visit `https://<your-backend>.azurewebsites.net/health`:
 
 If `env` says `development`, `NODE_ENV` isn't set.
 
+> **The first request can be slow.** On the Basic plan the app goes to sleep after some idle time (about 20 minutes with no visitors), and it restarts after every deploy. The first request after either may take a minute or more while it wakes up (a *cold start*); the next answers in a fraction of a second. Turning on **Always On** (App Service → Settings → Configuration → General settings; available on Basic and above) keeps the app awake. That is normal, not a failed deployment. Wait and try again before you change anything.
+
 ![Browser Health Check](../images/browser-health-check.png)
 
 ### 6.2 Log stream
@@ -236,10 +240,18 @@ After that, each request is logged, e.g. `[2026-…] GET /auth/test — Origin: 
 | Browser console: CORS error mentioning `Access-Control-Allow-Origin` | `FRONTEND_URL` doesn't match the SWA URL exactly | Copy the SWA URL from the portal; no trailing slash |
 | Login returns 200 but you're immediately logged out | Cookie not sent cross-site | `NODE_ENV=production`; see 4.1 and the [frontend guide](../frontend/README.md#6-cookies-between-two-sites) |
 | `Application Error` page / app keeps restarting | Startup crash | Read the first error in the log stream |
+| `/health` hangs or times out the first time, then works | Cold start: the app was asleep | Wait a minute and retry; don't redeploy |
+| The frontend can't find the backend (`ERR_NAME_NOT_RESOLVED`) | `VITE_BACKEND_API_URL` uses an address that was guessed | Copy the **Default domain** from the App Service Overview, then redeploy the frontend |
 
 ---
 
-## 8. Summary
+## 8. Optional (Milestone 6): Code Quality with SonarQube
+
+SonarQube Cloud reads your code and your test coverage on every push and reports bugs, security problems, and untested code. This repo already has the pieces: [`sonar-project.properties`](../sonar-project.properties), a `sonar` job in [`ci.yml`](../.github/workflows/ci.yml), and an `npm run test:coverage` script in `backend/` (and `frontend/`). The job stays off until a repository **Admin** adds the `SONAR_TOKEN` secret and sets the variable `SONAR_ENABLED` to `true`. The [SonarQube guide](https://tdevine1.github.io/xPostForecast/students/sonarqube.html) walks through creating the project, the token, and reading the results.
+
+---
+
+## 9. Summary
 
 Your team has:
 

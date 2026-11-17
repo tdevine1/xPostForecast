@@ -79,6 +79,9 @@ You do **not** create or delete Azure resources in this sprint.
    - Add or fix the deploy workflow
    - Add `staticwebapp.config.json` so page refreshes work
 3. **End-to-end validation**: register, log in, refresh, fetch data, log out on the live site; use the browser's dev tools and the App Service log stream to investigate problems.
+4. **Code quality (Milestone 6)**: connect your repository to SonarQube Cloud, with coverage reports, using the [SonarQube guide](https://tdevine1.github.io/xPostForecast/students/sonarqube.html).
+
+New to GitHub Actions, or to any of these words? The [Writing GitHub Workflows guide](https://tdevine1.github.io/xPostForecast/students/github-workflows.html) builds the workflows from scratch and explains every line, and the [Glossary](https://tdevine1.github.io/xPostForecast/glossary.html) defines the vocabulary in plain English.
 
 ---
 
@@ -88,7 +91,10 @@ You do **not** create or delete Azure resources in this sprint.
 |---|---|
 | `.github/workflows/deploy-backend.yml` | **New.** On pushes to `main` that touch `backend/`: install, test, remove dev packages, deploy to App Service |
 | `.github/workflows/deploy-frontend.yml` | **New.** On pushes to `main` that touch `frontend/`: install, test, build with `VITE_BACKEND_API_URL`, upload to SWA |
-| `frontend/public/staticwebapp.config.json` | **New.** Sends unknown paths such as `/map` to `index.html` so refreshing a page doesn't 404 |
+| `frontend/public/staticwebapp.config.json` | **New.** Sends unknown paths such as `/map` to `index.html` so refreshing a page doesn't 404, and sets `Referrer-Policy: strict-origin-when-cross-origin` so OpenStreetMap accepts the map tiles |
+| `frontend/src/components/MapComponent.jsx` | The map's `TileLayer` sets `referrerPolicy="strict-origin-when-cross-origin"`, so tile requests always carry a `Referer` |
+| `.github/workflows/ci.yml` | Adds a `sonar` job (SonarQube Cloud), off until `SONAR_ENABLED` is `true` |
+| `sonar-project.properties`, `npm run test:coverage` | **New.** SonarQube settings, and coverage reports from Vitest in `frontend/` and `backend/` |
 | `frontend/src/api.js` | Logs the API base URL to the browser console (a quick way to confirm the build got the right URL) |
 
 The backend code needs no changes: it was written from Sprint 2 on to read `PORT` and all settings from the environment, and to switch cookie settings with `NODE_ENV`.
@@ -97,11 +103,11 @@ The backend code needs no changes: it was written from Sprint 2 on to read `PORT
 
 ## ✅ End-to-End Validation (Live Site)
 
-- [ ] `https://<your-backend>.azurewebsites.net/health` returns `{"ok":true,"env":"production"}`
+- [ ] `https://<your-backend's default domain>/health` returns `{"ok":true,"env":"production"}`. Copy the address from the App Service's **Overview → Default domain**; apps made in the portal have a random suffix. The very first request after a deploy can take a minute or more (the app is waking up); the second should be fast.
 - [ ] The SWA URL loads; the browser console shows `Frontend API Base URL: https://<your-backend>.azurewebsites.net`
 - [ ] Register and log in work
 - [ ] Refreshing on `/map` keeps you logged in (no 404, no bounce to `/login`)
-- [ ] Fetch Data draws temperatures for a month between 1895 and September 2022
+- [ ] Fetch Data draws temperatures for a month between 1895 and September 2022, on top of a real street map (grey squares reading "Access blocked" mean the Referrer-Policy fix is missing: see the [frontend guide](./frontend/README.md#8-troubleshooting))
 - [ ] Logout returns you to `/login`, and `/map` then redirects to `/login`
 - [ ] No CORS errors in the console; no crashes or database errors in the App Service log stream
 
