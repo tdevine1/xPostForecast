@@ -157,15 +157,20 @@
         <h3>6. Token and variable</h3>
         <p>Your workflow proves to SonarQube Cloud who it is with an access token, stored as a GitHub secret.</p>
         <ol class="step-list">
-          <li>In SonarQube Cloud open <strong>My Account &rarr; Security</strong>, generate a token named something like <code>github-actions</code>, and copy it right away. It is shown only once.</li>
+          <li>
+            In SonarQube Cloud click your <strong>profile picture</strong> (top right) &rarr; <strong>My Account</strong>, then open <strong>Access tokens</strong>
+            (or go straight to <code>sonarcloud.io/account/access-tokens</code>). On the <strong>Personal Tokens</strong> tab type a <strong>Token name</strong>
+            such as <code>github-actions</code>, and set <strong>Expires in</strong> to a date <em>after your project is finished</em>: the default is only 30 days,
+            and the scan stops working the day the token expires. Click <strong>Generate Token</strong> and <strong>copy it right away</strong>; it is shown only once.
+            SonarQube may suggest "Scoped Organization Tokens"; those need a paid plan, so use a personal token.
+          </li>
           <li>In your GitHub repository go to <strong>Settings &rarr; Secrets and variables &rarr; Actions</strong> (visible to the repository Admin only).</li>
           <li><strong>Secrets</strong> tab &rarr; <strong>New repository secret</strong>: name <code>SONAR_TOKEN</code>, value the token.</li>
           <li><strong>Variables</strong> tab &rarr; <strong>New repository variable</strong>: name <code>SONAR_ENABLED</code>, value <code>true</code>. The workflow's <code>sonar</code> job only runs when this is set, so teams that haven't finished setup still get a green build.</li>
         </ol>
         <div class="danger-note">
           <strong>A token works like a password.</strong> Never commit it, put it in a file, send it in a chat, or paste it
-          into an AI tool (see <a href="ai-guide.html#secrets">Never paste secrets</a>). If it leaks, revoke it on the same
-          Security page and generate a new one.
+          into an AI tool (see <a href="ai-guide.html#secrets">Never paste secrets</a>). If it leaks, click <strong>Revoke</strong> next to it on the same Access tokens page and generate a new one.
         </div>
       </section>
 
@@ -335,6 +340,11 @@ sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/l
               <td>Scan fails with "Not authorized" or "project not found"</td>
               <td>Wrong or missing <code>SONAR_TOKEN</code>, or a typo in <code>sonar.organization</code> / <code>sonar.projectKey</code></td>
               <td>Re-check the keys on the project's Information page; generate a new token and replace the secret.</td>
+            </tr>
+            <tr>
+              <td>The scan worked for a while, then fails with "Not authorized"</td>
+              <td>The token expired (the default lifetime is 30 days)</td>
+              <td>Generate a new token under My Account &rarr; Access tokens with a later expiry, and replace the <code>SONAR_TOKEN</code> secret.</td>
             </tr>
             <tr>
               <td>Error mentioning Automatic Analysis, or "already analyzed"</td>
