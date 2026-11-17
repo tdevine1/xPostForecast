@@ -1,209 +1,130 @@
-# Sprint 1: Frontend Setup Guide
+# xPostForecast Frontend (Sprint 1)
 
-Welcome to Sprint 1! **This `frontend/` folder is xPostForecast's own reference implementation** — a finished example you can read, run, and compare against. You will **not** clone or fork it. Instead, you'll create your own GitHub repository and build your own app, on your own topic, using the same tools and steps shown here.
+The React app at the heart of xPostForecast. In Sprint 1 it is a single page: month and year dropdowns, a **Fetch Data** button, and an interactive Leaflet map of West Virginia. The button and **Logout** are stubs that only write to the browser console; Sprint 2 adds login and Sprint 3 fetches real data.
 
-In this phase, you'll scaffold a React front end using [Vite](https://vite.dev/), connect it to your own GitHub repo, and build out an interactive UI. This sprint focuses on learning how front-end development is structured and how modern dev tools help streamline the process.
+> **Setting up this frontend yourself?** Read on. **Building your own project for CS 330?** Don't copy this one: follow the [Sprint 1 student guide](https://tdevine1.github.io/xPostForecast/students/sprint-1.html), which walks you through your tools, your team repository, and your own React app, and use this code to see what a finished Sprint 1 looks like.
 
----
-
-## 🧰 What You’ll Learn
-
-- How to scaffold and set up a Vite-powered React project from scratch
-- Understanding the frontend folder and component structure
-- How routing works using React Router
-- How to run the local development server with hot reloading
+The overall picture is in the [root README](../README.md).
 
 ---
 
-## 1. 🔧 Prerequisites
+## 1. What it is made of
 
-Make sure the following are installed:
+**Tech stack**
 
-- [Node.js & npm](https://nodejs.org/en/) – JavaScript runtime and package manager. Install **Node.js 24 LTS**. Current Vite releases do not run on older versions such as Node 18.
-- [Git](https://git-scm.com/downloads) – Version control  
-- [VS Code](https://code.visualstudio.com/) – Recommended code editor. Optional: the **SQLTools** extension (by Matheus Teixeira) and its **SQLTools MySQL/MariaDB/TiDB** driver, handy from Sprint 2 for browsing your database from VS Code. This repo's `.vscode/extensions.json` makes VS Code suggest both when you open it.
-- A [GitHub](https://github.com/) account
+- **Framework:** React 19 + Vite
+- **Routing:** React Router
+- **Mapping:** Leaflet + React-Leaflet, with OpenStreetMap tiles
+- **Loading indicator:** `react-spinners`
+- **Tests:** Vitest + Testing Library; **lint:** oxlint (the linter Vite's React template ships with)
 
----
+**Folder structure**
 
-## 2. 📖 Look at the Reference Example First
-
-Before building your own app, skim this repo's `frontend/` folder on the [`sprint-1` branch](https://github.com/tdevine1/xPostForecast/tree/sprint-1) to see a complete Sprint 1 solution:
-
-- `src/components/` – reusable UI pieces (`MapComponent.jsx`, `DateSelector.jsx`)
-- `src/pages/` – full screens that compose components (`MapPage.jsx`)
-- `src/App.jsx` / `src/main.jsx` – routing and entry point
-
-You're not copying this code — you're building the *equivalent* structure for your own topic. Come back to this repo any time as a reference while you work.
-
----
-
-## 3. 🆕 Create Your Own GitHub Repository
-
-Follow your course's setup guide for the details (team naming, class organization, collaborators). In short:
-
-1. **One teammate** creates the repository at [github.com/new](https://github.com/new), owned by the course organization, set to **Private**, with **Add a README file** checked and the **Node** `.gitignore` template selected. That template already ignores `node_modules/` and `.env` files (but not `.env.example`).
-2. **The same teammate adds every team member** right away, so each person can push commits under their own account (never share one login). In the repo go to **Settings → Collaborators and teams → Add people**, invite each teammate by GitHub username, and have them accept the invitation. Give each person only the access they need, the **principle of least privilege**:
-   - **Write** is enough for day-to-day work: cloning, branching, pushing, and opening pull requests. Choose **Write** for every teammate, not Admin.
-   - Keep **Admin** for **one person** only (the teammate who created the repo). Admin can change settings, add deployment secrets, manage who has access, and delete the repository. Those powers are rarely needed and can cause real damage if misused or if an account is compromised.
-   - You'll need that one Admin again in Sprint 4, when the deployment secrets are added.
-3. **Every teammate** clones it, either with VS Code's **Source Control → Clone Repository** or in a terminal (`` Ctrl+` ``):
-
-   ```bash
-   git clone https://github.com/<organization>/<your-repo-name>.git
-   cd <your-repo-name>
-   ```
-
----
-
-## 4. 🏗️ Scaffold Your Project with Vite
-
-From the **top level** of your cloned repo folder (the one containing `README.md`), run:
-
-```bash
-npm create vite@latest frontend -- --template react
-cd frontend
-```
-
-This generates a new Vite + React project in a `frontend/` subfolder — mirroring how this reference repo separates `frontend/` from `backend/` (added in Sprint 2). Keep the app directly in `frontend/` (not nested deeper, such as `frontend/app/`): later sprints and the Sprint 4 deployment workflows assume `frontend/` and `backend/` sit side by side at the top of the repo. If the tool asks whether to install dependencies and start the dev server now, either answer is fine; if the server starts, stop it with `Ctrl+C` and continue.
-
-Vite also generates a starter `.gitignore` inside `frontend/` covering `node_modules/`, `dist/`, and editor files, and sets up **oxlint** as the project's linter (`npm run lint`).
-
-**Mini-Lesson: Why keep frontend and backend in separate folders?**  
-Later sprints add a Node.js backend alongside your React frontend. Separating them from the start keeps dependencies, configs, and deployment concerns cleanly split.
-
----
-
-## 5. 📦 Installing Dependencies
-
-Still inside `frontend/`, install the packages you'll need. At minimum, for routing:
-
-```bash
-npm install react-router-dom
-```
-
-If your topic includes a map (like this example does, using [Leaflet](https://leafletjs.com/)), also install:
-
-```bash
-npm install leaflet react-leaflet
-```
-
-Pick libraries that fit *your* topic — a chart library (e.g. `chart.js`), a calendar picker, etc. are all reasonable substitutes depending on what your app needs to display.
-
----
-
-## 6. 🧠 Structuring Your Project
-
-Organize your `src/` folder the same way this reference example does:
-
-```bash
+```text
 frontend/
+├── index.html
+├── package.json
+├── vite.config.js            Vite and Vitest settings
+├── .oxlintrc.json            lint rules
 └── src/
-    ├── components/     # Reusable pieces (your equivalents of MapComponent, DateSelector)
-    ├── pages/          # Full screens tied to routes
-    ├── App.jsx         # Main app routing component
-    ├── main.jsx        # Entry point for rendering App
-    └── index.css       # Global styles
+    ├── main.jsx              entry point: renders <App />
+    ├── App.jsx               routes (/ redirects to /map; /map shows MapPage)
+    ├── index.css             global styles
+    ├── components/
+    │   ├── DateSelector.jsx  month/year dropdowns + Fetch Data (with DateSelector.test.jsx)
+    │   └── MapComponent.jsx  the Leaflet map
+    └── pages/
+        └── MapPage.jsx       the screen: combines the selector and the map
 ```
 
-**Mini-Lesson: Why split components and pages?**  
-`components/` are reusable widgets (like buttons or selectors).  
-`pages/` are full screens (like "MapPage") that use multiple components.
+**Why components and pages are separate.** `components/` are reusable widgets (a selector, a map). `pages/` are full screens tied to a route that combine several components. **Why `frontend/` is its own folder.** Sprint 2 adds a `backend/` next to it; keeping them apart keeps their packages, settings, and deployment separate.
 
 ---
 
-## 7. 🚀 Running the Development Server
+## 2. Run it locally
 
-In the terminal:
+You need **Node.js 24 LTS** (current Vite releases don't run on older versions such as Node 18) and Git.
 
 ```bash
-npm run dev
+git clone https://github.com/tdevine1/xPostForecast.git
+cd xPostForecast
+git switch sprint-1
+cd frontend
+npm install
+npm run dev          # http://localhost:5173
 ```
 
-This launches the Vite development server. Your terminal will show something like:
-
-```
-  ➜  Local:   http://localhost:5173/
-```
-
-Visit that URL in your browser to see the app.
-
-**Mini-Lesson: What is hot reloading?**  
-When you edit a file, the page updates instantly without reloading. This is Vite’s superpower!
-
----
-
-## 8. ✅ Lint and Test
-
-Two habits worth starting now:
+Open the address in your browser. The terminal also offers:
 
 ```bash
-npm run lint   # oxlint: catches unused variables, hook mistakes, and similar bugs
+npm run lint         # oxlint: unused variables, hook mistakes, and similar bugs
+npm test             # Vitest component tests
+npm run build        # production build into dist/
 ```
 
-This reference example also has a component test, `src/components/DateSelector.test.jsx`, run with [Vitest](https://vitest.dev/) via `npm test`, and a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs lint, tests, and a build on every push. Check with your instructor whether tests are required for your project; either way, the files are a short, working example to copy from.
-
----
-
-## 9. 🧪 What the Reference Example Looks Like
-
-Here's a screenshot of *this reference app* at the end of Sprint 1 — yours will look different since it's your own topic, but should hit the same milestones:
+Editing a file updates the page instantly without a reload (Vite's *hot reloading*).
 
 ![Sprint 1 UI](../images/screenshot-sprint1.png)
 
-By the end of Sprint 1, your own app should have:
+---
 
-- A working interactive UI element relevant to your topic (this example uses a Leaflet map)
-- A selector/input UI for choosing what data to view (this example uses month/year dropdowns)
-- Placeholder "Fetch Data" and "Logout" buttons — no real data fetch or login logic yet, that comes in later sprints
+## 3. How it works
+
+| File | What it does |
+|---|---|
+| `main.jsx` | Renders `<App />` into the page. |
+| `App.jsx` | Sets up React Router. `/` redirects to `/map`; `/map` renders `MapPage`. Sprint 2 adds `/login` and `/register` and puts `/map` behind a login check. |
+| `pages/MapPage.jsx` | Holds the chosen `date` and a loading flag. **Fetch Data** warns if no month is chosen, otherwise logs "would fetch…", waits half a second (to show the spinner), and stops. **Logout** only logs. |
+| `components/DateSelector.jsx` | Month and year dropdowns (years 1895–2022, the range Planetary Computer's data covers). Calls `onDateChange('YYYY-MM-01')` once both are chosen, and `fetchTemperatureData()` when **Fetch Data** is clicked. Dropdowns mean no free-text date parsing is needed. |
+| `components/MapComponent.jsx` | A React-Leaflet map centered on West Virginia. Takes a `temperatures` array of `{ lat, lon, tavg }` points (empty in this sprint). |
+
+Props of the two components:
+
+| Component | Prop | Type | Meaning |
+|---|---|---|---|
+| `DateSelector` | `onDateChange` | `(date: string) => void` | Called with e.g. `'2020-07-01'` once both month and year are chosen |
+| `DateSelector` | `fetchTemperatureData` | `() => void` | Called when **Fetch Data** is clicked |
+| `MapComponent` | `temperatures` | `Array<{ lat, lon, tavg }>` | Points to draw; an empty array shows just the map |
 
 ---
 
-## 10. 🛠️ Troubleshooting
+## 4. Tests and CI
 
-- **`npm install` fails or hangs** — delete `node_modules/` and `package-lock.json`, then re-run `npm install`. Make sure you're inside your `frontend/` folder when you run it.
-- **`npm` or `node` not recognized** — Node.js isn't installed or isn't on your PATH. Reinstall Node.js and restart VS Code.
-- **Errors mentioning an unsupported Node version** — run `node --version`; if it is older than v24, install Node.js 24 LTS.
-- **`Port 5173 is already in use`** — another instance of the dev server is already running. Stop it (`Ctrl+C` in that terminal) or close other terminal tabs running `npm run dev`.
-- **Blank page / component doesn't render** — open your browser's developer console (`F12`) and check for errors; a common cause is a typo in an import path under `src/components/`.
+`src/components/DateSelector.test.jsx` is a [Vitest](https://vitest.dev/) test for the dropdowns. The workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs `npm ci`, `npm run lint`, `npm test`, and `npm run build` on every push and pull request, so a mistake turns red on GitHub before it can cause harm. New to workflows? See the [GitHub workflows guide](https://tdevine1.github.io/xPostForecast/students/github-workflows.html).
 
 ---
 
-## 11. 💡 Explore More (Optional Learning)
+## 5. Keep secrets out of Git
+
+This sprint has no secrets, but the habits start now:
+
+- Vite's `frontend/.gitignore` covers `node_modules/` and `dist/` but **not `.env`**. The repository-level `.gitignore` (GitHub's **Node** template) does. Starting in Sprint 2, `.env` files hold settings such as the backend's address and database credentials, and must never be committed.
+- `.vscode/settings.json` is ignored too. If you use SQLTools (optional, from Sprint 2) it saves your database connection there, and depending on one setting that can include the database password. This repository's [`.gitignore`](../.gitignore) ignores everything in `.vscode/` except `extensions.json`, which only recommends the extensions.
+- Before every `git add`, run `git status` and confirm nothing like `node_modules/`, a `.env` file, or `.vscode/settings.json` is about to be committed.
+
+---
+
+## 6. Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `npm install` fails or hangs | A broken download or the wrong folder | Delete `node_modules/` and `package-lock.json`, make sure you are inside `frontend/`, and run `npm install` again |
+| `npm` or `node` not recognized | Node.js isn't installed or isn't on your PATH | Reinstall Node.js 24 LTS and restart VS Code |
+| "running scripts is disabled on this system" (Windows PowerShell) | PowerShell blocks npm's helper script | See the [fix in the Sprint 1 guide](https://tdevine1.github.io/xPostForecast/students/sprint-1.html#powershell) |
+| Errors mentioning an unsupported Node version | Node older than v24 | Run `node --version` and install Node.js 24 LTS |
+| `Port 5173 is already in use` | Another dev server is running | Stop it with `Ctrl+C`, or close other terminals running `npm run dev` |
+| Blank page, or a component doesn't render | Often a typo in an import path | Open the browser console (`F12`) and read the first error |
+
+---
+
+## 7. References
 
 | Topic | Resource |
-|-------|----------|
-| Learn JSX | [React: Writing Markup with JSX](https://react.dev/learn/writing-markup-with-jsx) |
-| Learn React Router | [React Router: Declarative Mode](https://reactrouter.com/start/declarative/installation) |
-| Learn Vite | [Vite Guide](https://vite.dev/guide/) |
-| Learn Vitest | [Vitest Guide](https://vitest.dev/guide/) |
+|---|---|
+| JSX | [React: Writing Markup with JSX](https://react.dev/learn/writing-markup-with-jsx) |
+| React Router | [Declarative mode](https://reactrouter.com/start/declarative/installation) |
+| Vite | [Vite Guide](https://vite.dev/guide/) |
+| Vitest | [Vitest Guide](https://vitest.dev/guide/) |
+| React-Leaflet | <https://react-leaflet.js.org/> |
 
----
-
-## ✅ You Now Have
-
-- Created your own GitHub repository and cloned it locally
-- Added every teammate with Write access (Admin for one person only)
-- Scaffolded a Vite React app of your own from scratch
-- Installed dependencies and structured your project
-- Built and previewed an interactive frontend for your own topic
-
-In **Sprint 2**, we’ll add a backend connection and a database for login functionality.
-
-Happy coding!
-
----
-
-## 🛑 Don't Forget: Commit Your Work
-
-Vite's scaffold adds a `.gitignore` in `frontend/` covering `node_modules/` and `dist/`, but **it does not exclude `.env`**. The repo-level `.gitignore` from GitHub's **Node** template does. If your repo was created without that template, add `.env` to a `.gitignore` yourself before you ever create one (you'll need one starting in Sprint 2 for settings like the backend URL and database credentials).
-
-Also ignore `.vscode/settings.json`. If you use SQLTools (optional, from Sprint 2), it saves your database connection there, and depending on one setting it can include your database password. This repo's [`.gitignore`](../.gitignore) shows the pattern: ignore everything in `.vscode/` except `extensions.json`.
-
-Before you `git add`, run `git status` and confirm nothing like `node_modules/`, a `.env` file, or `.vscode/settings.json` is about to be committed.
-
-```bash
-git add .
-git commit -m "Sprint 1: frontend setup"
-git push
-```
+In **Sprint 2** the app gains an Express backend, an Azure MySQL database, and login. Next: [`sprint-2`](https://github.com/tdevine1/xPostForecast/tree/sprint-2).
