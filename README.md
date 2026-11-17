@@ -175,6 +175,8 @@ Everything is on the guides site, **<https://tdevine1.github.io/xPostForecast/>*
 
 | Guide | For |
 |---|---|
+| [Sprint 1: Frontend and your team repo](https://tdevine1.github.io/xPostForecast/students/sprint-1.html) | Students setting up tools, their team repo, and a React app |
+| [Sprint 2: Backend and login](https://tdevine1.github.io/xPostForecast/students/sprint-2.html) | Students building a backend with a database and login |
 | [Sprint 3: Connect to an API](https://tdevine1.github.io/xPostForecast/students/sprint-3.html) | Students connecting their own project to a data API |
 | [Sprint 4: Deploy to the cloud](https://tdevine1.github.io/xPostForecast/students/sprint-4.html) | Students putting their own project on Azure |
 | [Writing GitHub workflows](https://tdevine1.github.io/xPostForecast/students/github-workflows.html) | Students writing CI and deploy workflows |

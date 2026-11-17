@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sprint 2 student guide: build an Express backend with an Azure MySQL database, registration, login and logout, and connect it to your React frontend." />
+  <title>Sprint 2: Backend and Login | CS 330 Student Guide</title>
+  <link rel="stylesheet" href="../site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="../WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Sprint 2: Backend and Login</h1>
+        <p>CS 330 student guide: a server, a database, and user accounts.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="../index.html">All guides</a></li>
+        <li><a href="sprint-1.html">Sprint 1: Frontend and your team repo</a></li>
+        <li>
+          <a class="active-link" aria-current="page" href="sprint-2.html">Sprint 2: Backend and login</a>
+          <ul class="sub">
+            <li><a href="#fit">How the pieces fit</a></li>
+            <li><a href="#start">1. Before you start</a></li>
+            <li><a href="#project">2. Create the backend project</a></li>
+            <li><a href="#envvars">3. Environment variables</a></li>
+            <li><a href="#cert">4. The SSL certificate</a></li>
+            <li><a href="#schema">5. The database and table</a></li>
+            <li><a href="#database">6. Connect to the database</a></li>
+            <li><a href="#routes">7. Login routes</a></li>
+            <li><a href="#server">8. Build and start the server</a></li>
+            <li><a href="#frontend">9. Add login to the frontend</a></li>
+            <li><a href="#test">10. Test and open a PR</a></li>
+            <li><a href="#team">11. Every teammate runs it</a></li>
+            <li><a href="#trouble">Troubleshooting</a></li>
+            <li><a href="#checklist">Checklist</a></li>
+          </ul>
+        </li>
+        <li><a href="sprint-3.html">Sprint 3: Connect to an API</a></li>
+        <li><a href="sprint-4.html">Sprint 4: Deploy to the cloud</a></li>
+        <li><a href="github-workflows.html">Writing GitHub workflows</a></li>
+        <li><a href="sonarqube.html">Testing with SonarQube Cloud</a></li>
+        <li><a href="ai-guide.html">Developing with AI</a></li>
+        <li><a href="../glossary.html">Glossary</a></li>
+      </ul>
+      <h2>Project Links</h2>
+      <ul>
+        <li><a href="https://github.com/tdevine1/xPostForecast">Reference app on GitHub</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast/tree/sprint-2">The Sprint 2 branch</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast/compare/sprint-1...sprint-2">What Sprint 2 changed (diff)</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Give your app a server and user accounts</h2>
+        <p>
+          In Sprint 2 your app gets a <strong>backend</strong>: an <strong>Express</strong> server that stores user
+          accounts in your team's <strong>Azure Database for MySQL</strong> and handles registration, login, and logout.
+          You also add Login and Register pages to your frontend and put your main page behind a login check.
+        </p>
+        <div class="notice">
+          <strong>Who does what.</strong> One teammate, the <strong>Backend Lead</strong>, follows steps 1 to 10 on a
+          branch and opens a pull request. After it is merged, <strong>every teammate</strong> follows step 11 to run the
+          app on their own computer. You need the frontend from
+          <a href="sprint-1.html">Sprint 1</a>, including <code>react-router-dom</code> and <code>axios</code> and
+          <code>frontend/.env</code>.
+        </div>
+        <div class="notice">
+          <strong>The xPostForecast repository is an example, not a template.</strong> The code below is the same as the
+          <a href="https://github.com/tdevine1/xPostForecast/tree/sprint-2">sprint-2 branch</a>, so you can compare any
+          file with a working version. One difference: the reference app's main page is a map at <code>/map</code>, and
+          yours is called <code>HomePage</code> at <code>/home</code>. New words are in the
+          <a href="../glossary.html">Glossary</a>.
+        </div>
+      </section>
+
+      <section class="section" id="fit">
+        <h3>How the pieces fit together</h3>
+        <p>Read this once before you start. Every file you create below does one of these jobs.</p>
+        <ol class="step-list">
+          <li><strong>Register.</strong> The Register page sends an email, username, and password to <code>POST /auth/register</code>. The backend <strong>hashes</strong> the password with bcrypt and stores only the hash in the <code>users</code> table.</li>
+          <li><strong>Log in.</strong> The Login page sends a username and password to <code>POST /auth/login</code>. If they match, the backend creates a signed <strong>JSON Web Token (JWT)</strong> and sends it back in an <strong>HTTP-only cookie</strong> named <code>token</code>. The browser stores it, and page JavaScript can't read it.</li>
+          <li><strong>Page load or refresh.</strong> <code>App.jsx</code> calls <code>GET /auth/test</code>. The browser sends the cookie, the backend's auth middleware checks the token's signature and expiry, and it answers <code>200</code> (logged in) or <code>401</code> (not). <code>App.jsx</code> shows the main page or the login page.</li>
+          <li><strong>Log out.</strong> The Logout button calls <code>POST /auth/logout</code>, and the backend clears the cookie.</li>
+        </ol>
+        <p>
+          Because the cookie is HTTP-only, the frontend never touches the token. It only has to send its requests with
+          credentials turned on (<code>withCredentials: true</code> in axios, <code>credentials: 'include'</code> in
+          fetch) so the browser includes the cookie.
+        </p>
+      </section>
+
+      <section class="section" id="start">
+        <h3>1. Before you start (Backend Lead)</h3>
+        <p>You need:</p>
+        <ul>
+          <li>Your team's repository with the frontend from <a href="sprint-1.html">Sprint 1</a>.</li>
+          <li>Your Azure MySQL server's details from your instructor: the <strong>server name</strong> (like <code>yourserver.mysql.database.azure.com</code>), the <strong>admin username</strong>, and the <strong>password</strong>.</li>
+          <li>Access to your server in the <a href="https://portal.azure.com">Azure portal</a>.</li>
+        </ul>
+        <p><strong>Let your computer connect to the database.</strong> Add your computer's IP address to the server's firewall:</p>
+        <ol class="step-list">
+          <li>Azure portal &rarr; your <strong>MySQL Flexible Server</strong> &rarr; <strong>Networking</strong>.</li>
+          <li>Under <strong>Firewall rules</strong> click <strong>Add current client IP address</strong>, then <strong>Save</strong>.</li>
+        </ol>
+        <p>Your IP address changes when you move between home, campus, and a phone hotspot. If the backend stops connecting after you move, add the new address the same way.</p>
+        <p>Then create a branch for this work: click the <strong>branch name</strong> in VS Code's lower-left corner &rarr; <strong>Create new branch</strong>, and name it <code>feature/backend</code>.</p>
+      </section>
+
+      <section class="section" id="project">
+        <h3>2. Create the backend project (Backend Lead)</h3>
+        <p>In the VS Code terminal, in the top-level folder of your repository (the one with <code>README.md</code> and <code>frontend</code>):</p>
+<pre><code>mkdir backend
+cd backend
+npm init -y
+npm install express cors cookie-parser mysql2 bcryptjs jsonwebtoken express-rate-limit</code></pre>
+        <table>
+          <thead>
+            <tr><th>Package</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>express</code></td><td>The web server framework. It sends each request, like <code>POST /auth/login</code>, to the code that handles it.</td></tr>
+            <tr><td><code>cors</code></td><td>Lets your frontend, which runs on a different port, call the backend.</td></tr>
+            <tr><td><code>cookie-parser</code></td><td>Reads cookies from requests, so the backend can find the login cookie.</td></tr>
+            <tr><td><code>mysql2</code></td><td>Connects to MySQL and runs queries.</td></tr>
+            <tr><td><code>bcryptjs</code></td><td>Hashes passwords.</td></tr>
+            <tr><td><code>jsonwebtoken</code></td><td>Creates and checks JWTs.</td></tr>
+            <tr><td><code>express-rate-limit</code></td><td>Limits how many login and register attempts one computer can make.</td></tr>
+          </tbody>
+        </table>
+        <p>Open <code>backend/package.json</code> and change three things, leaving the rest as it is:</p>
+        <ul>
+          <li>Set <code>"main"</code> to <code>"server.js"</code>.</li>
+          <li>Change <code>"type"</code> from <code>"commonjs"</code> to <code>"module"</code>, so you can use <code>import</code> and <code>export</code>.</li>
+          <li>Replace <code>"scripts"</code> with a start script and a dev script.</li>
+        </ul>
+<pre><code>"main": "server.js",
+"scripts": {
+  "start": "node server.js",
+  "dev": "node --watch server.js"
+},
+"type": "module",</code></pre>
+        <p><code>npm start</code> runs the server once, the way Azure will in Sprint 4. <code>npm run dev</code> restarts it whenever you save a file, which is what you use while developing.</p>
+        <p>By the end of this guide the backend folder looks like this. Create folders with the Explorer's <strong>New Folder</strong> icon and files with <strong>New File</strong>.</p>
+<pre><code>backend/
+├── config/
+│   ├── cookies.js                    # settings for the login cookie
+│   ├── database.js                   # MySQL connection pool over TLS
+│   ├── DigiCertGlobalRootG2.crt.pem  # Azure's CA certificate
+│   └── env.js                        # loads .env
+├── db/
+│   └── schema.sql                    # creates the database and users table
+├── middleware/
+│   └── authMiddleware.js             # checks the login cookie
+├── routes/
+│   └── auth.js                       # register, login, test, logout
+├── app.js                            # the Express app: middleware and routes
+├── server.js                         # starts the server
+├── .env                              # your settings and passwords (never committed)
+├── .env.example                      # template for .env (committed)
+└── package.json</code></pre>
+      </section>
+
+      <section class="section" id="envvars">
+        <h3>3. Environment variables (Backend Lead)</h3>
+        <p>Like the frontend, the backend keeps settings and secrets in a <code>.env</code> file that is never committed. Create <code>backend/.env.example</code>, which <em>is</em> committed so teammates know what to fill in:</p>
+<pre><code># Copy this file to .env and fill in your values. Never commit .env.
+
+# Server. Locally the backend listens on 5175.
+# On Azure App Service, PORT is set automatically: do not add it there.
+PORT=5175
+FRONTEND_URL=http://localhost:5173
+NODE_ENV=development
+
+# Secret used to sign login tokens (JWTs). Generate one with:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET=
+
+# Azure Database for MySQL
+DB_HOST=&lt;your-server&gt;.mysql.database.azure.com
+DB_USER=&lt;your-admin-user&gt;
+DB_PASSWORD=&lt;your-password&gt;
+DB_NAME=authdb
+DB_PORT=3306</code></pre>
+        <p>Then create <code>backend/.env</code> with the same lines and fill in the real values:</p>
+        <ul>
+          <li><code>DB_HOST</code>, <code>DB_USER</code>, <code>DB_PASSWORD</code>: your server's name, admin username, and password from your instructor.</li>
+          <li><code>JWT_SECRET</code>: a long random string the backend uses to sign login tokens. Generate one with this command and paste its output after <code>JWT_SECRET=</code>:</li>
+        </ul>
+<pre><code>node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code></pre>
+        <ul>
+          <li>Keep <code>DB_NAME=authdb</code>: step 5 creates a database with that name.</li>
+        </ul>
+        <div class="danger-note">
+          <strong>Open Source Control and check that <code>backend/.env</code> does not appear under Changes.</strong>
+          The Node <code>.gitignore</code> ignores <code>.env</code> files in every folder. If it does appear, stop and fix
+          <code>.gitignore</code> before you commit anything.
+        </div>
+        <p>Now create <code>backend/config/env.js</code>, which loads <code>.env</code> when the server starts:</p>
+<pre><code>/**
+ * config/env.js
+ *
+ * Loads backend/.env into process.env for LOCAL development, using Node's
+ * built-in loader (no dotenv package needed). Import this file first.
+ *
+ * On Azure App Service there is no .env file: values come from the App
+ * Service "Environment variables" settings instead, so a missing file is fine.
+ */
+try {
+  process.loadEnvFile(new URL('../.env', import.meta.url));
+} catch (err) {
+  if (err.code !== 'ENOENT') throw err; // a malformed .env should still fail loudly
+}</code></pre>
+        <p><code>process.loadEnvFile</code> is built into Node 24, so you don't need the <code>dotenv</code> package. On Azure in Sprint 4 there is no <code>.env</code> file: the same variables come from the App Service settings, which is why a missing file isn't an error.</p>
+      </section>
+
+      <section class="section" id="cert">
+        <h3>4. The SSL certificate (Backend Lead)</h3>
+        <p>Azure only accepts encrypted connections, and your backend checks that it is really talking to Azure by verifying the server's certificate against a file you download.</p>
+        <ol class="step-list">
+          <li>Azure portal &rarr; your <strong>MySQL Flexible Server</strong> &rarr; <strong>Networking</strong>.</li>
+          <li>Click <strong>Download SSL Certificate</strong>.</li>
+          <li>Move the downloaded file into <code>backend/config</code> and make sure it is named <code>DigiCertGlobalRootG2.crt.pem</code>.</li>
+        </ol>
+        <p>This certificate is public, not a secret, so it is fine to commit it.</p>
+      </section>
+
+      <section class="section" id="schema">
+        <h3>5. Create the database and the users table (Backend Lead)</h3>
+        <p>Create <code>backend/db/schema.sql</code>:</p>
+<pre><code>-- Database schema for xPostForecast (Sprint 2 onward).
+-- Run once against your Azure Database for MySQL server. Easiest: Azure Portal -&gt; your server -&gt;
+-- Connect -&gt; Cloud Shell, run the mysql command it shows, and paste this whole file at the mysql&gt; prompt.
+-- Or open this file in VS Code with your SQLTools connection active, select all (Ctrl+A), and run it
+-- (Ctrl+E Ctrl+E). Or with the mysql client, from the backend/ folder:
+--   mysql -h &lt;your-server&gt;.mysql.database.azure.com -u &lt;your-admin-user&gt; -p --ssl-ca=config/DigiCertGlobalRootG2.crt.pem &lt; db/schema.sql
+
+CREATE DATABASE IF NOT EXISTS authdb;
+USE authdb;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,   -- bcrypt hash, never the plaintext password
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+        <p>Run it from the Azure portal, whose <strong>Connect</strong> page opens a MySQL session in <strong>Azure Cloud Shell</strong>, a terminal in your browser. Nothing to install.</p>
+        <ol class="step-list">
+          <li>Azure portal &rarr; your <strong>MySQL Flexible Server</strong> &rarr; <strong>Connect</strong>.</li>
+          <li>Open <strong>Cloud Shell</strong> from the Connect page. The first time, choose <strong>Bash</strong>; if it asks about storage, choose <strong>No storage account required</strong>.</li>
+          <li>Run the <code>mysql</code> command the Connect page shows (your server name and admin user are already filled in) and type the password when it asks. You are connected when you see the <code>mysql&gt;</code> prompt.</li>
+          <li>Copy all of <code>schema.sql</code> from VS Code and paste it at the <code>mysql&gt;</code> prompt (right-click &rarr; <strong>Paste</strong>, or <strong>Shift+Insert</strong>). Each statement prints <code>Query OK</code>.</li>
+          <li>Check the result, then leave:
+<pre><code>SHOW TABLES FROM authdb;
+DESCRIBE authdb.users;
+exit</code></pre>
+          </li>
+        </ol>
+        <p>What the table enforces:</p>
+        <ul>
+          <li><code>password_hash</code> stores the bcrypt hash, never the password itself.</li>
+          <li><code>UNIQUE</code> on <code>email</code> and <code>username</code>: the database refuses a second account with the same username or email, and the backend turns that refusal into a clear message.</li>
+        </ul>
+        <div class="danger-note">
+          <strong>Type the password at the prompt, never on the command line</strong> (as in <code>-pMyPassword</code>).
+          Cloud Shell saves its command history, so anyone who uses that shell later could read it.
+        </div>
+        <p>If Cloud Shell shows <code>ERROR 2002 (HY000): Can't connect to MySQL server</code>, ask your instructor to turn on <strong>Allow public access from any Azure service within Azure to this server</strong> in the server's Networking settings.</p>
+      </section>
+
+      <section class="section" id="database">
+        <h3>6. Connect to the database (Backend Lead)</h3>
+        <p>Create <code>backend/config/database.js</code>:</p>
+<pre><code>/**
+ * config/database.js
+ *
+ * Creates the MySQL connection pool used by every route.
+ * The connection to Azure Database for MySQL is encrypted (TLS) and the
+ * server's certificate is verified against the bundled CA certificate.
+ */
+import mysql from 'mysql2/promise';
+import fs from 'node:fs';
+
+// Root CA certificate for Azure Database for MySQL, read once at startup
+const caCert = fs.readFileSync(new URL('./DigiCertGlobalRootG2.crt.pem', import.meta.url));
+
+const port = Number(process.env.DB_PORT) || 3306;
+console.log(`Connecting to MySQL at ${process.env.DB_HOST}:${port}`);
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  ssl: {
+    ca: caCert,               // trust Azure's certificate chain
+    rejectUnauthorized: true, // refuse the connection if the certificate doesn't verify
+  },
+});
+
+// Try one connection at startup so database problems show up in the logs immediately.
+// A failure is only logged (the app keeps running), and startup doesn't wait for it.
+async function checkConnection() {
+  try {
+    const conn = await pool.getConnection();
+    console.log('Successfully connected to MySQL');
+    conn.release();
+  } catch (err) {
+    console.error('MySQL connection failed on startup:', err.message);
+  }
+}
+void checkConnection();
+
+export default pool;</code></pre>
+        <ul>
+          <li>A <strong>pool</strong> keeps a few connections open and lends one to each request, instead of opening a new connection every time.</li>
+          <li><code>ssl.ca</code> with <code>rejectUnauthorized: true</code>: the connection is encrypted, and it is refused if the server's certificate doesn't verify against the file from step 4.</li>
+          <li><code>checkConnection()</code> tries one connection at startup, so a wrong password or a missing firewall rule shows in the terminal right away instead of on the first login. It is <code>async</code> and started with <code>void</code> because the server should <em>not</em> wait for it: a failure is logged and the server keeps running.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="routes">
+        <h3>7. Add the login routes (Backend Lead)</h3>
+        <h4>Cookie settings</h4>
+        <p>Create <code>backend/config/cookies.js</code>:</p>
+<pre><code>/**
+ * config/cookies.js
+ *
+ * Options for the auth cookie, shared by login (set) and logout (clear) so
+ * they always match.
+ *
+ * Development: the frontend (localhost:5173) and backend (localhost:5175) are
+ * the SAME SITE (ports don't count), so a SameSite=Lax cookie is sent.
+ *
+ * Production: the frontend (*.azurestaticapps.net) and backend
+ * (*.azurewebsites.net) are DIFFERENT SITES. Browsers only send a cookie on
+ * cross-site requests when it is SameSite=None and Secure (HTTPS only).
+ * Partitioned (CHIPS) ties the cookie to the frontend's site, which lets it
+ * work in browsers that restrict third-party cookies.
+ */
+export function authCookieOptions() {
+  if (process.env.NODE_ENV === 'production') {
+    return { httpOnly: true, secure: true, sameSite: 'none', partitioned: true };
+  }
+  return { httpOnly: true, secure: false, sameSite: 'lax' };
+}</code></pre>
+        <p>Locally, <code>localhost:5173</code> and <code>localhost:5175</code> count as the same site (ports don't count), so a <code>SameSite=Lax</code> cookie works. In Sprint 4 the frontend and backend are on different sites, so production needs <code>SameSite=None</code> and <code>Secure</code>. Login and logout both call this function, because clearing a cookie only works with the same options that set it.</p>
+        <h4>Auth middleware</h4>
+        <p>Create <code>backend/middleware/authMiddleware.js</code>:</p>
+<pre><code>/**
+ * middleware/authMiddleware.js
+ *
+ * Protects routes: only requests carrying a valid JWT in the `token` cookie
+ * get through. Requires cookie-parser to run first (see app.js).
+ */
+import jwt from 'jsonwebtoken';
+
+/**
+ * Express middleware that verifies the JWT cookie.
+ * On success, attaches the decoded payload ({ id, username }) as req.user.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+const authMiddleware = (req, res, next) =&gt; {
+  const token = req.cookies?.token;
+  if (!token) return res.status(401).json({ error: 'Not logged in' });
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid or expired session' });
+  }
+};
+
+export default authMiddleware;</code></pre>
+        <p>Middleware runs <em>before</em> a route. This one lets a request through only if its cookie holds a JWT signed with your <code>JWT_SECRET</code> that hasn't expired, and it attaches the user to <code>req.user</code>. Put it in front of every route that needs a login: <code>/auth/test</code> now, and your own data routes in <a href="sprint-3.html">Sprint 3</a>.</p>
+        <h4>Auth routes</h4>
+        <p>Create <code>backend/routes/auth.js</code>:</p>
+<pre><code>/**
+ * routes/auth.js
+ *
+ * Authentication routes, mounted at /auth in app.js:
+ *   POST /auth/register  create an account (password is hashed before storage)
+ *   POST /auth/login     check credentials, set the JWT in an HTTP-only cookie
+ *   GET  /auth/test      report whether the cookie holds a valid session
+ *   POST /auth/logout    clear the cookie
+ *
+ * Requires JWT_SECRET (see .env.example) and cookie-parser + CORS with
+ * credentials enabled in app.js.
+ */
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
+import pool from '../config/database.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { authCookieOptions } from '../config/cookies.js';
+
+const router = express.Router();
+
+const MIN_PASSWORD_LENGTH = 8;
+const SESSION_MS = 60 * 60 * 1000; // 1 hour, used for both the JWT and the cookie
+
+// Slow down password guessing: at most 20 login/register attempts per IP per 15 minutes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many attempts. Please wait 15 minutes and try again.' },
+});
+
+/**
+ * Registers a new user.
+ * @route POST /auth/register
+ * @body {string} email
+ * @body {string} username
+ * @body {string} password - at least 8 characters; stored only as a bcrypt hash
+ * @returns 201 on success, 400 on bad input, 409 if the username or email is taken
+ */
+router.post('/register', authLimiter, async (req, res) =&gt; {
+  // req.body is undefined unless the request was sent as JSON
+  const { email, username, password } = req.body ?? {};
+  if (!email || !username || !password) {
+    return res.status(400).json({ error: 'email, username, and password are required' });
+  }
+  if (password.length &lt; MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+  }
+
+  try {
+    // Hash with a work factor of 10 (each +1 doubles the time to compute)
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await pool.execute(
+      'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+      [username, email, passwordHash]
+    );
+
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    // The UNIQUE constraints on username and email reject duplicates
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'That username or email is already registered' });
+    }
+    console.error('Error during user registration:', error);
+    res.status(500).json({ error: 'Failed to register user' });
+  }
+});
+
+/**
+ * Logs a user in and sets the JWT as an HTTP-only cookie named `token`.
+ * @route POST /auth/login
+ * @body {string} username
+ * @body {string} password
+ * @returns 200 on success, 400 on missing input, 401 on wrong credentials
+ */
+router.post('/login', authLimiter, async (req, res) =&gt; {
+  const { username, password } = req.body ?? {};
+  if (!username || !password) {
+    return res.status(400).json({ error: 'username and password are required' });
+  }
+
+  try {
+    const [rows] = await pool.execute(
+      'SELECT id, username, password_hash FROM users WHERE username = ?',
+      [username]
+    );
+    const user = rows[0];
+
+    // Same response whether the username or the password is wrong,
+    // so attackers can't use this endpoint to discover usernames
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Keep the JWT payload minimal: it is signed, not encrypted
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: SESSION_MS / 1000 }
+    );
+
+    // httpOnly: page JavaScript can't read the cookie (limits damage from XSS).
+    // See config/cookies.js for SameSite/Secure in development vs production.
+    res.cookie('token', token, { ...authCookieOptions(), maxAge: SESSION_MS });
+
+    // The token travels only in the cookie, never in the response body
+    res.json({ message: 'Login successful' });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ error: 'Failed to login' });
+  }
+});
+
+/**
+ * Reports whether the request carries a valid session cookie.
+ * The frontend calls this on page load to decide what to show.
+ * @route GET /auth/test
+ * @returns 200 { ok: true, user: { id, username } }, or 401 from authMiddleware
+ */
+router.get('/test', authMiddleware, (req, res) =&gt; {
+  res.json({ ok: true, user: { id: req.user.id, username: req.user.username } });
+});
+
+/**
+ * Logs out by clearing the cookie (options must match the ones used to set it).
+ * @route POST /auth/logout
+ */
+router.post('/logout', (_req, res) =&gt; {
+  res.clearCookie('token', authCookieOptions());
+  res.json({ message: 'Logged out' });
+});
+
+export default router;</code></pre>
+        <ul>
+          <li><strong>Register</strong> checks the input, hashes the password with bcrypt, and inserts the row. The <code>?</code> placeholders send the values separately from the SQL, which prevents <strong>SQL injection</strong>. <strong>Never build SQL by joining strings with user input.</strong></li>
+          <li>A duplicate username or email makes MySQL raise <code>ER_DUP_ENTRY</code>, which the route turns into a <code>409</code> response.</li>
+          <li><strong>Login</strong> gives the same <code>401</code> for a wrong username and a wrong password, so it doesn't reveal which usernames exist.</li>
+          <li>The JWT holds only the user's id and username. A JWT is <em>signed</em>, not encrypted: anyone who has it can read what is inside, but nobody can change it without the secret.</li>
+          <li>The token travels only in the cookie, never in the response body.</li>
+          <li><code>authLimiter</code> allows 20 login and register attempts per IP address every 15 minutes, which slows down password guessing.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="server">
+        <h3>8. Build and start the server (Backend Lead)</h3>
+        <p>Create <code>backend/app.js</code>:</p>
+<pre><code>/**
+ * app.js
+ *
+ * Builds the Express app: middleware first, then routes, then the 404 and
+ * error handlers. It does NOT start listening. server.js does that, and the
+ * tests import this app directly so they can send requests without a server.
+ */
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import authRoutes from './routes/auth.js';
+
+const app = express();
+
+// Behind Azure App Service's proxy, trust X-Forwarded-* headers so Express
+// knows the original request was HTTPS (needed for Secure cookies) and sees
+// the real client IP (needed for rate limiting).
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
+// CORS: allow ONLY our frontend's origin, and allow it to send cookies.
+// Must come before the routes.
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
+
+app.use(express.json());   // parse JSON request bodies into req.body
+app.use(cookieParser());   // parse cookies into req.cookies
+
+// Simple request logger, handy during setup and in the Azure log stream
+if (process.env.NODE_ENV !== 'test') {
+  app.use((req, _res, next) =&gt; {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} — Origin: ${req.headers.origin || 'n/a'}`);
+    next();
+  });
+}
+
+// Health check: confirms the server is up without touching the database
+app.get('/health', (_req, res) =&gt; {
+  res.json({ ok: true, env: process.env.NODE_ENV || 'development' });
+});
+
+app.use('/auth', authRoutes);
+
+// 404 for any route not matched above
+app.use((req, res) =&gt; {
+  res.status(404).json({ error: `Not found: ${req.method} ${req.originalUrl}` });
+});
+
+// Error handler: Express sends errors here (it is recognized by its 4 arguments)
+app.use((err, _req, res, _next) =&gt; {
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'Request body is not valid JSON' });
+  }
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+export default app;</code></pre>
+        <ul>
+          <li><strong>Order matters.</strong> CORS, JSON parsing, and cookie parsing run before the routes, and the 404 and error handlers come last.</li>
+          <li>CORS allows only <code>FRONTEND_URL</code>, with <code>credentials: true</code> so the browser may send the cookie. Logging in needs both this and the frontend's <code>withCredentials: true</code>.</li>
+          <li><code>/health</code> answers without touching the database: a quick "is the server up?" check.</li>
+          <li><code>app.js</code> doesn't start the server, so automated tests can import it. The reference repo's <code>backend/tests</code> folder shows how.</li>
+        </ul>
+        <p>Create <code>backend/server.js</code>:</p>
+<pre><code>/**
+ * server.js
+ *
+ * Entry point: loads configuration, checks it, and starts the HTTP server.
+ * The app itself (middleware and routes) is built in app.js.
+ */
+import './config/env.js'; // must be first: loads .env before other modules read process.env
+import app from './app.js';
+
+// Fail fast with a clear message instead of failing later in a confusing way
+const required = ['FRONTEND_URL', 'JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+const missing = required.filter((name) =&gt; !process.env[name]);
+if (missing.length &gt; 0) {
+  console.error(`Missing required environment variables: ${missing.join(', ')}`);
+  console.error('Locally: copy .env.example to .env and fill it in. On Azure: add them under App Service &gt; Environment variables.');
+  process.exit(1);
+}
+
+// Locally PORT is unset or 5175. Azure App Service sets PORT for us.
+const PORT = Number(process.env.PORT) || 5175;
+
+console.log('Configured FRONTEND_URL =', process.env.FRONTEND_URL);
+console.log('NODE_ENV =', process.env.NODE_ENV);
+
+app.listen(PORT, () =&gt; {
+  console.log(`Server is running on ${PORT}`);
+});</code></pre>
+        <p>It loads <code>.env</code> first, refuses to start if a setting is missing, and listens on <code>PORT</code> (which Azure sets for you in Sprint 4). Start it from the <code>backend</code> folder:</p>
+<pre><code>npm run dev</code></pre>
+        <p>You should see:</p>
+<pre><code>Connecting to MySQL at &lt;your-server&gt;.mysql.database.azure.com:3306
+Configured FRONTEND_URL = http://localhost:5173
+NODE_ENV = development
+Server is running on 5175
+Successfully connected to MySQL</code></pre>
+        <p>The last two lines can appear in either order. Then open <a href="http://localhost:5175/health">http://localhost:5175/health</a>: it should show <code>{"ok":true,"env":"development"}</code>.</p>
+        <p>
+          If you see <code>MySQL connection failed on startup</code> with <code>ETIMEDOUT</code>, your IP address isn't in the
+          firewall rules (step 1). With <code>Access denied for user</code>, check <code>DB_USER</code> and
+          <code>DB_PASSWORD</code> in <code>.env</code>. Leave the backend running for the next steps.
+        </p>
+      </section>
+
+      <section class="section" id="frontend">
+        <h3>9. Add login to the frontend (Backend Lead)</h3>
+        <p>
+          Check <code>frontend/.env</code> from Sprint 1: it should contain <code>VITE_BACKEND_API_URL=http://localhost:5175</code>.
+          If you skipped installing the packages, run <code>npm install react-router-dom axios</code> in the
+          <code>frontend</code> folder.
+        </p>
+        <h4>Login page</h4>
+        <p>Create <code>frontend/src/pages/Login.jsx</code>:</p>
+<pre><code>/**
+ * Login.jsx
+ *
+ * Login form. On success the backend sets an HTTP-only cookie; we then mark
+ * the app as authenticated and go to the main page.
+ *
+ * NOTE:
+ * - Requests must use `withCredentials: true` so the browser stores the cookie.
+ * - Backend auth routes are mounted at `/auth/*`, so the URL is `/auth/login`.
+ */
+
+import { useState } from 'react';
+import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
+
+// Base URL of the backend (e.g., http://localhost:5175), from frontend/.env
+const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+
+/**
+ * Login component allows users to enter credentials to access the app.
+ * @param {Function} setAuthenticated - Updates the app's authentication state.
+ * @returns {JSX.Element} The login form.
+ */
+const Login = ({ setAuthenticated }) =&gt; {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  /**
+   * Sends the credentials to the backend; on success, goes to the main page.
+   * @param {Object} e - Form submit event.
+   */
+  const handleSubmit = async (e) =&gt; {
+    e.preventDefault();
+
+    try {
+      await axios.post(
+        `${API_URL}/auth/login`,
+        { username, password },
+        { withCredentials: true } // lets the browser store the HTTP-only cookie
+      );
+
+      // axios only gets here for 2xx responses; errors jump to catch
+      setAuthenticated(true);
+      void navigate('/home', { replace: true });
+    } catch (error) {
+      if (error.response?.status === 401) {
+        alert('Invalid credentials');
+      } else {
+        // No response at all usually means the backend isn't running, the URL
+        // is wrong, or CORS blocked the request (check the browser console)
+        console.error('Login failed:', error);
+        alert(error.response?.data?.error ?? 'Unable to reach the server. Is the backend running?');
+      }
+    }
+  };
+
+  return (
+    &lt;div style={{ display: 'flex', flexDirection: 'column', maxWidth: '300px' }}&gt;
+      &lt;h2&gt;Login&lt;/h2&gt;
+      &lt;form onSubmit={handleSubmit}&gt;
+        &lt;input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) =&gt; setUsername(e.target.value)}
+          autoComplete="username"
+        /&gt;
+        &lt;input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) =&gt; setPassword(e.target.value)}
+          autoComplete="current-password"
+        /&gt;
+        &lt;button type="submit"&gt;Login&lt;/button&gt;
+      &lt;/form&gt;
+
+      &lt;p style={{ marginTop: '10px' }}&gt;
+        Don’t have an account? &lt;Link to="/register"&gt;Register here&lt;/Link&gt;
+      &lt;/p&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default Login;</code></pre>
+        <p><code>withCredentials: true</code> lets the browser store the cookie the backend sends. <code>setAuthenticated(true)</code> tells <code>App.jsx</code> you are now logged in.</p>
+        <h4>Register page</h4>
+        <p>Create <code>frontend/src/pages/Register.jsx</code>:</p>
+<pre><code>/**
+ * Register.jsx
+ *
+ * Registration form for new users. On success, sends the user to the login page.
+ *
+ * NOTE: Backend auth routes are mounted at `/auth/*`, so the URL is `/auth/register`.
+ */
+
+import { useState } from 'react';
+import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
+
+// Base URL of the backend (e.g., http://localhost:5175), from frontend/.env
+const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+
+/**
+ * Register component allows new users to create an account.
+ * @returns {JSX.Element} The registration form.
+ */
+const Register = () =&gt; {
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  /**
+   * Sends the registration details to the backend.
+   * @param {Object} e - Form submit event.
+   */
+  const handleRegister = async (e) =&gt; {
+    e.preventDefault();
+
+    // Check the obvious things before bothering the server
+    if (!email || !username || !password) {
+      alert('Please enter an email, username, and password.');
+      return;
+    }
+
+    try {
+      await axios.post(`${API_URL}/auth/register`, { email, username, password });
+      alert('Registration successful. Please log in.');
+      void navigate('/login', { replace: true });
+    } catch (error) {
+      // The backend explains 400 (bad input) and 409 (username/email taken) in `error`
+      console.error('Registration failed:', error);
+      alert(error.response?.data?.error ?? 'Unable to reach the server. Is the backend running?');
+    }
+  };
+
+  return (
+    &lt;div style={{ display: 'flex', flexDirection: 'column', maxWidth: '300px' }}&gt;
+      &lt;h2&gt;Register&lt;/h2&gt;
+      &lt;form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column' }}&gt;
+        &lt;input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) =&gt; setEmail(e.target.value)}
+          autoComplete="email"
+        /&gt;
+        &lt;input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) =&gt; setUsername(e.target.value)}
+          autoComplete="username"
+        /&gt;
+        &lt;input
+          type="password"
+          placeholder="Password (at least 8 characters)"
+          value={password}
+          onChange={(e) =&gt; setPassword(e.target.value)}
+          autoComplete="new-password"
+          minLength={8}
+        /&gt;
+        &lt;button type="submit"&gt;Register&lt;/button&gt;
+      &lt;/form&gt;
+
+      &lt;p style={{ marginTop: '10px' }}&gt;
+        Already have an account? &lt;Link to="/login"&gt;Log in&lt;/Link&gt;
+      &lt;/p&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default Register;</code></pre>
+        <p>Registering doesn't log you in: it creates the account and sends you to the login page.</p>
+        <h4>Your main page</h4>
+        <p>
+          Your Sprint 1 page becomes the page people see after logging in. Create <code>frontend/src/pages/HomePage.jsx</code>
+          and move your Sprint 1 page's content into it where the comment says. If your page is already its own
+          component, import it and render it there instead. The Logout button asks the backend to clear the cookie.
+        </p>
+<pre><code>/**
+ * HomePage.jsx
+ *
+ * The app's main page, only reachable when logged in (see App.jsx).
+ * Put your Sprint 1 page content here, and keep the Logout button.
+ */
+
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+// Base URL of the backend (e.g., http://localhost:5175), from frontend/.env
+const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+
+/**
+ * Main page with a Logout button.
+ * @param {Function} setAuthenticated - Updates the app's authentication state.
+ * @returns {JSX.Element} The main page.
+ */
+function HomePage({ setAuthenticated }) {
+  const navigate = useNavigate();
+
+  /**
+   * Logs out: asks the backend to clear the cookie, then returns to /login.
+   */
+  const handleLogout = async () =&gt; {
+    try {
+      await axios.post(`${API_URL}/auth/logout`, null, { withCredentials: true });
+    } catch (err) {
+      // Even if the request fails, log out on this side so the user isn't stuck
+      console.error('Logout request failed (continuing client-side):', err);
+    } finally {
+      setAuthenticated(false);
+      void navigate('/login', { replace: true });
+    }
+  };
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Your App Name&lt;/h1&gt;
+
+      {/* Your Sprint 1 page content goes here */}
+
+      &lt;button type="button" onClick={handleLogout} style={{ marginTop: '20px' }}&gt;
+        Logout
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default HomePage;</code></pre>
+        <h4>Routes and the login check</h4>
+        <p>Replace <code>frontend/src/App.jsx</code> with:</p>
+<pre><code>/**
+ * App.jsx
+ *
+ * Top-level component: routing plus "is the user logged in?" state.
+ *
+ * Login state lives in an HTTP-only cookie set by the backend, which page
+ * JavaScript cannot read. So on startup we ask the backend (GET /auth/test)
+ * whether the cookie holds a valid session, and wait for the answer before
+ * deciding which page to show. This keeps a page refresh from logging you out.
+ */
+
+import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+import HomePage from './pages/HomePage';
+import Login from './pages/Login';
+import Register from './pages/Register';
+
+const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+
+/**
+ * Main application component that manages authentication and routing.
+ * @returns {JSX.Element} The rendered application with routes.
+ */
+function App() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Ask the backend once, on startup, whether we already have a valid session
+  useEffect(() =&gt; {
+    async function verifyAuth() {
+      try {
+        const res = await fetch(`${API_URL}/auth/test`, {
+          credentials: 'include', // send the HTTP-only cookie
+        });
+        setAuthenticated(res.ok); // fetch: res.ok is true for any 2xx status
+      } catch {
+        setAuthenticated(false); // backend unreachable: treat as logged out
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+    void verifyAuth(); // `void`: we deliberately don't wait for it; errors are handled inside
+  }, []);
+
+  // Don't render any route until we know the answer, otherwise /home would
+  // briefly redirect to /login on every page refresh
+  if (checkingAuth) {
+    return &lt;p&gt;Checking your session…&lt;/p&gt;;
+  }
+
+  return (
+    &lt;Router&gt;
+      &lt;Routes&gt;
+        {/* Redirect base route based on auth state */}
+        &lt;Route path="/" element={&lt;Navigate to={authenticated ? '/home' : '/login'} replace /&gt;} /&gt;
+
+        &lt;Route
+          path="/login"
+          element={authenticated ? &lt;Navigate to="/home" replace /&gt; : &lt;Login setAuthenticated={setAuthenticated} /&gt;}
+        /&gt;
+
+        &lt;Route
+          path="/register"
+          element={authenticated ? &lt;Navigate to="/home" replace /&gt; : &lt;Register /&gt;}
+        /&gt;
+
+        {/* Protected: only reachable when logged in */}
+        &lt;Route
+          path="/home"
+          element={authenticated ? &lt;HomePage setAuthenticated={setAuthenticated} /&gt; : &lt;Navigate to="/login" replace /&gt;}
+        /&gt;
+      &lt;/Routes&gt;
+    &lt;/Router&gt;
+  );
+}
+
+export default App;</code></pre>
+        <ul>
+          <li>On startup <code>App</code> asks <code>GET /auth/test</code> whether the cookie holds a valid session, and shows "Checking your session…" until the answer arrives. Without that wait, every refresh would bounce to <code>/login</code> for a moment.</li>
+          <li><code>/home</code> renders <code>HomePage</code> only when you are logged in, and otherwise redirects to <code>/login</code>. <code>/login</code> and <code>/register</code> redirect to <code>/home</code> if you are already logged in.</li>
+          <li>In development, React runs the startup check twice (a feature of StrictMode in <code>main.jsx</code>), so the backend log shows two <code>GET /auth/test</code> requests per page load. That is expected.</li>
+          <li><code>void</code> in front of <code>verifyAuth()</code> and <code>navigate(...)</code> says "this runs in the background and I am deliberately not waiting for it". Tools such as SonarQube Cloud (<a href="sonarqube.html">Milestone 6</a>) flag an ignored promise, because an error inside it could disappear silently.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="test">
+        <h3>10. Test everything and open a pull request (Backend Lead)</h3>
+        <p>With the backend still running, open a second terminal (the <strong>+</strong> in the terminal panel) and start the frontend:</p>
+<pre><code>cd frontend
+npm run dev</code></pre>
+        <p>Open <a href="http://localhost:5173">http://localhost:5173</a> and check each of these:</p>
+        <ul class="checklist">
+          <li>You land on the login page.</li>
+          <li>Registering an account (password of at least 8 characters) sends you to the login page.</li>
+          <li>Registering the same username again shows "That username or email is already registered".</li>
+          <li>A wrong password shows "Invalid credentials".</li>
+          <li>Logging in takes you to <code>/home</code>.</li>
+          <li>Refreshing the page keeps you on <code>/home</code>.</li>
+          <li>Logout takes you back to <code>/login</code>, and going to <code>http://localhost:5173/home</code> sends you to <code>/login</code> again.</li>
+        </ul>
+        <p>To see the stored account, open the Connect page's Cloud Shell again (step 5) and run:</p>
+<pre><code>SELECT id, email, username, password_hash, created_at FROM authdb.users;</code></pre>
+        <p>The <code>password_hash</code> column holds a bcrypt hash that starts with <code>$2b$10$</code>, not the password.</p>
+        <p>If something fails, open the browser's developer tools (<strong>F12</strong>). The <strong>Console</strong> tab shows errors, and the <strong>Network</strong> tab shows each request to the backend with its status code. The <a href="#trouble">troubleshooting table</a> lists the common problems.</p>
+        <h4>Commit and open the pull request</h4>
+        <ol class="step-list">
+          <li>Open <strong>Source Control</strong> and check the list under <strong>Changes</strong>: <code>backend/.env</code>, <code>frontend/.env</code>, and <code>node_modules</code> must <strong>not</strong> appear. If one does, stop and fix <code>.gitignore</code> first.</li>
+          <li>Stage all changes, enter the message <code>feat: Express backend with registration and login</code>, and click <strong>Commit</strong>.</li>
+          <li>Click <strong>Publish Branch</strong> (or <strong>Sync Changes</strong>).</li>
+          <li>On GitHub, open a <strong>pull request</strong> from <code>feature/backend</code> into <code>main</code>. A teammate reviews it and merges it.</li>
+        </ol>
+        <div class="danger-note">
+          <strong>Send your teammates the database details (<code>DB_HOST</code>, <code>DB_USER</code>, <code>DB_PASSWORD</code>) privately</strong>,
+          for example in person or in a direct message. Never put them in the repository, a commit message, or an issue.
+        </div>
+      </section>
+
+      <section class="section" id="team">
+        <h3>11. Run the backend on your computer (every teammate)</h3>
+        <ol class="step-list">
+          <li>In VS Code, switch to <code>main</code> (click the branch name in the lower-left corner) and click <strong>Sync Changes</strong> to get the merged code.</li>
+          <li>Add <strong>your own IP address</strong> to the MySQL server's firewall rules, as in step 1.</li>
+          <li>In the terminal run <code>cd backend</code>, then <code>npm install</code>.</li>
+          <li>Create <code>backend/.env</code> with the same lines as <code>backend/.env.example</code>. Fill in the database details from your Backend Lead, and generate <strong>your own</strong> <code>JWT_SECRET</code> with the command from step 3.</li>
+          <li>Start the backend with <code>npm run dev</code> in <code>backend</code>. In a second terminal run <code>npm install</code> and then <code>npm run dev</code> in <code>frontend</code>.</li>
+          <li>Open <a href="http://localhost:5173">http://localhost:5173</a> and log in. Your team shares one database, so an account a teammate registered works on your computer too.</li>
+        </ol>
+      </section>
+
+      <section class="section" id="trouble">
+        <h3>Troubleshooting</h3>
+        <table>
+          <thead>
+            <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Missing required environment variables: …</code> when the backend starts</td><td><code>backend/.env</code> missing or incomplete</td><td>Create it from <code>.env.example</code> and fill in every value.</td></tr>
+            <tr><td><code>MySQL connection failed on startup</code> with <code>ETIMEDOUT</code></td><td>Your IP address isn't in the firewall rules, or <code>DB_HOST</code> is wrong</td><td>Add your current IP address (step 1), and check <code>DB_HOST</code>.</td></tr>
+            <tr><td><code>Access denied for user</code></td><td>Wrong <code>DB_USER</code> or <code>DB_PASSWORD</code></td><td>Compare them with the details from your instructor.</td></tr>
+            <tr><td><code>ER_BAD_DB_ERROR: Unknown database 'authdb'</code></td><td>The schema hasn't been run</td><td>Run <code>schema.sql</code> (step 5).</td></tr>
+            <tr><td><code>self-signed certificate</code> or another SSL error</td><td>Wrong or missing certificate file</td><td>Download it again (step 4), and check its name and folder.</td></tr>
+            <tr><td>CORS error in the browser console, or you are sent back to the login page right after logging in</td><td><code>FRONTEND_URL</code> doesn't match the frontend's address, or a request is missing <code>withCredentials</code></td><td>Set <code>FRONTEND_URL=http://localhost:5173</code> exactly (no trailing slash), and keep <code>withCredentials: true</code> in <code>Login.jsx</code> and <code>HomePage.jsx</code>.</td></tr>
+            <tr><td>"Unable to reach the server. Is the backend running?"</td><td>The backend isn't running, or <code>VITE_BACKEND_API_URL</code> is wrong</td><td>Start the backend. If you changed <code>frontend/.env</code>, restart <code>npm run dev</code> in <code>frontend</code>: Vite reads <code>.env</code> only when it starts.</td></tr>
+            <tr><td><code>401</code> for <code>/auth/test</code> in the console before you log in</td><td>Not logged in yet</td><td>Nothing to fix: that is how the app finds out.</td></tr>
+            <tr><td><code>429 Too Many Requests</code></td><td>More than 20 login or register attempts in 15 minutes</td><td>Wait, or restart the backend (it keeps the count in memory).</td></tr>
+            <tr><td><code>EADDRINUSE</code> when the backend starts</td><td>The backend is already running in another terminal</td><td>Stop the other one with <strong>Ctrl+C</strong>, or close that terminal.</td></tr>
+            <tr><td>Cloud Shell: <code>ERROR 2002 (HY000)</code></td><td>The server doesn't allow connections from Azure services</td><td>Ask your instructor to turn on <strong>Allow public access from any Azure service within Azure to this server</strong>.</td></tr>
+            <tr><td>"running scripts is disabled on this system"</td><td>Windows PowerShell's script setting</td><td>See <a href="sprint-1.html#powershell">the fix in the Sprint 1 guide</a>.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="checklist">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li>The firewall allows your IP address, and <code>backend/.env</code> exists and is not committed.</li>
+          <li>The certificate is in <code>backend/config</code>, and the <code>users</code> table exists in <code>authdb</code>.</li>
+          <li>The backend starts and shows "Successfully connected to MySQL", and <code>/health</code> answers.</li>
+          <li>Register, login, refresh, and logout all work, and passwords are stored only as hashes.</li>
+          <li>The backend and login pages are merged to <code>main</code> through a pull request.</li>
+          <li>Every teammate can run both halves on their own computer with their own <code>JWT_SECRET</code>.</li>
+        </ul>
+        <div class="button-row">
+          <a class="button gold" href="sprint-3.html">Next: Sprint 3, connect to an API</a>
+          <a class="button" href="../glossary.html">Glossary</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University · CS 330</p>
+    </div>
+  </footer>
+</body>
+</html>

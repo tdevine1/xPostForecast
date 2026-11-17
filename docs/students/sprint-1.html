@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sprint 1 student guide: install Git, Node.js and VS Code, create your team repository, and start a React and Vite frontend." />
+  <title>Sprint 1: Frontend and Your Team Repo | CS 330 Student Guide</title>
+  <link rel="stylesheet" href="../site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="../WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Sprint 1: Frontend and Your Team Repo</h1>
+        <p>CS 330 student guide: tools, GitHub, and a React app.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="../index.html">All guides</a></li>
+        <li>
+          <a class="active-link" aria-current="page" href="sprint-1.html">Sprint 1: Frontend and your team repo</a>
+          <ul class="sub">
+            <li><a href="#install">1. Install the software</a></li>
+            <li><a href="#github">2. Sign in to GitHub</a></li>
+            <li><a href="#repo">3. Create the team repo</a></li>
+            <li><a href="#folder">4. A folder for your repos</a></li>
+            <li><a href="#clone">5. Clone the repo</a></li>
+            <li><a href="#baseline">6. Create the React app</a></li>
+            <li><a href="#pr">7. Branches and pull requests</a></li>
+            <li><a href="#env">8. The .env file</a></li>
+            <li><a href="#run">9. Run the app</a></li>
+            <li><a href="#powershell">Windows script error fix</a></li>
+            <li><a href="#checklist">Checklist</a></li>
+          </ul>
+        </li>
+        <li><a href="sprint-2.html">Sprint 2: Backend and login</a></li>
+        <li><a href="sprint-3.html">Sprint 3: Connect to an API</a></li>
+        <li><a href="sprint-4.html">Sprint 4: Deploy to the cloud</a></li>
+        <li><a href="github-workflows.html">Writing GitHub workflows</a></li>
+        <li><a href="sonarqube.html">Testing with SonarQube Cloud</a></li>
+        <li><a href="ai-guide.html">Developing with AI</a></li>
+        <li><a href="../glossary.html">Glossary</a></li>
+      </ul>
+      <h2>Project Links</h2>
+      <ul>
+        <li><a href="https://github.com/tdevine1/xPostForecast">Reference app on GitHub</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast/tree/sprint-1">The Sprint 1 branch</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Set up your tools, your team, and your first app</h2>
+        <p>
+          Sprint 1 gets everything ready. You install the tools, your team shares one GitHub repository, and you
+          create a <strong>React</strong> app that you will grow all semester. Each step says who does it:
+          <strong>every teammate</strong>, or <strong>one teammate</strong> (the Project Lead).
+        </p>
+        <div class="notice">
+          <strong>The xPostForecast repository is an example, not a template.</strong> Your team builds its own app on
+          its own topic, in its own repository. The reference app's
+          <a href="https://github.com/tdevine1/xPostForecast/tree/sprint-1">Sprint 1 branch</a> shows what a finished
+          Sprint 1 looks like. This guide uses VS Code's built-in Source Control, with no extra GitHub extensions.
+          New words are explained in the <a href="../glossary.html">Glossary</a>.
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <h3>1. Install the software (every teammate)</h3>
+        <p>Each teammate needs these installed before class:</p>
+        <table>
+          <thead>
+            <tr><th>Tool</th><th>Get it</th><th>Check it worked (in a terminal)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Git</strong>, which tracks changes to your code</td><td><a href="https://git-scm.com/downloads">git-scm.com/downloads</a></td><td><code>git --version</code></td></tr>
+            <tr><td><strong>Node.js 24 LTS</strong>, which runs JavaScript outside a browser</td><td><a href="https://nodejs.org/en/download">nodejs.org/en/download</a></td><td><code>node -v</code> should print <code>v24</code> or higher; <code>npm -v</code> should print a number</td></tr>
+            <tr><td><strong>Visual Studio Code</strong>, your code editor</td><td><a href="https://code.visualstudio.com/">code.visualstudio.com</a></td><td>It opens</td></tr>
+          </tbody>
+        </table>
+        <p>On Windows, if <code>npm -v</code> fails with "running scripts is disabled on this system", see <a href="#powershell">the fix at the end of this guide</a>.</p>
+        <h4>Optional VS Code extension</h4>
+        <p>
+          Install from the Extensions sidebar (<strong>Ctrl+Shift+X</strong>): <strong>SQLTools</strong> by Matheus
+          Teixeira (mtxr) and the <strong>SQLTools MySQL/MariaDB/TiDB</strong> driver (also by Matheus Teixeira). It isn't
+          required, because in Sprint 2 you create your database from the Azure portal. It is handy for browsing your
+          database from VS Code. If you use it, first read "Keep editor settings and passwords out of Git" in
+          <a href="#env">step 8</a>.
+        </p>
+        <h4>Tell Git who you are (every teammate)</h4>
+        <p>Set your name and WVU email so your commits show your name:</p>
+<pre><code>git config --global user.name "First Last"
+git config --global user.email "abc123@mix.wvu.edu"</code></pre>
+        <p>Check with <code>git config --global --list</code>.</p>
+      </section>
+
+      <section class="section" id="github">
+        <h3>2. Sign in to GitHub (every teammate)</h3>
+        <ol class="step-list">
+          <li>Go to <a href="https://github.com">github.com</a> and log in with your WVU GitHub account.</li>
+          <li>If your instructor created a <strong>class organization</strong> (for example <code>WVU-CS330-2025</code>), make sure you are a member.</li>
+          <li>Accept any invitation to your <strong>organization</strong> or <strong>team repository</strong> once it is sent.</li>
+          <li>You stay signed in through your browser when you clone from VS Code.</li>
+        </ol>
+      </section>
+
+      <section class="section" id="repo">
+        <h3>3. Create the team repository (one teammate: the Project Lead)</h3>
+        <p><strong>Goal:</strong> one shared repository that the whole team connects to from VS Code.</p>
+        <h4>Create it</h4>
+        <ol class="step-list">
+          <li>On GitHub click <strong>+ &rarr; New repository</strong> (top right). If you use a course organization, make sure you are inside it.</li>
+          <li>Name it in the class format, for example <code>cs330-2025-group07</code>.</li>
+          <li>Under <strong>Owner</strong>, choose your course organization, not your personal account.</li>
+          <li><strong>Visibility:</strong> <strong>Private</strong>, so only your team and instructor can see it.</li>
+          <li>Tick <strong>Add a README file</strong> (it makes the first clone clean).</li>
+          <li>Under <strong>.gitignore</strong> choose <strong>Node</strong>, which matches a React and Vite project.</li>
+          <li>Click <strong>Create repository</strong>.</li>
+        </ol>
+        <h4>Add every teammate, with the least access they need</h4>
+        <p>
+          Go to your repository &rarr; <strong>Settings &rarr; Collaborators</strong> (or <em>Collaborators and teams</em>)
+          &rarr; <strong>Add people</strong>, and invite <strong>every member of your team</strong> by GitHub username or
+          WVU email. Each person must <strong>accept</strong> before they can push code.
+        </p>
+        <div class="notice">
+          <strong>Give teammates the Write role. Do not make everyone an Admin.</strong> This is the
+          <em>principle of least privilege</em>: each person gets only the power the job needs. Write lets a teammate
+          push branches and open pull requests. <strong>Admin</strong> can also change settings, add secrets, and delete
+          the repository, so keep it with <strong>one</strong> person (the Project Lead, who created it). In Sprint 4
+          that person adds the deployment secrets; everyone else still deploys by pushing code.
+        </div>
+        <h4>Copy the clone address (every teammate)</h4>
+        <p>
+          On the repository's main page click the green <strong>Code</strong> button and copy the <strong>HTTPS</strong>
+          address, for example <code>https://github.com/WVU-CS330-2025/cs330-2025-group07.git</code>. You paste it into
+          VS Code in step 5.
+        </p>
+      </section>
+
+      <section class="section" id="folder">
+        <h3>4. A folder for your repos, and the terminal (every teammate)</h3>
+        <ol class="step-list">
+          <li>Open your <strong>home folder</strong> (for example <code>C:/Users/YourName</code> on Windows, or <code>/home/yourname</code> on Linux or macOS).</li>
+          <li>Create a new folder named <code>git</code>. It will hold all your course repositories.</li>
+          <li>Cloning in step 5 creates your project's folder <em>inside</em> it, named after the repository (for example <code>cs330-2025-group07</code>).</li>
+          <li>When you clone, choose the <code>git</code> folder itself as the location. <strong>Don't create a project folder first</strong>, or you end up with one folder nested inside another.</li>
+        </ol>
+        <p>
+          <strong>Open a terminal in VS Code:</strong> menu <strong>View &rarr; Terminal</strong>, or press
+          <strong>Ctrl + `</strong> (the backtick key above Tab) on Windows and Linux, <strong>Cmd + `</strong> on macOS.
+          It opens at the bottom of VS Code in your workspace folder.
+        </p>
+      </section>
+
+      <section class="section" id="clone">
+        <h3>5. Clone the repository (every teammate)</h3>
+        <ol class="step-list">
+          <li>Open VS Code and click the <strong>Source Control</strong> icon in the left sidebar.</li>
+          <li>Choose <strong>Clone Repository</strong>.</li>
+          <li>Paste your repository's HTTPS address from step 3.</li>
+          <li>Choose the <code>git</code> folder you made in step 4.</li>
+          <li>When VS Code asks <em>Open Cloned Repository?</em>, click <strong>Open</strong>.</li>
+        </ol>
+        <p>You should now see the repository in the Explorer sidebar and <code>main</code> in the bottom-left status bar.</p>
+      </section>
+
+      <section class="section" id="baseline">
+        <h3>6. Create the React app and commit it (one teammate: the Project Lead)</h3>
+        <h4>Why React and Vite</h4>
+        <ul>
+          <li><strong>React</strong> is a JavaScript library for building user interfaces out of reusable <em>components</em>. Each page or widget is its own piece that is easy to maintain and extend.</li>
+          <li><strong>Vite</strong> is a fast build tool and development server. It starts quickly and reloads the page as you save, and it replaced older tools such as Create React App and Webpack.</li>
+          <li>Many real-world web apps use this stack, so you learn practices you will meet on the job.</li>
+        </ul>
+        <p>You start with a lightweight setup so later sprints can focus on logic, login, and data instead of setup trouble.</p>
+        <h4>Create the project</h4>
+        <p>In the VS Code terminal, in the <strong>top-level folder of your repository</strong> (the folder that contains <code>README.md</code>):</p>
+<pre><code>npm create vite@latest frontend -- --template react
+cd frontend
+npm install
+npm install react-router-dom axios</code></pre>
+        <p>
+          If the tool asks whether to install and start the app now, either answer is fine; if the dev server starts,
+          stop it with <strong>Ctrl+C</strong>. <strong>Keep the app directly in <code>frontend</code></strong>, not in a
+          deeper folder such as <code>frontend/app</code>: later sprints and the Sprint 4 deployment expect the
+          <code>frontend</code> and <code>backend</code> folders side by side at the top of the repository.
+        </p>
+        <p>
+          If you get <em>"...ps1 cannot be loaded because running scripts is disabled on this system"</em>, that is a
+          Windows setting. Follow <a href="#powershell">the fix at the end of this guide</a>, then run the commands again.
+        </p>
+        <h4>Add a starter page to test the setup</h4>
+        <p>Replace the <code>frontend/src/App.jsx</code> that Vite created with this simple page:</p>
+<pre><code>import React from 'react';
+
+function App() {
+  return (
+    &lt;div style={{ textAlign: 'center', marginTop: '50px' }}&gt;
+      &lt;h1&gt;CS330 Project Baseline&lt;/h1&gt;
+      &lt;p&gt;Your Vite + React app is running correctly!&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default App;</code></pre>
+        <p>Save it and run <code>npm run dev</code>. If the browser shows <strong>CS330 Project Baseline</strong>, everything works.</p>
+        <h4>Commit the baseline with Source Control</h4>
+        <ol class="step-list">
+          <li>Click the <strong>Source Control</strong> icon. All the new files are listed under <strong>Changes</strong>.</li>
+          <li>Click the <strong>+</strong> next to <em>Changes</em> to <strong>stage all changes</strong>.</li>
+          <li>Type the message <code>feat: initial Vite + React project baseline</code>.</li>
+          <li>Click <strong>Commit</strong> (the check mark above the message box).</li>
+          <li>Click <strong>Sync Changes</strong> to push the commit to <code>main</code> on GitHub.</li>
+        </ol>
+        <p>You have committed the baseline to <code>main</code> using VS Code's built-in Source Control.</p>
+      </section>
+
+      <section class="section" id="pr">
+        <h3>7. Make a change with a branch and a pull request (every teammate)</h3>
+        <p>Every teammate makes one small contribution. This proves that everyone can commit and open a pull request.</p>
+        <ol class="step-list">
+          <li>Click the <strong>branch name</strong> in the lower-left corner &rarr; <strong>Create new branch</strong>, for example <code>feature/&lt;wvu-id&gt;-intro</code>.</li>
+          <li>Make a small change, such as adding your name to the README or a test comment in <code>src/App.jsx</code>.</li>
+          <li>In <strong>Source Control</strong>, stage the change with <strong>+</strong>, type a short message such as <code>docs: add name to README</code>, and click <strong>Commit</strong>.</li>
+          <li>Click <strong>Publish Branch</strong> (or <strong>Sync Changes</strong>) to push your branch to GitHub.</li>
+          <li>On GitHub, open a <strong>pull request (PR)</strong> from your branch into <code>main</code>.</li>
+          <li>A different teammate reviews it and merges it when it looks good.</li>
+        </ol>
+        <h4>Why pull requests?</h4>
+        <ul>
+          <li>They keep <code>main</code> stable and free of unfinished or broken code.</li>
+          <li>Teammates can review and discuss a change before it is merged.</li>
+          <li>Each person's contribution shows up in the project history.</li>
+          <li>They prevent accidental overwrites, because changes arrive by merging instead of direct pushes.</li>
+        </ul>
+        <p>Each teammate should end with <strong>one merged PR</strong> that shows their name in the commit history.</p>
+      </section>
+
+      <section class="section" id="env">
+        <h3>8. The .env file (every teammate)</h3>
+        <p>
+          A <code>.env</code> file holds settings such as your backend's address. That keeps values out of your code
+          and keeps secrets out of GitHub.
+        </p>
+        <h4>Create it</h4>
+        <ol class="step-list">
+          <li>In VS Code open the <code>frontend</code> folder.</li>
+          <li>In the Explorer click the <strong>New File</strong> icon and name the file <code>.env</code>.</li>
+          <li>Add this line, which is the address your backend will use starting in Sprint 2, and save:
+<pre><code>VITE_BACKEND_API_URL=http://localhost:5175</code></pre>
+          </li>
+          <li>
+            Make sure <code>.env</code> is in your <code>.gitignore</code>. The Node <code>.gitignore</code> you chose in
+            step 3 already ignores it (Vite's own <code>frontend/.gitignore</code> does not). To check, open Source
+            Control: <code>.env</code> must <strong>not</strong> appear under Changes.
+          </li>
+        </ol>
+        <h4>The example file</h4>
+        <p>
+          The Project Lead also creates and commits <code>frontend/.env.example</code>, with the same New File steps and
+          this content. It tells teammates which values they need, without any secrets:
+        </p>
+<pre><code># Example environment configuration
+VITE_BACKEND_API_URL=http://localhost:5175</code></pre>
+        <p>Each teammate has their own local <code>.env</code>, and <code>.env.example</code> is committed.</p>
+        <h4>Keep editor settings and passwords out of Git</h4>
+        <p>
+          SQLTools (optional) saves every database connection in <code>.vscode/settings.json</code> inside your project.
+          If a connection's <strong>Password mode</strong> is "Save as plaintext in settings", your database password is
+          written there in plain text. The Node <code>.gitignore</code> does <em>not</em> ignore the <code>.vscode</code>
+          folder, so one "Stage All Changes" would upload the password to GitHub, where it stays in the history even
+          after you delete the file. <strong>This exact mistake happened in this course's own reference repository.</strong>
+        </p>
+        <p>Two habits prevent it:</p>
+        <ul>
+          <li>If you create a SQLTools connection in Sprint 2, set Password mode to <strong>SQLTools Driver Credentials</strong> (the default, which keeps the password in VS Code's secure storage) or <strong>Ask on connect</strong>. <strong>Never</strong> choose "Save as plaintext in settings".</li>
+          <li>The Project Lead opens <code>.gitignore</code> at the top of the repository, adds these lines at the end, and commits:</li>
+        </ul>
+<pre><code>.vscode/*
+!.vscode/extensions.json
+*.PublishSettings</code></pre>
+        <p>
+          The first line ignores everything in <code>.vscode</code>. The second still allows <code>extensions.json</code>, a
+          file your team can commit to recommend extensions such as SQLTools. The third ignores Azure publish profiles,
+          which you download in Sprint 4 and which work like a password.
+        </p>
+        <div class="danger-note">
+          <strong>If a password is ever pushed, treat it as public.</strong> Change it in Azure first, then remove the
+          file from the repository.
+        </div>
+      </section>
+
+      <section class="section" id="run">
+        <h3>9. Run the app (every teammate)</h3>
+        <p>From the <code>frontend</code> folder:</p>
+<pre><code>npm install
+npm run dev</code></pre>
+        <p>Open the address it prints (usually <a href="http://localhost:5173">http://localhost:5173</a>) to see your app. Stop it any time with <strong>Ctrl+C</strong>.</p>
+      </section>
+
+      <section class="section" id="powershell">
+        <h3>Fixing the "running scripts is disabled" error (Windows)</h3>
+        <p>
+          On Windows the VS Code terminal is PowerShell. npm comes with a small PowerShell script, <code>npm.ps1</code>,
+          and Windows blocks PowerShell scripts until you allow them. So your first npm command (often <code>npm -v</code>
+          or <code>npm install</code>) can fail with <em>"npm.ps1 cannot be loaded because running scripts is disabled on
+          this system."</em> Try these in order. Most students need only Fix 1. macOS and Linux don't have this setting.
+        </p>
+        <h4>Fix 1: allow scripts for your own account (no administrator needed)</h4>
+        <ol class="step-list">
+          <li>In the VS Code terminal run: <code>Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</code></li>
+          <li>If PowerShell asks you to confirm, type <code>Y</code> and press Enter.</li>
+          <li>Close the terminal (trash-can icon), open a new one (<strong>Ctrl+`</strong>), and run <code>npm -v</code> again.</li>
+        </ol>
+        <p><code>RemoteSigned</code> lets scripts already on your computer run, but still blocks unsigned scripts downloaded from the internet. <code>-Scope CurrentUser</code> changes the setting only for your own Windows account, which is why no administrator rights are needed.</p>
+        <h4>Fix 2: if PowerShell says the setting is "overridden"</h4>
+        <p>
+          Run <code>Get-ExecutionPolicy -List</code>. If <code>MachinePolicy</code> or <code>UserPolicy</code> shows anything
+          other than <code>Undefined</code>, an administrator set the policy (common on lab and work computers) and you
+          can't change it yourself: use Fix 3. If only <code>Process</code> shows a value, close the terminal, open a
+          new one, and try again.
+        </p>
+        <h4>Fix 3: use Command Prompt instead of PowerShell</h4>
+        <ol class="step-list">
+          <li>In VS Code press <strong>Ctrl+Shift+P</strong> and run <em>Terminal: Select Default Profile</em>.</li>
+          <li>Choose <strong>Command Prompt</strong> (or <strong>Git Bash</strong>, which comes with Git).</li>
+          <li>Open a new terminal. npm now works, because Command Prompt doesn't use PowerShell's script setting.</li>
+        </ol>
+        <p>For a single command you can stay in PowerShell and type <code>npm.cmd</code> instead of <code>npm</code>, for example <code>npm.cmd install</code>.</p>
+        <h4>Fix 4: allow scripts for the whole computer (administrator)</h4>
+        <p>Use this only if the fixes above failed and the computer is your own.</p>
+        <ol class="step-list">
+          <li>Close VS Code.</li>
+          <li>Open the Start menu, type <em>PowerShell</em>, right-click <strong>Windows PowerShell</strong>, and choose <strong>Run as administrator</strong>. Click Yes.</li>
+          <li>Run <code>Set-ExecutionPolicy -ExecutionPolicy RemoteSigned</code> and type <code>Y</code>.</li>
+          <li>Close the window, reopen VS Code, and run <code>npm -v</code> in a new terminal.</li>
+        </ol>
+        <div class="danger-note">
+          <strong>Don't set the policy to <code>Unrestricted</code> or <code>Bypass</code></strong> to make the error go
+          away. Those let any script run, including ones downloaded from the internet.
+        </div>
+      </section>
+
+      <section class="section" id="checklist">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li>Git, Node.js 24, and VS Code are installed, and <code>git config</code> has your name and WVU email.</li>
+          <li>The team repository is private, in the course organization, with a Node <code>.gitignore</code>.</li>
+          <li>Every teammate is a collaborator with <strong>Write</strong> access, and only the Project Lead is Admin.</li>
+          <li>Everyone cloned the repository into their <code>git</code> folder.</li>
+          <li>The React app is in <code>frontend/</code>, shows "CS330 Project Baseline", and is committed to <code>main</code>.</li>
+          <li>Every teammate has one merged pull request.</li>
+          <li>Everyone has a local <code>frontend/.env</code> (not committed), and <code>.env.example</code> is committed.</li>
+          <li><code>.gitignore</code> ignores <code>.vscode/*</code> (except <code>extensions.json</code>) and <code>*.PublishSettings</code>.</li>
+        </ul>
+        <div class="button-row">
+          <a class="button gold" href="sprint-2.html">Next: Sprint 2, backend and login</a>
+          <a class="button" href="../glossary.html">Glossary</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University · CS 330</p>
+    </div>
+  </footer>
+</body>
+</html>

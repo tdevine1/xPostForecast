@@ -9,7 +9,7 @@ Published with GitHub Pages at **<https://tdevine1.github.io/xPostForecast/>** (
 The site has two audiences, chosen from the landing page (`index.html`):
 
 - **Instructors** (`instructors.html` and the numbered pages it links to): a step-by-step reference for WVU professors, instructors, and staff covering project setup, GitHub configuration, Azure deployment, and troubleshooting for CS 330.
-- **Students** (`students/`): `ai-guide.html`, on using AI tools like a professional developer while still learning the fundamentals, `sonarqube.html`, a tutorial for connecting a team repository to SonarQube Cloud (Milestone 6), `github-workflows.html`, on writing GitHub Actions workflows, `sprint-3.html`, on connecting a project to an API, and `sprint-4.html`, on deploying a team project to Azure. Their sidebars also link to the Google Doc setup guides.
+- **Students** (`students/`): `ai-guide.html`, on using AI tools like a professional developer while still learning the fundamentals, `sonarqube.html`, a tutorial for connecting a team repository to SonarQube Cloud (Milestone 6), `github-workflows.html`, on writing GitHub Actions workflows, `sprint-1.html` and `sprint-2.html` (the former Google Docs: tools, team repo, backend and login), `sprint-3.html`, on connecting a project to an API, and `sprint-4.html`, on deploying a team project to Azure. Their sidebars also link to the Google Doc setup guides.
 
 ## Layout
 | File | Purpose |
@@ -20,6 +20,8 @@ The site has two audiences, chosen from the landing page (`index.html`):
 | `azure-scripts.html`, `scripts/` | Instructor guide page and the downloadable PowerShell scripts (MySQL servers, App Services, Static Web Apps, access, cleanup). Scripts are parameterized: no passwords or student e-mails are stored in them |
 | `glossary.html` | Plain-English definitions of the Azure, GitHub, and web terms used in every guide; linked from each sidebar |
 | `students/ai-guide.html` | Student guide: developing with AI (includes a small prompt builder written in plain JavaScript) |
+| `students/sprint-1.html` | Student guide: install tools, create the team repository (Write role for teammates, one Admin), a React and Vite app, branches and pull requests, `.env`, and the Windows script-policy fix. Replaces the Google Doc "01 - Setting up the Frontend" |
+| `students/sprint-2.html` | Student guide: the Express backend, Azure MySQL schema, login routes, and the frontend login pages. Backend code is read from the reference `sprint-2` branch, so it matches the real files. Replaces the Google Doc "02 - Setting up the Backend" |
 | `students/sprint-3.html` | Student guide: what APIs, HTTP, JSON, and REST are, how to choose an API, a complete backend route and frontend states, keeping outside data safe, and testing without the network. The route example was run against the live Open-Meteo API |
 | `students/sprint-4.html` | Student guide: deploy your own project to Azure (what to change in the code, App Service settings, GitHub secrets, the two deploy workflows, a live-site checklist, and a symptom/fix table). Matches the Sprint 4 code on `main`. Screenshots are in `docs/images/` |
 | `students/sonarqube.html` | Student guide: SonarQube Cloud setup, coverage reports, the CI job, and using the results in the Milestone 6 report. Matches `sonar-project.properties` and the `sonar` job in `.github/workflows/ci.yml` |
