@@ -43,7 +43,7 @@ backend/
 │   ├── auth.js                   /auth/register, /login, /test, /logout
 │   └── stac.js                   /temperature/:date
 ├── sign/sign.js                  signs Planetary Computer download URLs
-├── tests/                        auth.test.js, temperature.test.js
+├── tests/                        auth, temperature, sign (URL safety), config, and app-mode tests
 ├── vitest.config.js              test and coverage settings
 └── .env.example                  template for your .env
 ```
@@ -176,7 +176,7 @@ curl -s http://localhost:5175/temperature/2020-07-01 -b cookies.txt | head -c 30
 1. **Cache check.** Results are kept in memory per month (up to 24 months), because historical data never changes. A cached month returns in milliseconds.
 2. **STAC search.** `POST https://planetarycomputer.microsoft.com/api/stac/v1/search` with the collection `noaa-nclimgrid-monthly`, a bounding box around West Virginia, and a date in the middle of the month. Each item covers a whole month. No item means `404`.
 3. **Pick the asset by name.** An item has several assets (`prcp`, `tavg`, `tmax`, `tmin`, …). The code uses `item.assets.tavg`. Picking by name matters: the order of keys in JSON isn't guaranteed.
-4. **Sign the URL** with `sign/sign.js`. The file lives in Azure Blob Storage, which allows downloads only with a short-lived token; Planetary Computer's signing endpoint returns the same URL with a token added.
+4. **Sign the URL** with `sign/sign.js`. The file lives in Azure Blob Storage, which allows downloads only with a short-lived token; Planetary Computer's signing endpoint returns the same URL with a token added. The asset URL comes from another service's response, so it is **checked first**: only `https` addresses on `*.blob.core.windows.net` are accepted, both before signing and before downloading (see [`sign/README.md`](./sign/README.md)). Anything else is refused and the route answers `502`.
 5. **Read the grid.** The backend downloads the Cloud Optimized GeoTIFF (about 1.2 MB for the whole U.S.), and `geotiff` decodes only the window covering West Virginia.
 6. **Convert cells to points.** For each cell: skip "no data" values; find the cell's **center**; keep it only if the center is inside the bounding box; convert °C to °F. The result is capped at 10,000 points as a safety limit.
 7. **Cache and return** the JSON array.
@@ -193,7 +193,7 @@ npm run lint             # oxlint
 npm run test:coverage    # tests plus a coverage report in coverage/ (lcov for SonarQube)
 ```
 
-The tests send real HTTP requests to the Express app (imported from `app.js`, so no server or port is needed) and replace the database with a mock, and `fetch` and `geotiff` with fakes, so they run offline in seconds and work in GitHub Actions. They check things that are easy to break without noticing: passwords are stored only as hashes, the cookie is `HttpOnly`, a token signed with the wrong secret is rejected, `/temperature` requires login, and `404` and `502` appear in the right situations.
+The tests send real HTTP requests to the Express app (imported from `app.js`, so no server or port is needed) and replace the database with a mock, and `fetch` and `geotiff` with fakes, so they run offline in seconds and work in GitHub Actions. They check things that are easy to break without noticing: passwords are stored only as hashes, the cookie is `HttpOnly`, a token signed with the wrong secret is rejected, `/temperature` requires login, `404` and `502` appear in the right situations, and the server refuses to download from an address that is not Azure Blob Storage.
 
 **SonarQube Cloud** reads the coverage report on every push and reports bugs, security problems, and untested code. The `sonar` job in [`ci.yml`](../.github/workflows/ci.yml) stays off until a repository **Admin** adds the `SONAR_TOKEN` secret and sets the variable `SONAR_ENABLED` to `true`. See the [SonarQube guide](https://tdevine1.github.io/xPostForecast/students/sonarqube.html).
 

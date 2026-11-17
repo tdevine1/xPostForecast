@@ -156,7 +156,7 @@ npm run test:coverage    # coverage report in coverage/ (lcov for SonarQube)
 npm run build            # production bundle in dist/
 ```
 
-`App.test.jsx` replaces the `api` module with a mock and checks that a valid session stays on `/map` after a refresh, a logged-out visitor is sent to `/login`, Fetch Data requests the chosen month and hands the points to the map, a `404` shows the backend's message, and an expired session (`401`) returns to `/login`. `DateSelector.test.jsx` covers the dropdowns.
+`App.test.jsx` replaces the `api` module with a mock and checks that a valid session stays on `/map` after a refresh, a logged-out visitor is sent to `/login`, Fetch Data requests the chosen month and hands the points to the map, a `404` shows the backend's message, and an expired session (`401`) returns to `/login`. `DateSelector.test.jsx` covers the dropdowns, `Login.test.jsx` and `Register.test.jsx` cover the forms (success, wrong password, taken username, backend down), `MapPage.test.jsx` covers the empty-month, error, and logout paths, `MapComponent.test.jsx` checks the colors, popups, and tile settings (with Leaflet replaced by stand-ins), and `api.test.js` checks the client's address and cookie setting.
 
 `VITE_BACKEND_API_URL` is baked into the bundle **at build time**. The deployed site is just static files with no server-side environment to read later, so when the address changes you must build again. In the cloud, GitHub Actions sets it to the Azure backend's address before building.
 

@@ -304,6 +304,40 @@ sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/l
           <strong>Don't chase a perfect score.</strong> Read each finding before acting. Some are real bugs, some are
           style preferences, and some are false alarms. Deciding which is which, and writing down why, is the skill.
         </div>
+
+        <h4>Example: a failed Quality Gate on the reference app</h4>
+        <p>
+          The first scan of xPostForecast <strong>failed</strong> the Quality Gate on New Code. A red gate on the first
+          scan is normal. These were the three failed conditions and what the team did about each:
+        </p>
+        <table>
+          <thead>
+            <tr><th>Finding</th><th>What it meant</th><th>What we did</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Coverage 67.5%</strong> (needs 80% or more)</td>
+              <td>Too many lines were never run by a test. The per-file view showed the gaps: the login and register pages, the map component, the database setup, and the error paths of the data route.</td>
+              <td>Wrote tests for those files. Coverage went above 90% in both folders.</td>
+            </tr>
+            <tr>
+              <td><strong>Reliability C</strong>: "Promises must be awaited&hellip;"</td>
+              <td>Four places started an asynchronous action (such as <code>navigate(...)</code>) and ignored its result, so a failure there would vanish silently.</td>
+              <td>Marked the deliberate ones with <code>void</code>, which says "I know this runs in the background".</td>
+            </tr>
+            <tr>
+              <td><strong>Security C</strong>: "Server-side request forgery via unsanitized user input"</td>
+              <td>The server downloads a file from a web address that came from <em>another service's response</em>. If that response were tampered with, our server could be tricked into requesting any address it can reach, such as internal ones.</td>
+              <td>Added a check that only accepts <code>https</code> addresses on Azure Blob Storage, before asking to sign a URL and again before downloading. Added tests that prove other addresses are refused.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The lesson for your own report: <strong>treat anything that comes from outside your code as untrusted</strong>
+          (a form field, a URL parameter, <em>or another website's response</em>), and check it before you act on it.
+          If SonarQube still flags a line after you added a proper check, read why: if you are sure it is a false alarm,
+          mark the issue <em>Accepted</em> or <em>False positive</em> and write a sentence explaining your reasoning.
+        </p>
       </section>
 
       <section class="section" id="report">

@@ -20,7 +20,7 @@
 
 import express from 'express';
 import { fromArrayBuffer } from 'geotiff';
-import { signUrl } from '../sign/sign.js';
+import { assertTrustedAssetUrl, signUrl } from '../sign/sign.js';
 
 const router = express.Router();
 
@@ -66,7 +66,7 @@ export function c2f(c) {
 async function readGrid(url, bbox) {
   const [west, south, east, north] = bbox;
 
-  const res = await fetch(url);
+  const res = await fetch(assertTrustedAssetUrl(url));
   if (!res.ok) {
     throw new Error(`GeoTIFF download failed: ${res.status}`);
   }

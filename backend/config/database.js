@@ -29,14 +29,17 @@ const pool = mysql.createPool({
   },
 });
 
-// Try one connection at startup so database problems show up in the logs immediately
-pool.getConnection()
-  .then((conn) => {
+// Try one connection at startup so database problems show up in the logs immediately.
+// A failure is only logged (the app keeps running), and startup doesn't wait for it.
+async function checkConnection() {
+  try {
+    const conn = await pool.getConnection();
     console.log('Successfully connected to MySQL');
     conn.release();
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error('MySQL connection failed on startup:', err.message);
-  });
+  }
+}
+void checkConnection();
 
 export default pool;

@@ -37,7 +37,7 @@ function App() {
         setCheckingAuth(false);
       }
     }
-    verifyAuth();
+    void verifyAuth(); // `void`: we deliberately don't wait for it; errors are handled inside
   }, []);
 
   // Don't render any route until we know the answer, otherwise /map would

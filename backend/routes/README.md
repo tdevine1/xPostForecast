@@ -41,6 +41,6 @@ MapPage.jsx   → POST /auth/logout   → cookie cleared
 |---|---|---|
 | `/temperature/:date` | GET | `200 [{ lat, lon, tavg }, …]` (°F); `400` bad date; `401` not logged in; `404` no data for that month; `502` Planetary Computer unavailable |
 
-Steps: check the in-memory cache → STAC search for the `noaa-nclimgrid-monthly` item covering the month → take the item's `tavg` asset (by name) → sign its URL with `sign/sign.js` → download the GeoTIFF and read the West Virginia window with `geotiff` → convert each cell center inside the bounding box to a point in °F → cache and return. See [`../README.md`](../README.md) for the full walkthrough.
+Steps: check the in-memory cache → STAC search for the `noaa-nclimgrid-monthly` item covering the month → take the item's `tavg` asset (by name) → sign its URL with `sign/sign.js` (only `https` Azure Blob Storage addresses are accepted) → download the GeoTIFF and read the West Virginia window with `geotiff` → convert each cell center inside the bounding box to a point in °F → cache and return. See [`../README.md`](../README.md) for the full walkthrough.
 
 References: [Express routing](https://expressjs.com/en/guide/routing.html) · [bcryptjs](https://github.com/dcodeIO/bcrypt.js) · [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken)
