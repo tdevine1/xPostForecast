@@ -175,6 +175,7 @@ Everything is on the guides site, **<https://tdevine1.github.io/xPostForecast/>*
 
 | Guide | For |
 |---|---|
+| [Sprint 3: Connect to an API](https://tdevine1.github.io/xPostForecast/students/sprint-3.html) | Students connecting their own project to a data API |
 | [Sprint 4: Deploy to the cloud](https://tdevine1.github.io/xPostForecast/students/sprint-4.html) | Students putting their own project on Azure |
 | [Writing GitHub workflows](https://tdevine1.github.io/xPostForecast/students/github-workflows.html) | Students writing CI and deploy workflows |
 | [Testing with SonarQube Cloud](https://tdevine1.github.io/xPostForecast/students/sonarqube.html) | Students (Milestone 6) |

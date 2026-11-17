@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sprint 3 student guide: learn what APIs, JSON, and REST are, then connect your own project to a real data API from your backend." />
+  <title>Sprint 3: Connect to an API | CS 330 Student Guide</title>
+  <link rel="stylesheet" href="../site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="../WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Sprint 3: Connect to an API</h1>
+        <p>CS 330 student guide: bring real data into your project.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="../index.html">All guides</a></li>
+        <li>
+          <a class="active-link" aria-current="page" href="sprint-3.html">Sprint 3: Connect to an API</a>
+          <ul class="sub">
+            <li><a href="#goal">1. What you are building</a></li>
+            <li><a href="#api">2. What an API is</a></li>
+            <li><a href="#http">3. HTTP in five minutes</a></li>
+            <li><a href="#json">4. JSON</a></li>
+            <li><a href="#rest">5. REST, and other styles</a></li>
+            <li><a href="#access">6. Keys, limits, and paging</a></li>
+            <li><a href="#choose">7. Choose your API</a></li>
+            <li><a href="#explore">8. Try it before you code</a></li>
+            <li><a href="#backend">9. Call it from your backend</a></li>
+            <li><a href="#frontend">10. Show it in your frontend</a></li>
+            <li><a href="#safe">11. Keep it safe</a></li>
+            <li><a href="#test">12. Test without the network</a></li>
+            <li><a href="#trouble">13. When something breaks</a></li>
+            <li><a href="#checklist">14. Checklist</a></li>
+          </ul>
+        </li>
+        <li><a href="sprint-4.html">Sprint 4: Deploy to the cloud</a></li>
+        <li><a href="github-workflows.html">Writing GitHub workflows</a></li>
+        <li><a href="sonarqube.html">Testing with SonarQube Cloud</a></li>
+        <li><a href="ai-guide.html">Developing with AI</a></li>
+        <li><a href="../glossary.html">Glossary</a></li>
+      </ul>
+      <h2>Project Links</h2>
+      <ul>
+        <li><a href="https://github.com/tdevine1/xPostForecast">Reference app on GitHub</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast/tree/sprint-3">The Sprint 3 branch</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast/compare/sprint-2...sprint-3">What Sprint 3 changed (diff)</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Let your app talk to the rest of the internet</h2>
+        <p>
+          So far your app only knows what is in your own database. In Sprint 3 it asks <em>another</em> service for
+          information, such as weather, earthquakes, books, or sports scores, and shows the answer to your users.
+          Programs ask each other for data through an <strong>API</strong>. This guide explains what that means from
+          scratch, then walks you through connecting <em>your own project</em> to one.
+        </p>
+        <div class="notice">
+          <strong>Before you start:</strong> you need the Sprint 1 frontend and the Sprint 2 backend working on your
+          computer (login included). You do not need any Azure knowledge yet. New words are explained in the
+          <a href="../glossary.html">Glossary</a>.
+        </div>
+        <div class="notice">
+          <strong>The xPostForecast repository is an example, not a template.</strong> It shows one finished way to do
+          this with one API. Pick your own API for your own topic, and use the
+          <a href="https://github.com/tdevine1/xPostForecast/tree/sprint-3">Sprint 3 branch</a> to see how a finished
+          version is organised.
+        </div>
+      </section>
+
+      <section class="section" id="goal">
+        <h3>1. What you are building</h3>
+        <p>By the end of Sprint 3 your project does this:</p>
+<pre><code>  Browser (React)  --1. user clicks a button-->  Your backend (Express)
+                                                    |
+                         2. checks the user is logged in
+                         3. asks the outside API for data
+                                                    v
+                                              Outside API
+                                                    |
+                         4. reads the answer, tidies it up
+                                                    |
+  Browser (React)  &lt;--5. sends back clean JSON------+
+        |
+  6. shows it (a map, a table, a chart...)
+</code></pre>
+        <p>
+          Notice that the <strong>browser never talks to the outside API directly</strong>. Your backend does. Section 9
+          explains why that is the usual, safer design. The reference app follows exactly this shape: the browser asks
+          your backend for <code>/temperature/2020-07-01</code>, and the backend asks Microsoft's Planetary Computer
+          for weather data.
+        </p>
+      </section>
+
+      <section class="section" id="api">
+        <h3>2. What an API is</h3>
+        <p>
+          <strong>API</strong> stands for <em>application programming interface</em>. Think of a restaurant. You
+          don't walk into the kitchen. You read a <strong>menu</strong> (what you may ask for), tell the waiter your
+          order in a set format, and the kitchen sends back a dish. A web API is the same:
+        </p>
+        <table>
+          <thead>
+            <tr><th>Restaurant</th><th>Web API</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>The menu</td><td>The API's <strong>documentation</strong>: what you can ask for and how.</td></tr>
+            <tr><td>Placing an order</td><td>Sending a <strong>request</strong> to a web address (a URL).</td></tr>
+            <tr><td>A particular dish on the menu</td><td>An <strong>endpoint</strong>: one URL that does one job, such as <code>/forecast</code>.</td></tr>
+            <tr><td>The dish arriving</td><td>The <strong>response</strong>: data, usually written in JSON (section 4).</td></tr>
+            <tr><td>"Sorry, we're out of that"</td><td>An error <strong>status code</strong>, such as <code>404</code> (section 3).</td></tr>
+          </tbody>
+        </table>
+        <p>
+          You have already <em>built</em> an API: the Sprint 2 backend answers <code>/auth/login</code> and
+          <code>/auth/register</code>, and your frontend calls them. In Sprint 3 you also become a <strong>client</strong>
+          of someone else's API. The same ideas apply in both directions.
+        </p>
+      </section>
+
+      <section class="section" id="http">
+        <h3>3. HTTP in five minutes</h3>
+        <p>
+          Web APIs speak <strong>HTTP</strong>, the same language your browser uses to load pages. Every exchange is a
+          <strong>request</strong> followed by a <strong>response</strong>.
+        </p>
+        <h4>A request has four parts</h4>
+        <table>
+          <thead>
+            <tr><th>Part</th><th>What it is</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Method</strong></td><td>The kind of action</td><td><code>GET</code> (read), <code>POST</code> (create or send data), <code>PUT</code>/<code>PATCH</code> (change), <code>DELETE</code> (remove)</td></tr>
+            <tr><td><strong>URL</strong></td><td>Where to send it, plus optional <strong>query parameters</strong> after a <code>?</code></td><td><code>https://api.open-meteo.com/v1/forecast?latitude=39.63&amp;longitude=-79.96</code></td></tr>
+            <tr><td><strong>Headers</strong></td><td>Extra information about the request</td><td><code>Content-Type: application/json</code> says "my body is JSON"; <code>Authorization: Bearer ...</code> carries a key</td></tr>
+            <tr><td><strong>Body</strong></td><td>Data you send (mostly with <code>POST</code>)</td><td><code>{"username":"alice","password":"..."}</code></td></tr>
+          </tbody>
+        </table>
+        <p>
+          Query parameters are <code>name=value</code> pairs joined by <code>&amp;</code>. Characters like spaces and
+          <code>&amp;</code> must be encoded, which is why code uses <code>encodeURIComponent()</code> or
+          <code>URLSearchParams</code> instead of gluing strings together.
+        </p>
+        <h4>A response has a status, headers, and a body</h4>
+        <p>The <strong>status code</strong> is a three-digit number saying how it went. Learn the groups:</p>
+        <table>
+          <thead>
+            <tr><th>Code</th><th>Meaning</th><th>Common ones</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>2xx</strong></td><td>It worked</td><td><code>200 OK</code>, <code>201 Created</code></td></tr>
+            <tr><td><strong>3xx</strong></td><td>Look somewhere else</td><td><code>301</code>/<code>302</code> redirects</td></tr>
+            <tr><td><strong>4xx</strong></td><td>Your request was wrong</td><td><code>400</code> bad input, <code>401</code> not logged in or bad key, <code>403</code> not allowed, <code>404</code> not found, <code>429</code> too many requests</td></tr>
+            <tr><td><strong>5xx</strong></td><td>The server had a problem</td><td><code>500</code> server error, <code>502</code> a server it depends on failed, <code>503</code> unavailable</td></tr>
+          </tbody>
+        </table>
+        <p>
+          A useful rule: <strong>4xx means "fix your request", 5xx means "not your fault, try again later"</strong>.
+          The reference backend uses <code>502 Bad Gateway</code> when the outside weather service fails, so the
+          frontend can tell "you typed a bad date" (<code>400</code>) from "their server is down" (<code>502</code>).
+        </p>
+      </section>
+
+      <section class="section" id="json">
+        <h3>4. JSON</h3>
+        <p>
+          <strong>JSON</strong> (JavaScript Object Notation) is the text format most web APIs use to send data. It looks
+          like JavaScript objects and arrays, which makes it easy to use in your code. Here is a real answer from the
+          free <a href="https://open-meteo.com/">Open-Meteo</a> weather API:
+        </p>
+<pre><code>{
+  "latitude": 39.641438,
+  "longitude": -79.95688,
+  "timezone": "GMT",
+  "elevation": 243.0,
+  "current_units": { "time": "iso8601", "temperature_2m": "°F" },
+  "current": { "time": "2026-11-17T04:30", "interval": 900, "temperature_2m": 38.6 }
+}</code></pre>
+        <p>JSON has only six kinds of value:</p>
+        <table>
+          <thead>
+            <tr><th>Kind</th><th>Example</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Object</td><td><code>{ "name": "Ada", "age": 36 }</code></td><td>Named values in <code>{ }</code>. Names must be in <strong>double quotes</strong>.</td></tr>
+            <tr><td>Array</td><td><code>[1, 2, 3]</code></td><td>An ordered list in <code>[ ]</code>. Often a list of objects, such as 9,700 temperature points.</td></tr>
+            <tr><td>String</td><td><code>"hello"</code></td><td>Double quotes only.</td></tr>
+            <tr><td>Number</td><td><code>38.6</code></td><td>No quotes. Dates are <em>not</em> a type: they travel as strings like <code>"2026-11-17T04:30"</code>.</td></tr>
+            <tr><td>Boolean</td><td><code>true</code>, <code>false</code></td><td>Lowercase, no quotes.</td></tr>
+            <tr><td>Null</td><td><code>null</code></td><td>"No value".</td></tr>
+          </tbody>
+        </table>
+        <h4>Using JSON in JavaScript</h4>
+<pre><code>const text = '{"current":{"temperature_2m":38.6}}';  // JSON is just text
+const data = JSON.parse(text);                       // text -&gt; JavaScript object
+console.log(data.current.temperature_2m);            // 38.6
+console.log(JSON.stringify(data));                   // object -&gt; text again
+
+// Arrays of objects are everywhere:
+const points = [{ lat: 38.9, lon: -80.2, tavg: 54.1 }, { lat: 39.0, lon: -80.2, tavg: 55.3 }];
+const warm = points.filter((p) =&gt; p.tavg &gt; 55);   // [{ lat: 39.0, ... }]
+</code></pre>
+        <p>
+          With <code>fetch</code>, <code>await res.json()</code> does the <code>JSON.parse</code> for you. With axios,
+          <code>response.data</code> is already parsed. Two things trip people up:
+        </p>
+        <ul>
+          <li><strong>Reading something that isn't there.</strong> <code>data.current.temperature_2m</code> throws if <code>current</code> is missing. Use optional chaining, <code>data.current?.temperature_2m</code>, and check the shape before you trust it (section 11).</li>
+          <li><strong>Not everything is JSON.</strong> Some APIs return CSV, XML, images, or binary files. The reference app's data file is a GeoTIFF (binary), which it downloads and decodes with a library. Check the <code>Content-Type</code> response header.</li>
+        </ul>
+        <p>Tip: paste JSON into a formatter, such as the one built into your browser's dev tools or VS Code (<em>Format Document</em>), to read it comfortably.</p>
+      </section>
+
+      <section class="section" id="rest">
+        <h3>5. REST, and other styles</h3>
+        <p>
+          <strong>REST</strong> is a popular way to design a web API. A REST API is organised around
+          <strong>resources</strong> (things, like users or books), each with its own URL. The HTTP method says what to
+          do with it.
+        </p>
+        <table>
+          <thead>
+            <tr><th>You want to&hellip;</th><th>Method and URL</th><th>Typical status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>List all books</td><td><code>GET /books</code></td><td>200</td></tr>
+            <tr><td>Read one book</td><td><code>GET /books/42</code></td><td>200, or 404 if there is no book 42</td></tr>
+            <tr><td>Add a book</td><td><code>POST /books</code> with a JSON body</td><td>201 Created</td></tr>
+            <tr><td>Change a book</td><td><code>PUT /books/42</code> or <code>PATCH /books/42</code></td><td>200</td></tr>
+            <tr><td>Delete a book</td><td><code>DELETE /books/42</code></td><td>200 or 204</td></tr>
+          </tbody>
+        </table>
+        <p>Habits of a good REST API (and of the ones you write):</p>
+        <ul>
+          <li><strong>URLs are nouns, methods are verbs.</strong> <code>GET /books</code>, not <code>/getAllBooks</code>.</li>
+          <li><strong>Stateless.</strong> Each request carries everything the server needs (such as the login cookie or key). The server doesn't remember the last request.</li>
+          <li><strong><code>GET</code> never changes anything</strong>, so it is safe to repeat and to cache.</li>
+          <li><strong>Honest status codes and JSON error bodies</strong>, like <code>{ "error": "Date must be YYYY-MM-DD" }</code>.</li>
+        </ul>
+        <p>Not every API is REST. You will meet these names, so here is what they mean in one line each:</p>
+        <table>
+          <thead>
+            <tr><th>Style</th><th>One-line idea</th><th>Good for</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>REST</strong></td><td>Many URLs, one per resource; methods say the action.</td><td>Most public data APIs. <strong>What you will use.</strong></td></tr>
+            <tr><td><strong>GraphQL</strong></td><td>One URL; you send a query that names exactly the fields you want.</td><td>Apps that need different slices of data (GitHub offers one).</td></tr>
+            <tr><td><strong>WebSockets / Server-Sent Events</strong></td><td>A connection that stays open so the server can push updates.</td><td>Live data: chat, prices, scores.</td></tr>
+            <tr><td><strong>SOAP</strong></td><td>Older, XML-based, very formal.</td><td>Some banks and government systems.</td></tr>
+            <tr><td><strong>gRPC</strong></td><td>Compact binary messages between servers.</td><td>Services talking to each other inside a company.</td></tr>
+            <tr><td><strong>Files and feeds</strong></td><td>You download a file (CSV, GeoJSON, GeoTIFF) from a URL.</td><td>Large datasets, like the temperature grids in the reference app.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          For this course, choose a <strong>REST API that returns JSON</strong> unless your instructor approves
+          something else. Whatever the style, the skills are the same: read the docs, build a request, check the status,
+          and handle the data.
+        </p>
+      </section>
+
+      <section class="section" id="access">
+        <h3>6. Keys, limits, and paging</h3>
+        <p>Most APIs have rules about <em>who</em> may call and <em>how often</em>. Learn to spot these in the documentation before you choose one.</p>
+        <table>
+          <thead>
+            <tr><th>Topic</th><th>What it means</th><th>What you do</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>No authentication</strong></td><td>Anyone may call it.</td><td>Just send the request. (Open-Meteo and the reference app's data service work this way.)</td></tr>
+            <tr><td><strong>API key</strong></td><td>A long secret string that identifies you. Sent in a header or a query parameter.</td><td>Create a free account, copy the key, put it in your backend's <code>.env</code> file as <code>WEATHER_API_KEY=...</code>, and read it with <code>process.env.WEATHER_API_KEY</code>. <strong>Never in the frontend, never committed.</strong></td></tr>
+            <tr><td><strong>Token / OAuth</strong></td><td>Log in as a user, get a short-lived token, send it as <code>Authorization: Bearer &lt;token&gt;</code>.</td><td>Follow the provider's guide. Harder; avoid unless your topic needs it.</td></tr>
+            <tr><td><strong>Rate limit</strong></td><td>A cap on requests per minute or day. Going over gives <code>429 Too Many Requests</code>.</td><td>Read the limit, <strong>cache</strong> answers you reuse, and don't call in a loop. Many APIs report your usage in headers such as <code>X-RateLimit-Remaining</code>.</td></tr>
+            <tr><td><strong>Pagination</strong></td><td>A long list comes in pages (for example 20 at a time) with a link or number for the next page.</td><td>Request the page you need (<code>?page=2&amp;limit=20</code>), or loop carefully until there are no more.</td></tr>
+            <tr><td><strong>Terms of use</strong></td><td>Rules about what you may do with the data.</td><td>Read them. Many require credit (attribution) or a <code>User-Agent</code> header that names your app.</td></tr>
+          </tbody>
+        </table>
+        <div class="danger-note">
+          <strong>An API key is a password.</strong> Anyone who has it can use your quota and may get your account
+          blocked. Keep it in <code>.env</code> (which <code>.gitignore</code> excludes), in a GitHub secret for
+          deployment, and out of chat messages and AI tools. If a key leaks, <strong>revoke it at the provider and make a new one</strong>.
+        </div>
+      </section>
+
+      <section class="section" id="choose">
+        <h3>7. Choose your API</h3>
+        <p>Pick the API <em>after</em> you pick your topic, and check it against this list before you commit:</p>
+        <ul class="checklist">
+          <li>It has <strong>documentation</strong> with example requests and responses.</li>
+          <li>It is <strong>free</strong> at the level you need, and the limits are enough for a class project.</li>
+          <li>It returns <strong>JSON</strong> (or another format you can handle).</li>
+          <li>Its <strong>terms of use</strong> allow a student project, and you know what credit it needs.</li>
+          <li>You can make a request in your <strong>browser or <code>curl</code></strong> and get a sensible answer (section 8).</li>
+          <li>The data is <strong>interesting enough for several screens</strong>: a list, a detail view, a chart or map. A single number is too small.</li>
+          <li>Your teammates all understand it. Choose one and write down why.</li>
+        </ul>
+        <p>Places to look. Free tiers and terms change, so confirm on the provider's own site:</p>
+        <table>
+          <thead>
+            <tr><th>Topic</th><th>Examples to explore</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Weather and climate</td><td>Open-Meteo, the U.S. National Weather Service API (<code>api.weather.gov</code>), NOAA data services</td></tr>
+            <tr><td>Space and science</td><td>NASA Open APIs (<code>api.nasa.gov</code>), USGS earthquake feeds</td></tr>
+            <tr><td>Government and public data</td><td>Data.gov catalog, U.S. Census Bureau API</td></tr>
+            <tr><td>Software and developers</td><td>GitHub REST API</td></tr>
+            <tr><td>Games, books, movies, fun data</td><td>PokéAPI, Open Library</td></tr>
+            <tr><td>Browsing many options</td><td>The community-maintained "public-apis" list on GitHub</td></tr>
+          </tbody>
+        </table>
+        <p>Ask your instructor to approve your choice before you build on it.</p>
+      </section>
+
+      <section class="section" id="explore">
+        <h3>8. Try it before you code</h3>
+        <p>
+          Never write code against an API you haven't called by hand. Doing it by hand shows you the real answer, and
+          then your code has something to match.
+        </p>
+        <ol class="step-list">
+          <li>
+            <strong>Open the documentation</strong> and find one endpoint that gives what you need. Note its URL, its
+            parameters (which are required?), and an example response.
+          </li>
+          <li>
+            <strong>Call it in the browser</strong> if it is a <code>GET</code> with no key: paste the URL into the
+            address bar. For Open-Meteo:
+            <code>https://api.open-meteo.com/v1/forecast?latitude=39.63&amp;longitude=-79.96&amp;current=temperature_2m&amp;temperature_unit=fahrenheit</code>
+          </li>
+          <li>
+            <strong>Call it from a terminal with <code>curl</code></strong>, which also shows headers and works for
+            <code>POST</code>. The <code>-i</code> flag prints the status line and headers:
+<pre><code>curl -i "https://api.open-meteo.com/v1/forecast?latitude=39.63&amp;longitude=-79.96&amp;current=temperature_2m"
+
+# A POST with a JSON body (this is the kind of call the reference app makes)
+curl -X POST https://planetarycomputer.microsoft.com/api/stac/v1/search \
+  -H "Content-Type: application/json" \
+  --data '{"collections":["noaa-nclimgrid-monthly"],"datetime":"2020-07-15T00:00:00Z","limit":1}'</code></pre>
+          </li>
+          <li>
+            <strong>Break it on purpose.</strong> Send a latitude of <code>999</code>. The API answers
+            <code>400 Bad Request</code> with a JSON body like
+            <code>{"error":true,"reason":"Latitude must be in range of -90 to 90°..."}</code>. Now you know what errors
+            look like <em>before</em> you handle them.
+          </li>
+          <li>
+            <strong>Write down</strong> the request and a trimmed example response in your team's notes. You will copy
+            it into your tests (section 12).
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="backend">
+        <h3>9. Call it from your backend</h3>
+        <h4>Why not call the API from React?</h4>
+        <ul>
+          <li><strong>Secrets.</strong> Code in the browser is visible to everyone. An API key placed there is public.</li>
+          <li><strong>CORS.</strong> Browsers block a page from reading another site's answer unless that site allows it. Your own backend isn't a browser, so it has no such restriction.</li>
+          <li><strong>Control.</strong> Your backend can require login, cache answers, tidy the data into just what your screens need, and hide the outside API's quirks. If you switch APIs later, the frontend doesn't change.</li>
+        </ul>
+        <h4>The shape of a good route</h4>
+        <p>Every Sprint 3 route follows the same five steps. The reference app's <code>routes/stac.js</code> is a full example:</p>
+        <ol class="step-list">
+          <li><strong>Check the input</strong> from your own user. Reject bad input with <code>400</code> before doing any work.</li>
+          <li><strong>Check the cache.</strong> If you already have the answer, return it. This saves quota and time.</li>
+          <li><strong>Call the outside API</strong> with a timeout, and check <code>res.ok</code>.</li>
+          <li><strong>Read and check the answer.</strong> Pull out only the fields you need, and convert units or names to what your frontend expects.</li>
+          <li><strong>Map failures to honest status codes:</strong> your user's mistake is <code>4xx</code>; the outside API failing is <code>502</code>; "no data for that" is <code>404</code>.</li>
+        </ol>
+        <h4>A small, complete example</h4>
+        <p>This route returns the current temperature for a point, using Open-Meteo. Adapt the shape, not the details:</p>
+<pre><code>// routes/weather.js
+import express from 'express';
+const router = express.Router();
+
+const cache = new Map();                // 'lat,lon' -&gt; { value, savedAt }
+const CACHE_MS = 10 * 60 * 1000;        // reuse an answer for 10 minutes
+
+router.get('/current', async (req, res) =&gt; {
+  // 1. Check the input
+  const lat = Number(req.query.lat);
+  const lon = Number(req.query.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) &gt; 90 || Math.abs(lon) &gt; 180) {
+    return res.status(400).json({ error: 'lat and lon must be numbers in range' });
+  }
+
+  // 2. Check the cache
+  const key = `${lat},${lon}`;
+  const hit = cache.get(key);
+  if (hit &amp;&amp; Date.now() - hit.savedAt &lt; CACHE_MS) return res.json(hit.value);
+
+  try {
+    // 3. Call the outside API (build the URL safely, set a timeout)
+    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    url.search = new URLSearchParams({
+      latitude: lat, longitude: lon, current: 'temperature_2m', temperature_unit: 'fahrenheit',
+    });
+    const upstream = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!upstream.ok) throw new Error(`Weather service answered ${upstream.status}`);
+
+    // 4. Read and check the answer, keep only what the frontend needs
+    const data = await upstream.json();
+    const temp = data.current?.temperature_2m;
+    if (typeof temp !== 'number') throw new Error('Unexpected response shape');
+    const value = { lat, lon, tempF: temp, asOf: data.current.time };
+
+    cache.set(key, { value, savedAt: Date.now() });
+    return res.json(value);
+  } catch (error) {
+    // 5. Our user did nothing wrong: the outside service failed
+    console.error('Weather lookup failed:', error.message);
+    return res.status(502).json({ error: 'The weather service is unavailable. Try again later.' });
+  }
+});
+
+export default router;
+</code></pre>
+        <p>Then mount it <em>behind your login check</em> in <code>app.js</code>, exactly as Sprint 3 does for temperatures:</p>
+<pre><code>app.use('/weather', authMiddleware, weatherRoutes);   // logged-in users only</code></pre>
+        <p>
+          Why behind login? An open route lets anyone on the internet spend <em>your</em> API quota. Requiring a login
+          means only your users can.
+        </p>
+        <div class="notice">
+          <strong>Node's built-in <code>fetch</code></strong> (Node 24) needs no package. It only throws when the network
+          fails, <strong>not</strong> when the server answers with an error status, so always check <code>res.ok</code>.
+          (axios, by contrast, throws on any non-2xx status.)
+        </div>
+        <h4>What the reference app does that is more advanced</h4>
+        <ul>
+          <li>It makes a <strong><code>POST</code> with a JSON body</strong> to a "search" endpoint, then follows a link in the answer to a second step (signing a file URL), then downloads a <strong>binary file</strong> and decodes it. Your API may be much simpler.</li>
+          <li>It <strong>picks fields by name</strong> (<code>item.assets.tavg</code>) because the order of keys in JSON is never guaranteed.</li>
+          <li>It <strong>caches by month</strong> (the data never changes) and <strong>caps the answer size</strong> as a safety limit.</li>
+        </ul>
+        <p>Read it in <a href="https://github.com/tdevine1/xPostForecast/blob/sprint-3/backend/routes/stac.js"><code>routes/stac.js</code></a> after you have written your own.</p>
+      </section>
+
+      <section class="section" id="frontend">
+        <h3>10. Show it in your frontend</h3>
+        <p>The browser now only ever talks to <em>your</em> backend, using the shared client from Sprint 2:</p>
+<pre><code>// src/api.js: one axios instance for every call
+const api = axios.create({
+  baseURL: import.meta.env.VITE_BACKEND_API_URL,
+  withCredentials: true,       // send the login cookie
+});</code></pre>
+        <p>A page that loads data needs to handle <strong>four states</strong>, not one. Beginners often build only the happy path:</p>
+        <table>
+          <thead>
+            <tr><th>State</th><th>What the user sees</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Nothing asked yet</strong></td><td>Instructions, or an empty screen that makes sense.</td></tr>
+            <tr><td><strong>Loading</strong></td><td>A spinner. The first call can take seconds.</td></tr>
+            <tr><td><strong>Success</strong></td><td>The data.</td></tr>
+            <tr><td><strong>Error</strong></td><td>A clear message that says what to do next, and the old data cleared so it isn't mistaken for new data.</td></tr>
+          </tbody>
+        </table>
+<pre><code>const [data, setData] = useState(null);
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState('');
+
+const load = async () =&gt; {
+  setError('');
+  setIsLoading(true);
+  try {
+    const { data } = await api.get('/weather/current', { params: { lat: 39.63, lon: -79.96 } });
+    setData(data);
+  } catch (err) {
+    if (err.response?.status === 401) { /* session expired: send the user to /login */ return; }
+    setData(null);
+    setError(err.response?.data?.error ?? 'Could not reach the server. Is the backend running?');
+  } finally {
+    setIsLoading(false);        // runs on success AND failure
+  }
+};</code></pre>
+        <p>
+          Use the backend's own <code>error</code> message when it sends one. That is why the backend returns JSON
+          errors with plain-English text. Compare with the reference app's
+          <a href="https://github.com/tdevine1/xPostForecast/blob/sprint-3/frontend/src/pages/MapPage.jsx"><code>MapPage.jsx</code></a>.
+        </p>
+      </section>
+
+      <section class="section" id="safe">
+        <h3>11. Keep it safe</h3>
+        <p>
+          <strong>Data from another service is untrusted input</strong>, just like text typed into a form. The
+          reference app learned this the hard way: SonarQube Cloud flagged it for downloading a file from an address
+          that came out of another service's JSON, a weakness called <em>server-side request forgery</em>. If that
+          answer were ever tampered with, the server could be tricked into requesting internal addresses. The fix was a
+          short check before the download:
+        </p>
+<pre><code>export function assertTrustedAssetUrl(href) {
+  const url = new URL(href);                      // throws if it isn't a URL at all
+  if (url.protocol !== 'https:' || !url.hostname.endsWith('.blob.core.windows.net')) {
+    throw new Error(`Refusing to request an untrusted host: ${url.hostname}`);
+  }
+  return url.href;
+}</code></pre>
+        <p>Habits that apply to any API:</p>
+        <ul class="checklist">
+          <li><strong>Check the shape</strong> of an answer before using it (<code>typeof temp === 'number'</code>, <code>Array.isArray(items)</code>).</li>
+          <li><strong>Only follow web addresses you expect.</strong> If an answer gives you a URL to fetch, check its host first.</li>
+          <li><strong>Build URLs with <code>URL</code> and <code>URLSearchParams</code></strong>, never by pasting user text into a string.</li>
+          <li><strong>Set a timeout</strong> (<code>AbortSignal.timeout(8000)</code>) so a slow API can't hang your route forever.</li>
+          <li><strong>Keep keys on the server</strong> and out of logs. Log error messages, not whole requests with headers.</li>
+          <li><strong>Don't send the outside API's raw error text to your users.</strong> It may reveal internals. Log it, and send a plain message.</li>
+          <li><strong>Respect rate limits</strong> with caching, and give credit as the terms require.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="test">
+        <h3>12. Test without the network</h3>
+        <p>
+          Tests must not depend on someone else's server being up, fast, or free. Replace <code>fetch</code> with a
+          fake that returns the example response you saved in section 8. Vitest makes this easy:
+        </p>
+<pre><code>import { afterEach, describe, expect, it, vi } from 'vitest';
+import request from 'supertest';
+import app from '../app.js';
+
+afterEach(() =&gt; vi.unstubAllGlobals());
+
+describe('GET /weather/current', () =&gt; {
+  it('returns the temperature in °F', async () =&gt; {
+    vi.stubGlobal('fetch', vi.fn(async () =&gt;
+      Response.json({ current: { time: '2026-11-17T04:30', temperature_2m: 38.6 } })));
+
+    const res = await request(app).get('/weather/current?lat=39.63&amp;lon=-79.96').set('Cookie', loginCookie());
+
+    expect(res.status).toBe(200);
+    expect(res.body.tempF).toBe(38.6);
+  });
+
+  it('answers 502 when the outside service fails', async () =&gt; {
+    vi.spyOn(console, 'error').mockImplementation(() =&gt; {});
+    vi.stubGlobal('fetch', vi.fn(async () =&gt; new Response('busy', { status: 503 })));
+
+    const res = await request(app).get('/weather/current?lat=39.63&amp;lon=-79.96').set('Cookie', loginCookie());
+
+    expect(res.status).toBe(502);
+  });
+
+  it('rejects a latitude that is out of range, without calling the API', async () =&gt; {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const res = await request(app).get('/weather/current?lat=999&amp;lon=0').set('Cookie', loginCookie());
+
+    expect(res.status).toBe(400);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});</code></pre>
+        <p>
+          (<code>loginCookie()</code> is a small helper that signs a token with your test <code>JWT_SECRET</code>; see the
+          reference app's <a href="https://github.com/tdevine1/xPostForecast/blob/sprint-3/backend/tests/temperature.test.js"><code>temperature.test.js</code></a>.)
+          Test each status your route can return: success, bad input, no data, and outside failure. Those tests also
+          raise your coverage for <a href="sonarqube.html">Milestone 6</a>.
+        </p>
+      </section>
+
+      <section class="section" id="trouble">
+        <h3>13. When something breaks</h3>
+        <p>Work from the outside in: can you call the API by hand? Then does your backend route work in <code>curl</code>? Only then look at React.</p>
+        <table>
+          <thead>
+            <tr><th>What you see</th><th>Likely cause</th><th>What to do</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>401</code> or <code>403</code> from the outside API</td><td>Missing, wrong, or expired key</td><td>Check the key's name in <code>.env</code>, restart the backend, and check where the docs say to send it (header or query).</td></tr>
+            <tr><td><code>404</code> from the outside API</td><td>Wrong path, or nothing exists for that input</td><td>Compare your URL with the docs, character by character.</td></tr>
+            <tr><td><code>429</code></td><td>Rate limit reached</td><td>Slow down and cache. Wait for the limit to reset.</td></tr>
+            <tr><td><code>SyntaxError: Unexpected token &lt; in JSON</code></td><td>The "JSON" was really an HTML error page</td><td>Log <code>await res.text()</code> and the status to see what came back.</td></tr>
+            <tr><td><code>Cannot read properties of undefined</code></td><td>The answer doesn't have the shape you assumed</td><td>Log the answer, check the docs, and use <code>?.</code> plus a shape check.</td></tr>
+            <tr><td>Your route answers <code>401</code></td><td>Not logged in, or the cookie wasn't sent</td><td>Log in first; in <code>curl</code> use <code>-b cookies.txt</code>; in React use the shared <code>api</code> client.</td></tr>
+            <tr><td>Browser console: CORS error</td><td>The browser is calling the outside API directly, or <code>FRONTEND_URL</code> is wrong</td><td>Call your own backend instead (section 9), and check <code>FRONTEND_URL</code>.</td></tr>
+            <tr><td>Works for you, empty for others</td><td>A secret or setting exists only on your computer</td><td>List every <code>.env</code> variable your code reads, and make sure each is set wherever the code runs.</td></tr>
+            <tr><td>The first request is slow, later ones fast</td><td>The outside call is slow, and your cache works</td><td>That is normal. Show a loading spinner.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Still stuck? Copy the exact error and the request you sent (<strong>without</strong> keys), say what you tried,
+          and ask your team, then your instructor. The <a href="ai-guide.html">AI guide</a> shows how to use an AI tool
+          to understand an error without pasting secrets.
+        </p>
+      </section>
+
+      <section class="section" id="checklist">
+        <h3>14. Checklist</h3>
+        <ul class="checklist">
+          <li>Your API is chosen, approved, and its terms are read.</li>
+          <li>You called it by hand (browser or <code>curl</code>) and saved an example request and response.</li>
+          <li>Any API key is in <code>.env</code> and a GitHub secret, never in code or chat.</li>
+          <li>Your backend route validates input, caches, sets a timeout, checks <code>res.ok</code>, and checks the shape of the answer.</li>
+          <li>Failures map to honest status codes (<code>400</code>, <code>404</code>, <code>502</code>) with JSON <code>error</code> messages.</li>
+          <li>The route sits behind your login check.</li>
+          <li>The frontend handles empty, loading, success, and error states, and calls only your own backend.</li>
+          <li>Tests cover success and each failure without using the network.</li>
+          <li>Your README says which API you use, where to get a key, and how to set it up.</li>
+        </ul>
+        <div class="button-row">
+          <a class="button gold" href="sprint-4.html">Next: Sprint 4, deploy to the cloud</a>
+          <a class="button" href="../glossary.html">Glossary</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University · CS 330</p>
+    </div>
+  </footer>
+</body>
+</html>

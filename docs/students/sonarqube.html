@@ -23,6 +23,7 @@
       <h2>Student Guide</h2>
       <ul>
         <li><a href="../index.html">All guides</a></li>
+        <li><a href="sprint-3.html">Sprint 3: Connect to an API</a></li>
         <li><a href="sprint-4.html">Sprint 4: Deploy to the cloud</a></li>
         <li><a href="ai-guide.html">Developing with AI</a></li>
         <li>
@@ -328,7 +329,7 @@ sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/l
             <tr>
               <td><strong>Security C</strong>: "Server-side request forgery via unsanitized user input"</td>
               <td>The server downloads a file from a web address that came from <em>another service's response</em>. If that response were tampered with, our server could be tricked into requesting any address it can reach, such as internal ones.</td>
-              <td>Added a check that only accepts <code>https</code> addresses on Azure Blob Storage, before asking to sign a URL and again before downloading. Added tests that prove other addresses are refused.</td>
+              <td>Added a check that only accepts <code>https</code> addresses on Azure Blob Storage, before asking to sign a URL and again before downloading. Added tests that prove other addresses are refused. SonarQube <em>still listed</em> the lines afterwards, because it cannot tell that a check like this makes the address safe. So we read each finding again, confirmed the check really covers it, and recorded the decision (see below).</td>
             </tr>
           </tbody>
         </table>

@@ -34,6 +34,7 @@
       </ul>
       <h2>Student Guide</h2>
       <ul>
+        <li><a href="students/sprint-3.html">Sprint 3: Connect to an API</a></li>
         <li><a href="students/sprint-4.html">Sprint 4: Deploy to the cloud</a></li>
         <li><a href="students/ai-guide.html">Developing with AI</a></li>
         <li><a href="students/sonarqube.html">Testing with SonarQube Cloud</a></li>
@@ -129,6 +130,14 @@
           <tbody>
             <tr id="frontend-backend"><td><strong>Frontend and backend</strong></td><td>The frontend is what runs in the visitor's browser (the map and forms). The backend runs on a server and holds the database logic and logins.</td><td><code>frontend/</code> and <code>backend/</code> folders.</td></tr>
             <tr id="api"><td><strong>API</strong></td><td>The set of web addresses the backend answers, which the frontend calls to get or save data.</td><td><code>/auth/login</code>, <code>/temperature/…</code></td></tr>
+            <tr id="endpoint"><td><strong>Endpoint</strong></td><td>One web address of an API that does one job, such as <code>/forecast</code> or <code>/auth/login</code>.</td><td><code>GET /temperature/2020-07-01</code></td></tr>
+            <tr id="http-methods"><td><strong>HTTP method</strong></td><td>The kind of action in a request: <code>GET</code> reads, <code>POST</code> sends or creates, <code>PUT</code> and <code>PATCH</code> change, <code>DELETE</code> removes.</td><td><code>api.get(...)</code>, <code>api.post(...)</code></td></tr>
+            <tr id="status-code"><td><strong>Status code</strong></td><td>A three-digit number in every response. 2xx worked, 4xx means your request was wrong (<code>401</code> not logged in, <code>404</code> not found), 5xx means the server had a problem (<code>502</code> a server it depends on failed).</td><td>Browser Network tab.</td></tr>
+            <tr id="json"><td><strong>JSON</strong></td><td>The text format most web APIs use to send data: objects in <code>{ }</code>, lists in <code>[ ]</code>, strings, numbers, true/false, and null. <code>JSON.parse</code> turns the text into a JavaScript object.</td><td><code>[{ "lat": 38.9, "lon": -80.2, "tavg": 54.1 }]</code></td></tr>
+            <tr id="rest"><td><strong>REST</strong></td><td>A common style of API: one URL per thing (<code>/books/42</code>), with the HTTP method saying what to do to it.</td><td>The routes in <code>backend/routes/</code>.</td></tr>
+            <tr id="api-key"><td><strong>API key</strong></td><td>A secret string that identifies you to an API. Treat it like a password: keep it in <code>.env</code> on the server, never in the frontend or in git.</td><td><code>process.env.WEATHER_API_KEY</code></td></tr>
+            <tr id="rate-limit"><td><strong>Rate limit</strong></td><td>A cap on how many requests you may make in a period. Going over gives <code>429 Too Many Requests</code>. Caching answers keeps you under it.</td><td>The in-memory month cache in <code>routes/stac.js</code>.</td></tr>
+            <tr id="ssrf"><td><strong>Server-side request forgery</strong></td><td>A weakness where a server can be tricked into requesting an address an attacker chose. Avoided by checking that any address from outside is on an expected host before fetching it.</td><td><code>assertTrustedAssetUrl()</code> in <code>sign/sign.js</code>.</td></tr>
             <tr id="env-file"><td><strong>.env file</strong></td><td>A local file of settings and passwords for your own computer. It must <strong>never</strong> be committed; <code>.gitignore</code> keeps it out.</td><td><code>backend/.env</code></td></tr>
             <tr id="vite-build"><td><strong>Vite and build</strong></td><td>Vite turns your React source into plain files a browser can load (the "build"). Values like <code>VITE_BACKEND_API_URL</code> are copied into those files at build time, so they must be right <em>when you build</em>.</td><td><code>npm run build</code></td></tr>
             <tr id="npm-ci"><td><strong><code>npm ci</code> vs <code>npm install</code></strong></td><td><code>npm install</code> can change <code>package-lock.json</code>; <code>npm ci</code> installs exactly what the lock file lists, so builds are repeatable. Workflows use <code>npm ci</code>.</td><td>Every workflow.</td></tr>
