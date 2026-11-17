@@ -60,7 +60,7 @@ function MapPage({ setAuthenticated }) {
       console.error('Logout request failed (continuing client-side):', err);
     } finally {
       setAuthenticated(false);
-      navigate('/login', { replace: true });
+      void navigate('/login', { replace: true });
     }
   };
 

@@ -110,6 +110,8 @@ await axios.post(`${API_URL}/auth/logout`, null, { withCredentials: true });
 
 ---
 
+> **Why `void` appears in front of some calls.** `navigate(...)` in React Router and the `verifyAuth()` call in `App.jsx` start work in the background and return a promise that nothing waits for. A static-analysis tool such as SonarQube Cloud flags an ignored promise, because an error inside it could disappear silently. Writing `void navigate(...)` says "I know this is a background task and I am choosing not to wait for it". Anything whose result or failure matters is `await`ed inside `try/catch` instead, as `handleSubmit` does for the login request.
+
 ## 6) Run, Lint, and Test
 
 ```bash

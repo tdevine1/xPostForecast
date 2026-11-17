@@ -26,7 +26,9 @@ backend/
 ├── routes/
 │   └── auth.js                    # /auth/register, /login, /test, /logout
 ├── tests/
-│   └── auth.test.js               # API tests (database mocked)
+│   ├── auth.test.js               # API tests (database mocked)
+│   ├── config.test.js             # env loading and the startup database check (MySQL mocked)
+│   └── app-modes.test.js          # production proxy setting, request logging, the 500 handler
 └── .env.example                   # template for your .env
 ```
 
@@ -210,7 +212,9 @@ npm test        # Vitest + Supertest
 npm run lint    # oxlint
 ```
 
-`tests/auth.test.js` sends real HTTP requests to the Express app (imported from `app.js`, so no server or port is needed) and replaces the database with a mock, so the tests run anywhere, including GitHub Actions. They check things that are easy to break without noticing, for example that passwords are stored only as hashes, the cookie is `HttpOnly`, and a token signed with the wrong secret is rejected.
+`tests/auth.test.js` sends real HTTP requests to the Express app (imported from `app.js`, so no server or port is needed) and replaces the database with a mock, so the tests run anywhere, including GitHub Actions. They check things that are easy to break without noticing, for example that passwords are stored only as hashes, the cookie is `HttpOnly`, and a token signed with the wrong secret is rejected. `config.test.js` and `app-modes.test.js` cover the settings that change between your laptop and Azure (a missing `.env`, `NODE_ENV=production`) and the last-resort `500` handler, which must never reveal internal details.
+
+> **Startup database check.** `config/database.js` tries one connection when the server starts, so a wrong password or firewall problem shows up in the log immediately. It is written as an `async` function (`checkConnection`) that is started but not waited for: a failure is logged and the server keeps running, and the server never waits on the database before it starts listening. SonarQube Cloud (Milestone 6) flagged the earlier `.then().catch()` chain as harder to read; the `async` version does the same job.
 
 ---
 
