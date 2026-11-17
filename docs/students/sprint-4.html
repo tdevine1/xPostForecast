@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sprint 4 student guide: put your own React and Node.js project on the internet with Azure App Service, Azure Static Web Apps, and GitHub Actions." />
+  <title>Sprint 4: Deploy to the Cloud | CS 330 Student Guide</title>
+  <link rel="stylesheet" href="../site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="../WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Sprint 4: Deploy to the Cloud</h1>
+        <p>CS 330 student guide: put your own project on the internet.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="../index.html">All guides</a></li>
+        <li>
+          <a class="active-link" aria-current="page" href="sprint-4.html">Sprint 4: Deploy to the cloud</a>
+          <ul class="sub">
+            <li><a href="#big-picture">1. The big picture</a></li>
+            <li><a href="#collect">2. What to collect first</a></li>
+            <li><a href="#ready">3. Make your code deploy-ready</a></li>
+            <li><a href="#backend-settings">4. Backend settings in Azure</a></li>
+            <li><a href="#secrets">5. Secrets and variables</a></li>
+            <li><a href="#deploy-backend">6. Deploy the backend</a></li>
+            <li><a href="#deploy-frontend">7. Deploy the frontend</a></li>
+            <li><a href="#verify">8. Check the live site</a></li>
+            <li><a href="#trouble">9. When something breaks</a></li>
+            <li><a href="#quality">10. Code quality (Milestone 6)</a></li>
+            <li><a href="#checklist">11. Checklist</a></li>
+          </ul>
+        </li>
+        <li><a href="github-workflows.html">Writing GitHub workflows</a></li>
+        <li><a href="sonarqube.html">Testing with SonarQube Cloud</a></li>
+        <li><a href="ai-guide.html">Developing with AI</a></li>
+        <li><a href="../glossary.html">Glossary</a></li>
+      </ul>
+      <h2>Project Links</h2>
+      <ul>
+        <li><a href="https://github.com/tdevine1/xPostForecast">Reference app on GitHub</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast/compare/sprint-3...main">What Sprint 4 changed (diff)</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Move your app from your laptop to the internet</h2>
+        <p>
+          Until now your project has run only on your own computer. In Sprint 4 your team puts it on
+          <strong>Microsoft Azure</strong> so anyone with the link can use it, and sets up GitHub so every change you
+          push is tested and published automatically. This guide tells you what to do, in order, for <em>your own
+          project</em>, and why each step is needed.
+        </p>
+        <div class="notice">
+          <strong>Before you start:</strong> your project needs <code>frontend/</code> and <code>backend/</code> folders
+          that work on your computer (Sprints 1&ndash;3), and <code>npm test</code> must pass in both. Your instructor
+          creates the Azure resources for your group, so <strong>you do not create or delete anything in Azure</strong>.
+          New words are explained in the <a href="../glossary.html">Glossary</a>.
+        </div>
+        <div class="notice">
+          <strong>The xPostForecast repository is an example, not a template.</strong> It shows what a finished Sprint 4
+          looks like. Read its files for ideas, but make the same changes in <em>your</em> repository with <em>your</em>
+          names. Its <a href="https://github.com/tdevine1/xPostForecast/blob/main/backend/README.md">backend</a> and
+          <a href="https://github.com/tdevine1/xPostForecast/blob/main/frontend/README.md">frontend</a> READMEs explain how
+          the example's code works.
+        </div>
+      </section>
+
+      <section class="section" id="big-picture">
+        <h3>1. The big picture</h3>
+        <p>On your computer you started two programs, and the browser talked to both. In the cloud it is the same idea, with three places instead:</p>
+        <table>
+          <thead>
+            <tr><th>Part</th><th>Where it runs</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Frontend</strong> (React)</td><td>Azure <strong>Static Web App</strong></td><td>Stores your finished website files and hands them to browsers. Address ends in <code>.azurestaticapps.net</code>.</td></tr>
+            <tr><td><strong>Backend</strong> (Node/Express)</td><td>Azure <strong>App Service</strong></td><td>Runs your server code all the time. Address ends in <code>.azurewebsites.net</code>.</td></tr>
+            <tr><td><strong>Database</strong> (MySQL)</td><td>Azure Database for MySQL</td><td>The same database you set up in Sprint 2.</td></tr>
+          </tbody>
+        </table>
+<pre><code>  you push to main
+        |
+        v
+   GitHub Actions  --test + upload-->  Static Web App   (the website)
+        |           --test + upload-->  App Service      (the server)  ---->  MySQL
+        |
+  Browser  --loads the site from the Static Web App
+           --asks the server for data (login, your API) from the App Service
+</code></pre>
+        <p>
+          Two things follow from the website and the server living at <strong>different addresses</strong>, and most
+          Sprint 4 problems come from one of them:
+        </p>
+        <ul>
+          <li><strong>The website must be told where the server is.</strong> On your laptop that was <code>http://localhost:5175</code>. In the cloud it is the App Service's address, and it gets written into the website while it is built.</li>
+          <li><strong>The server must be told which website may talk to it, and the login cookie must be allowed to cross between the two addresses.</strong> That is <code>FRONTEND_URL</code> and <code>NODE_ENV=production</code> in section 4.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="collect">
+        <h3>2. What to collect first</h3>
+        <p>Open a text file and fill in this table with your group's values before you touch anything else. You will copy from it all sprint.</p>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Where to find it</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>App Service <strong>name</strong></td><td>Azure portal &rarr; App Services &rarr; your app (top of the page).</td></tr>
+            <tr><td>Backend <strong>address</strong></td><td>Same page, <strong>Overview &rarr; Default domain</strong>. <strong>Copy it; don't type it.</strong> An app created in the portal gets a random-looking ending such as <code>your-app-gmhxfca6exbhgccd.eastus-01.azurewebsites.net</code>, so a guessed address fails with <code>ERR_NAME_NOT_RESOLVED</code>.</td></tr>
+            <tr><td>Static Web App <strong>address</strong></td><td>Azure portal &rarr; Static Web Apps &rarr; your site &rarr; Overview &rarr; <strong>URL</strong>.</td></tr>
+            <tr><td>Database host, name, user, password</td><td>Your Sprint 2 notes and local <code>backend/.env</code> file.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <strong>Make sure the right people have the right access first.</strong> Everyone on your team should be added
+          to your GitHub repository (Settings &rarr; Collaborators and teams) with <strong>Write</strong> access, and
+          only <strong>one</strong> teammate should have <strong>Admin</strong>. That is the principle of least
+          privilege: nobody gets more power than the job needs. Only an Admin can see the repository's <em>Settings</em>
+          tab, so that person will add the secrets in section 5. Everyone else can still run the workflows.
+        </p>
+      </section>
+
+      <section class="section" id="ready">
+        <h3>3. Make your code deploy-ready</h3>
+        <p>
+          Code that works on your laptop often needs five small changes before the cloud will run it. If you wrote your
+          backend like the Sprint 2 and 3 guides, most are already done. Check each one in <em>your</em> project.
+        </p>
+
+        <h4>Backend</h4>
+        <ol class="step-list">
+          <li>
+            <strong>Read the port from the environment.</strong> Azure picks the port your server must use and passes it
+            in a setting called <code>PORT</code>. A server that always uses one fixed port is never found, and Azure
+            reports it as failed to start.
+<pre><code>const PORT = Number(process.env.PORT) || 5175;   // Azure's port in the cloud, 5175 on your laptop
+app.listen(PORT, () =&gt; console.log(`Server is running on ${PORT}`));</code></pre>
+          </li>
+          <li>
+            <strong>Read every setting from <code>process.env</code>, and fail loudly when one is missing.</strong>
+            Your <code>.env</code> file never goes to GitHub or Azure, so the same values are typed into Azure instead
+            (section 4). Checking at startup turns a mystery crash into a clear message in the log:
+<pre><code>const required = ['FRONTEND_URL', 'JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+const missing = required.filter((name) =&gt; !process.env[name]);
+if (missing.length &gt; 0) {
+  console.error(`Missing required environment variables: ${missing.join(', ')}`);
+  process.exit(1);
+}</code></pre>
+          </li>
+          <li>
+            <strong>Allow exactly your website, with cookies.</strong> This is CORS. The browser refuses to let one
+            address talk to another unless the server says it is allowed.
+<pre><code>app.use(cors({
+  origin: process.env.FRONTEND_URL,   // your Static Web App address, exactly
+  credentials: true,                  // allow the login cookie to travel with requests
+}));</code></pre>
+          </li>
+          <li>
+            <strong>Make the login cookie work between two addresses.</strong> Browsers only send a cookie from one site
+            to another if it is marked <code>SameSite=None</code> and <code>Secure</code>. Keep the relaxed setting for
+            your laptop and switch when <code>NODE_ENV</code> is <code>production</code>:
+<pre><code>export function authCookieOptions() {
+  if (process.env.NODE_ENV === 'production') {
+    return { httpOnly: true, secure: true, sameSite: 'none', partitioned: true };
+  }
+  return { httpOnly: true, secure: false, sameSite: 'lax' };
+}</code></pre>
+            Also tell Express it sits behind Azure's front door, so it knows the request really was HTTPS:
+<pre><code>if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}</code></pre>
+          </li>
+          <li>
+            <strong>Add a health check.</strong> A page that answers without touching the database, so you can ask "is
+            the server alive?" and separate that from "is the database working?":
+<pre><code>app.get('/health', (_req, res) =&gt; {
+  res.json({ ok: true, env: process.env.NODE_ENV || 'development' });
+});</code></pre>
+          </li>
+        </ol>
+        <p>
+          Your database's security certificate file (for xPostForecast, <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>)
+          is part of your code and must be committed, because the server loads it from the same folder in the cloud. It is a public certificate, not a secret.
+        </p>
+
+        <h4>Frontend</h4>
+        <ol class="step-list">
+          <li>
+            <strong>Take the server's address from a build setting, not from typed-in text.</strong> Vite copies any
+            variable starting with <code>VITE_</code> into the finished website while it builds:
+<pre><code>const api = axios.create({
+  baseURL: import.meta.env.VITE_BACKEND_API_URL,
+  withCredentials: true,     // send the login cookie with every request
+});</code></pre>
+            Locally the value comes from <code>frontend/.env</code>; in the cloud, from a GitHub secret (section 5).
+            Because it is copied in at build time, <strong>changing the address means building again</strong>.
+            Printing it with <code>console.log(import.meta.env.VITE_BACKEND_API_URL)</code> gives you an easy check
+            later. Never put a password in a <code>VITE_</code> variable: everyone who visits can read it.
+          </li>
+          <li>
+            <strong>Make refreshing a page work.</strong> A Static Web App only serves files. A refresh on <code>/map</code>
+            looks for a file named <code>map</code>, finds none, and shows a 404, even though React Router knows the page.
+            Add <code>frontend/public/staticwebapp.config.json</code> (Vite copies <code>public/</code> into the
+            build):
+<pre><code>{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/*.{svg,png,ico,json}"]
+  },
+  "globalHeaders": {
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  }
+}</code></pre>
+            The <code>globalHeaders</code> part matters only if your project shows a map from OpenStreetMap or a similar
+            free service. Those services want to know which website is asking, using the <code>Referer</code> header.
+            Azure's default tells browsers to send nothing, so the map turns into grey "Access blocked" squares, but
+            <em>only</em> on the deployed site. If you use such a service, also set
+            <code>referrerPolicy="strict-origin-when-cross-origin"</code> on the map layer, as the example's
+            <a href="https://github.com/tdevine1/xPostForecast/blob/main/frontend/src/components/MapComponent.jsx"><code>MapComponent.jsx</code></a> does.
+          </li>
+        </ol>
+        <p>Commit these changes to <code>main</code> (through a pull request if your team uses them) before you go on.</p>
+      </section>
+
+      <section class="section" id="backend-settings">
+        <h3>4. Backend settings in Azure</h3>
+        <p>
+          Your server runs in Azure with no <code>.env</code> file, so you type the same settings into the App Service.
+          Azure portal &rarr; your App Service &rarr; <strong>Settings &rarr; Environment variables &rarr; App settings</strong>,
+          then <strong>+ Add</strong> for each row and <strong>Apply</strong> at the end (the app restarts).
+        </p>
+        <img src="../images/appservice-envvars.png" alt="The App Service Environment variables page listing the app settings" />
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>DB_HOST</code></td><td><code>&lt;your-server&gt;.mysql.database.azure.com</code>, same as your local <code>.env</code></td></tr>
+            <tr><td><code>DB_USER</code></td><td>Same as local</td></tr>
+            <tr><td><code>DB_PASSWORD</code></td><td>Same as local. The name must match what your code reads.</td></tr>
+            <tr><td><code>DB_NAME</code></td><td>Your team's database name</td></tr>
+            <tr><td><code>FRONTEND_URL</code></td><td>Your Static Web App address, exactly, <strong>no slash at the end</strong>: <code>https://&lt;your-site&gt;.azurestaticapps.net</code></td></tr>
+            <tr><td><code>JWT_SECRET</code></td><td>A <strong>new</strong> long random string; don't reuse your local one</td></tr>
+            <tr><td><code>NODE_ENV</code></td><td><code>production</code></td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li>Do <strong>not</strong> add <code>PORT</code>. Azure sets it for you.</li>
+          <li>Use the exact names your own code reads. If yours are called something else, use yours.</li>
+          <li>To make a random <code>JWT_SECRET</code>, run this in a terminal and paste the result: <code>node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"</code></li>
+          <li>The database already allows Azure services to connect (your instructor set that up). If the log later shows <code>ETIMEDOUT</code> for MySQL, that is a server networking setting: tell your instructor.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="secrets">
+        <h3>5. Secrets and variables</h3>
+        <p>
+          GitHub needs a few things to upload your code to Azure for you. They are passwords, so they are kept as GitHub
+          <strong>secrets</strong>, never in your code. The teammate with <strong>Admin</strong> opens the repository's
+          <strong>Settings &rarr; Secrets and variables &rarr; Actions</strong> and adds these. Names must match
+          the workflows exactly, including capitals.
+          The <a href="github-workflows.html#secrets">workflows guide</a> explains secrets and variables in detail.
+        </p>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Kind</th><th>Value and where it comes from</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>APP_SERVICE_PUBLISH_PROFILE</code></td><td>Secret</td><td>The <em>entire</em> contents of the file from App Service &rarr; Overview &rarr; <strong>Download publish profile</strong>. Open it in a text editor, copy everything, then <strong>delete the downloaded file</strong>.</td></tr>
+            <tr><td><code>AZURE_WEBAPP_NAME</code></td><td>Variable</td><td>The App Service's name, exactly as in the portal</td></tr>
+            <tr><td><code>VITE_BACKEND_API_URL</code></td><td>Secret</td><td><code>https://</code> + the backend's <strong>Default domain</strong>, no slash at the end</td></tr>
+            <tr><td><code>AZURE_STATIC_WEB_APPS_API_TOKEN</code></td><td>Secret</td><td>Static Web App &rarr; Overview &rarr; <strong>Manage deployment token</strong> &rarr; copy</td></tr>
+          </tbody>
+        </table>
+        <img src="../images/appservice-publish-profile.png" alt="The App Service Overview page with the Download publish profile button" />
+        <img src="../images/swa-build-config.png" alt="The Static Web App Overview page with the Manage deployment token button" />
+        <img src="../images/github-secrets.png" alt="The repository Secrets and variables page listing secrets" />
+        <p>This screenshot is from a different project, so its secret names differ. Use the names in the table above.</p>
+        <div class="danger-note">
+          <strong>Never paste a publish profile, token, or password into your code, a chat, an AI tool, or a commit.</strong>
+          Anything pushed to GitHub is public if the repository is public, and deleting the file later does not remove it
+          from history. If one leaks, tell your instructor and replace it in Azure and in the GitHub secret.
+        </div>
+        <div class="notice">
+          <strong>Can't click "Download publish profile" (it is grey)?</strong> Basic authentication is switched off for the
+          app. Ask your instructor to turn it on.
+        </div>
+      </section>
+
+      <section class="section" id="deploy-backend">
+        <h3>6. Deploy the backend</h3>
+        <ol class="step-list">
+          <li>Create <code>.github/workflows/deploy-backend.yml</code>. The <a href="github-workflows.html#backend">workflows guide, section 6</a> gives the whole file and explains every line. Use your own folder names.</li>
+          <li>
+            <strong>Keep only one backend deploy workflow.</strong> If the Azure portal's Deployment Center offered to
+            connect GitHub, it may have added a file named like <code>main_&lt;your-app&gt;.yml</code>. Delete it, or
+            every push deploys twice.
+          </li>
+          <li>Check that your <code>package.json</code> <code>test</code> script really runs tests. npm's default one (<code>echo "Error: no test specified" &amp;&amp; exit 1</code>) always fails and blocks every deployment.</li>
+          <li>Commit and push, then open the repository's <strong>Actions</strong> tab. If the workflow doesn't start by itself, choose it in the left list and click <strong>Run workflow</strong> (<code>main</code> branch).</li>
+          <li>Wait for the green check.</li>
+        </ol>
+        <img src="../images/github-actions-backend-success.png" alt="GitHub Actions showing the backend deploy workflow with a green check" />
+        <p>
+          Now ask the server if it is alive. Open <code>https://&lt;your backend's default domain&gt;/health</code> in a
+          browser. You should see <code>{"ok":true,"env":"production"}</code>.
+        </p>
+        <img src="../images/browser-health-check.png" alt="A browser showing the health check JSON" />
+        <div class="notice">
+          <strong>The first visit can take a minute or more. That is normal.</strong> On the plan your instructor chose,
+          the app falls asleep after about 20 minutes with no visitors, and it restarts after every deploy. The first
+          request wakes it up (a <em>cold start</em>); the next one answers instantly. Wait and refresh before you change
+          anything. If <code>env</code> says <code>development</code>, <code>NODE_ENV</code> isn't set.
+        </div>
+        <p>
+          To watch the server start, open the App Service &rarr; <strong>Monitoring &rarr; Log stream</strong>, then
+          Overview &rarr; <strong>Restart</strong>. A healthy start ends with lines like
+          <code>Server is running on 8080</code> and <code>Successfully connected to MySQL</code>.
+        </p>
+        <img src="../images/appservice-logs-startup.png" alt="The App Service log stream showing a healthy startup" />
+      </section>
+
+      <section class="section" id="deploy-frontend">
+        <h3>7. Deploy the frontend</h3>
+        <ol class="step-list">
+          <li>Create <code>.github/workflows/deploy-frontend.yml</code> from the <a href="github-workflows.html#frontend">workflows guide, section 7</a>. It installs, tests, <em>builds</em> your site with <code>VITE_BACKEND_API_URL</code>, and uploads the finished folder.</li>
+          <li>
+            <strong>Again, only one frontend deploy workflow.</strong> If Azure generated
+            <code>azure-static-web-apps-&lt;name&gt;.yml</code> when the Static Web App was connected to GitHub, either
+            delete it and use yours, or fix it by following the example repo's
+            <a href="https://github.com/tdevine1/xPostForecast/blob/main/frontend/README.md#2-two-ways-to-deploy-pick-one">frontend README, section 2</a>
+            (the generated file needs the <code>VITE_BACKEND_API_URL</code> line added, or the site won't know where the server is).
+          </li>
+          <li>Make sure the two secrets from section 5 exist, then commit and push (or <strong>Run workflow</strong>).</li>
+          <li>Wait for the green check, then open your Static Web App address.</li>
+        </ol>
+        <img src="../images/github-actions-frontend-success.png" alt="GitHub Actions showing the frontend deploy workflow with a green check" />
+        <p>
+          <strong>Order matters only once:</strong> deploy the backend first so the website has a server to talk to, but
+          neither workflow depends on the other afterwards. After that, each deploys on its own when its folder changes.
+        </p>
+      </section>
+
+      <section class="section" id="verify">
+        <h3>8. Check the live site</h3>
+        <p>Open your site with the browser's developer tools showing (press <strong>F12</strong>; use the <em>Console</em> and <em>Network</em> tabs) and walk through the whole app like a user:</p>
+        <ul class="checklist">
+          <li>Your backend's <code>/health</code> page shows <code>{"ok":true,"env":"production"}</code>.</li>
+          <li>Your site loads. The console shows the backend address you expected, not <code>undefined</code>.</li>
+          <li>Register and log in work.</li>
+          <li><strong>Refresh</strong> on an inner page (such as <code>/map</code>): no 404, and you are still logged in.</li>
+          <li>Your data appears from the API. Pages that need login only work when logged in.</li>
+          <li>Any map shows real map tiles, not grey "Access blocked" squares.</li>
+          <li>Log out returns you to the login page, and the inner pages send you back to login.</li>
+          <li>The console has no red CORS errors, and the App Service log stream has no crashes.</li>
+          <li>Try a second browser, or a private window, to prove it works for someone who is not you.</li>
+        </ul>
+        <p>
+          <strong>Share the right link.</strong> Your project's public address is the <strong>Static Web App</strong> one
+          (<code>.azurestaticapps.net</code>), not the backend's. Put it in your README and your report.
+        </p>
+      </section>
+
+      <section class="section" id="trouble">
+        <h3>9. When something breaks</h3>
+        <p>Find the symptom, check the likely cause, change <em>one</em> thing, and test again. Two tools answer most questions: the browser's <strong>Console</strong> and <strong>Network</strong> tabs (what the website saw), and the App Service <strong>Log stream</strong> (what the server saw).</p>
+        <table>
+          <thead>
+            <tr><th>What you see</th><th>Likely cause</th><th>What to do</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Workflow says a secret or variable "is not set"</td><td>Missing or misspelled name</td><td>Add it (section 5). Names are case-sensitive.</td></tr>
+            <tr><td>Deploy step fails with an authentication error</td><td>Old or wrong publish profile or token</td><td>Get a fresh one from Azure and replace the secret.</td></tr>
+            <tr><td>Workflow fails at <code>npm test</code></td><td>A test fails, or the default npm <code>test</code> script</td><td>Run <code>npm test</code> on your laptop and fix it.</td></tr>
+            <tr><td>Log stream: <code>Missing required environment variables</code></td><td>An app setting is missing or misspelled</td><td>Fix it in Environment variables, then Apply.</td></tr>
+            <tr><td>Log stream: <code>Access denied for user</code></td><td>Wrong <code>DB_USER</code> or <code>DB_PASSWORD</code></td><td>Compare with your working local <code>.env</code>.</td></tr>
+            <tr><td>Log stream: <code>ETIMEDOUT</code> connecting to MySQL</td><td>Server networking</td><td>Tell your instructor.</td></tr>
+            <tr><td>"Application Error" page, or the app keeps restarting</td><td>Startup crash</td><td>Read the <em>first</em> error in the log stream.</td></tr>
+            <tr><td><code>/health</code> hangs the first time, then works</td><td>Cold start</td><td>Wait a minute and retry. Do not redeploy.</td></tr>
+            <tr><td>Console: <code>Frontend API Base URL: undefined</code>, or requests go to <code>/undefined/...</code></td><td>The build never received <code>VITE_BACKEND_API_URL</code></td><td>Check the secret's name and that the workflow passes it to the build, then deploy again.</td></tr>
+            <tr><td>Console: <code>ERR_NAME_NOT_RESOLVED</code></td><td>The backend address was guessed</td><td>Copy the <strong>Default domain</strong> from the portal, fix the secret, and <strong>redeploy the frontend</strong> (the address is baked into the build).</td></tr>
+            <tr><td>Console: CORS error, <code>Access-Control-Allow-Origin</code></td><td><code>FRONTEND_URL</code> doesn't match your site's address exactly</td><td>Copy the Static Web App address, no slash at the end, then Apply.</td></tr>
+            <tr><td>Login says success, then you are logged out at once, or you get 401</td><td>The cookie isn't being sent between the two addresses</td><td>Set <code>NODE_ENV=production</code>; check <code>FRONTEND_URL</code>. If it works in one browser but not another, a privacy setting is blocking cross-site cookies; tell your instructor.</td></tr>
+            <tr><td>404 when you refresh an inner page</td><td>No <code>staticwebapp.config.json</code></td><td>Add it to <code>frontend/public/</code> and redeploy.</td></tr>
+            <tr><td>Map is grey squares saying "Access blocked"</td><td>The site tells the browser not to send a <code>Referer</code></td><td>Add <code>globalHeaders</code> and the layer's <code>referrerPolicy</code> (section 3), redeploy, hard-reload.</td></tr>
+            <tr><td>Every push deploys twice</td><td>Two deploy workflows for one app</td><td>Delete the extra one.</td></tr>
+            <tr><td>Workflow is green but the site looks unchanged</td><td>Your browser kept the old copy</td><td>Hard-reload (Ctrl+Shift+R) or use a private window.</td></tr>
+          </tbody>
+        </table>
+        <p>Still stuck? Copy the exact error message (not a description), say what you already tried, and ask your team, then your instructor. The <a href="github-workflows.html#failed">workflows guide</a> shows how to read a failed run, and the <a href="ai-guide.html">AI guide</a> shows how to ask an AI tool for help <em>without</em> pasting secrets.</p>
+      </section>
+
+      <section class="section" id="quality">
+        <h3>10. Code quality (Milestone 6)</h3>
+        <p>
+          Once the app is live, connect your repository to SonarQube Cloud so every push is also checked for bugs,
+          security problems, and untested code. That is a separate guide, and it plugs into the CI workflow you build
+          in the <a href="github-workflows.html#ci">workflows guide</a>:
+          <a href="sonarqube.html">Testing with SonarQube Cloud</a>.
+        </p>
+      </section>
+
+      <section class="section" id="checklist">
+        <h3>11. Checklist</h3>
+        <ul class="checklist">
+          <li>Everyone is a collaborator with Write access; exactly one teammate is Admin.</li>
+          <li>Backend reads <code>PORT</code> and its settings from the environment, and has CORS, the production cookie settings, and <code>/health</code>.</li>
+          <li>Frontend reads <code>VITE_BACKEND_API_URL</code> and has <code>staticwebapp.config.json</code>.</li>
+          <li>App Service settings are in place (database, <code>FRONTEND_URL</code>, <code>JWT_SECRET</code>, <code>NODE_ENV=production</code>).</li>
+          <li>The four secrets and variables exist in GitHub, and the downloaded publish profile is deleted.</li>
+          <li>Exactly one deploy workflow per half, and both are green.</li>
+          <li>Section 8's whole walk-through works in a second browser.</li>
+          <li>The Static Web App address is in your README.</li>
+          <li>Nothing secret appears anywhere in your repository.</li>
+        </ul>
+        <div class="button-row">
+          <a class="button gold" href="github-workflows.html">Writing GitHub workflows</a>
+          <a class="button" href="sonarqube.html">SonarQube guide</a>
+          <a class="button" href="../glossary.html">Glossary</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University · CS 330</p>
+    </div>
+  </footer>
+</body>
+</html>

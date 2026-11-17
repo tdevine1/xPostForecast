@@ -1,6 +1,8 @@
 # Sprint 4 – Backend Deployment (Azure App Service)
 ### Instructor-provisioned App Service: students configure, deploy, and verify
 
+> **Doing Sprint 4 for your own project?** Follow the step-by-step [Sprint 4 student guide](https://tdevine1.github.io/xPostForecast/students/sprint-4.html). This README explains how the reference app is set up.
+
 > This is the **reference implementation** for Sprint 4's backend deployment. Deploy your own group's `backend/` (from Sprints 1–3) using this as your worked example; don't clone or fork this one.
 
 Your group's **Azure App Service (Web App for Linux)** has already been created by the instructor. Your team will:

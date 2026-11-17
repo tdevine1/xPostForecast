@@ -23,6 +23,8 @@ Switch sprints with the branch dropdown on GitHub, or locally with `git switch s
 
 # Sprint 4 – Cloud Deployment (Instructor-Provisioned Resources)
 
+> **Doing Sprint 4 for your own project?** Follow the step-by-step [Sprint 4 student guide](https://tdevine1.github.io/xPostForecast/students/sprint-4.html). This README explains how the reference app is set up.
+
 In Sprint 4, your team deploys the full-stack app to **Microsoft Azure**, using cloud resources the instructor has already created for your group:
 
 - **Azure Static Web Apps (SWA)** hosts the built React frontend
