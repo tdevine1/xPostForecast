@@ -31,6 +31,7 @@
         <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
 
         <li><a href="azure-scripts.html">6. Azure Scripts</a></li>
+        <li><a href="glossary.html">7. Glossary</a></li>
       </ul>
     </aside>
 
@@ -40,6 +41,10 @@
         <p>
           This page consolidates how the course project uses Azure App Service, Azure Static Web Apps, and Azure
           MySQL so support staff can verify each service configuration quickly.
+        </p>
+        <p>
+          New to Azure? Start with the plain-English picture below. Words in the tables are explained in the
+          <a href="glossary.html">Glossary</a>.
         </p>
         <div class="notice">
           <strong>WVU policy reminder:</strong> For course projects, request Azure resource groups through
@@ -86,10 +91,48 @@
         </table>
       </section>
 
+      <section class="section" id="picture">
+        <h3>How the pieces fit together</h3>
+        <p>A visitor's browser talks to two different Azure services, and one of them talks to the database:</p>
+<pre><code>Visitor's browser
+   |  1. downloads the website files
+   v
+Static Web App   (hosts the React website: HTML, JavaScript, CSS)
+   |
+   |  2. the website calls the API with the visitor's login cookie
+   v
+App Service      (runs the Node.js backend)
+   |
+   |  3. the backend reads and writes users
+   v
+MySQL server     (stores the users table)</code></pre>
+        <p>
+          Three addresses link the pieces together: the backend's address goes into the website
+          (<code>VITE_BACKEND_API_URL</code>), the website's address goes into the backend (<code>FRONTEND_URL</code>), and the
+          database's address goes into the backend (<code>DB_HOST</code>). If login fails, one of these three links is wrong.
+        </p>
+        <h4>Sizes we use and why</h4>
+        <p>Most of the cost of this project comes from picking a size. The portal's defaults are much larger than this app needs.</p>
+        <table>
+          <thead>
+            <tr><th>Resource</th><th>Use this size</th><th>Careful</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>App Service plan</td><td><strong>Basic B1</strong> (1 vCPU, 1.75 GB), Linux, East US</td><td>The portal defaults to a Premium size. A plan is billed <strong>while it exists, even with no app on it</strong>, so delete plans you no longer use.</td></tr>
+            <tr><td>Static Web App</td><td><strong>Free</strong></td><td>The create form defaults to the paid Standard plan.</td></tr>
+            <tr><td>MySQL Flexible Server</td><td><strong>Standard_B1ms</strong> (burstable), East US</td><td>Billed while it runs. It can be stopped when not in use.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Keep the database and the backend in the <strong>same region</strong> (East US). Each request then travels a short
+          distance instead of across the country.
+        </p>
+      </section>
+
       <section class="section">
         <h3>MySQL Networking and TLS</h3>
         <p>
-          The backend connects to Azure MySQL over TLS and verifies the server's certificate. Two network paths must be
+          The backend connects to Azure MySQL over <a href="glossary.html#tls">TLS</a> and verifies the server's certificate. Two network paths must be
           open: from each developer's computer (local development) and from the App Service (production).
         </p>
         <ol class="step-list">
@@ -177,8 +220,22 @@ const pool = mysql.createPool({
         <ul>
           <li>Runtime stack: <strong>Node 24 LTS</strong> on Linux. App Service starts the app with <code>npm start</code>.</li>
           <li>The backend listens on the Azure-assigned port: <code>const PORT = Number(process.env.PORT) || 5175;</code></li>
-          <li>Publish-profile deployments need <strong>Settings → Configuration → General settings → SCM Basic Auth Publishing Credentials</strong> turned on; otherwise <strong>Download publish profile</strong> is greyed out.</li>
-          <li>Validate after deploy: <code>https://&lt;backend&gt;.azurewebsites.net/health</code> returns <code>{"ok":true,"env":"production"}</code>.</li>
+          <li>
+            <strong>Publish profile needs "basic authentication" on.</strong> New apps have it off, which greys out
+            <strong>Download publish profile</strong>. If you create the app with the command line (recommended), the
+            <code>az resource update</code> line in <a href="deployment-steps.html#per-semester">Deployment Steps</a> turns it on. In the portal's
+            create form it is on the <strong>Deployment</strong> tab under <em>Authentication settings</em>.
+          </li>
+          <li>
+            <strong>Copy the address from the Overview page; don't guess it.</strong> Apps made in the portal get a random-looking suffix
+            and region (for example <code>myapp-gmhxfca6exbhgccd.eastus-01.azurewebsites.net</code>). Apps made with the command line get a plain
+            <code>myapp.azurewebsites.net</code>. The <strong>Default domain</strong> on the Overview page is always right.
+          </li>
+          <li>
+            Validate after deploy: <code>https://&lt;default domain&gt;/health</code> returns <code>{"ok":true,"env":"production"}</code>.
+            <strong>The first request after a deploy can take a minute or more</strong> because the app is waking up (a
+            <a href="glossary.html#cold-start">cold start</a>). The next answers in a fraction of a second. This is normal on the Basic plan. To avoid it, turn on <strong>Always On</strong> (<a href="glossary.html#always-on">explained here</a>).
+          </li>
           <li>Use <strong>Monitoring → Log stream</strong> for startup and database errors. A missing setting is reported as <code>Missing required environment variables: …</code>.</li>
           <li>The backend calls Microsoft Planetary Computer (<code>planetarycomputer.microsoft.com</code> and <code>*.blob.core.windows.net</code>); outbound internet access is allowed by default.</li>
         </ul>
@@ -192,11 +249,12 @@ const pool = mysql.createPool({
         </p>
         <ul>
           <li>When creating an SWA, the <strong>deployment source</strong> decides who writes the workflow:
-            <strong>GitHub</strong> makes Azure commit a workflow to the chosen repo (student option A);
+            <strong>GitHub</strong> makes Azure commit a workflow to the chosen repo (student <a href="https://github.com/tdevine1/xPostForecast/blob/main/frontend/README.md#option-a-fix-the-azure-generated-workflow">option A</a>);
             <strong>Other</strong> lets you deploy with your own workflow and the SWA's deployment token (the reference repo).</li>
+          <li>Choose the <strong>Free</strong> plan. It has everything this project needs.</li>
           <li>Build output is <code>dist</code> for Vite projects.</li>
           <li>Provide the backend URL through the secret <code>VITE_BACKEND_API_URL</code>.</li>
-          <li><code>frontend/public/staticwebapp.config.json</code> (a <code>navigationFallback</code> to <code>/index.html</code>) makes refreshes on <code>/map</code> and <code>/login</code> work.</li>
+          <li><code>frontend/public/staticwebapp.config.json</code> (a <code>navigationFallback</code> to <code>/index.html</code>) makes refreshes on <code>/map</code> and <code>/login</code> work. The same file sets <code>Referrer-Policy: strict-origin-when-cross-origin</code>. Azure otherwise sends <code>same-origin</code>, and OpenStreetMap then refuses the map tiles ("Access blocked").</li>
           <li>Confirm the deployed frontend sends requests to <code>https://&lt;appservice&gt;.azurewebsites.net/auth/...</code>; the browser console also prints <code>Frontend API Base URL: …</code>.</li>
         </ul>
       </section>
@@ -209,6 +267,9 @@ const pool = mysql.createPool({
           <li>SWA deployment is green in GitHub Actions.</li>
           <li><code>FRONTEND_URL</code> matches the SWA URL exactly, and <code>NODE_ENV</code> is <code>production</code>.</li>
           <li>Backend connects to MySQL without timeout or TLS errors.</li>
+          <li>The backend's <strong>Default domain</strong> (not a guessed address) is what <code>VITE_BACKEND_API_URL</code> uses.</li>
+          <li>Map tiles load on the live site (no grey "Access blocked" squares).</li>
+          <li>Plan sizes are B1 / Free / B1ms. No Premium or Standard resources are running by accident.</li>
         </ul>
         <div class="button-row">
           <a class="button gold" href="deployment-steps.html">Continue to Deployment Steps</a>

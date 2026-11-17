@@ -31,6 +31,7 @@
         <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
 
         <li><a href="azure-scripts.html">6. Azure Scripts</a></li>
+        <li><a href="glossary.html">7. Glossary</a></li>
       </ul>
     </aside>
 
@@ -40,6 +41,11 @@
         <p>
           This page is the starting point for WVU professors and staff. It combines Sprint 1 through Sprint 3 setup
           details into one clear foundation before cloud deployment.
+        </p>
+        <p>
+          <strong>You do not need cloud experience.</strong> The guides explain each step, say why it matters, and tell you how to
+          check that it worked. When a word is unfamiliar, look it up in the <a href="glossary.html">Glossary</a>. The suggested reading
+          order is: this page, then GitHub Setup, Azure Basics, and Deployment Steps. Keep Troubleshooting open for when something goes wrong.
         </p>
         <div class="notice">
           <strong>WVU resource group process:</strong> At WVU, project teams request Azure resource group setup through
@@ -63,6 +69,19 @@
           <li>VS Code extensions <strong>SQLTools</strong> (Matheus Teixeira) and <strong>SQLTools MySQL/MariaDB/TiDB</strong>; optional, for browsing the database from VS Code; the repo's <code>.vscode/extensions.json</code> recommends both</li>
           <li>GitHub repository access for your course project</li>
           <li>Azure access details from instructor or WVU support staff</li>
+        </ul>
+        <h4>Check your tools (two minutes)</h4>
+        <p>
+          Open a terminal (in VS Code: <strong>Terminal &rarr; New Terminal</strong>) and run the three commands below. Each should print a version
+          number. The most common surprise is an <strong>old Node.js</strong>: the project needs <strong>version 24</strong>, and an older one fails with confusing
+          errors such as <code>Cannot find native binding</code> when you run the tests.
+        </p>
+<pre><code>node -v     # should print v24.something
+npm -v      # prints a version (it comes with Node)
+git --version</code></pre>
+        <ul>
+          <li><strong><code>node -v</code> shows v20, v22, or "not recognized":</strong> install <strong>Node.js 24 LTS</strong> from nodejs.org, then <strong>close and reopen VS Code completely</strong> (not just the terminal panel). A terminal that was open during the install doesn't see the new version.</li>
+          <li><strong>Windows shortcut:</strong> <code>winget install --id OpenJS.NodeJS.LTS --version 24.22.1 --exact</code> installs a specific Node 24 release (the plain "LTS" package is a newer major version than this course uses).</li>
         </ul>
       </section>
 
@@ -136,7 +155,7 @@ git switch main          # back to the finished app</code></pre>
           <li>Clone the project repository and open it in VS Code.</li>
           <li>Allow your public IP address in the Azure MySQL server's <strong>Networking</strong> firewall rules.</li>
           <li>Install backend dependencies and create <code>backend/.env</code> from <code>.env.example</code>.</li>
-          <li>Create the schema from the Azure Portal: MySQL server → <strong>Connect</strong> → Cloud Shell, run the <code>mysql</code> command shown, and paste <code>backend/db/schema.sql</code> at the <code>mysql&gt;</code> prompt. This works without a firewall rule for your IP, because Cloud Shell runs inside Azure.</li>
+          <li>Create the schema from the Azure Portal: MySQL server → <strong>Connect</strong> → Cloud Shell, run the <code>mysql</code> command shown, and paste <code>backend/db/schema.sql</code> at the <code>mysql&gt;</code> prompt. This works without a firewall rule for your own IP, because Cloud Shell runs inside Azure, as long as <strong>Allow public access from any Azure service</strong> is ticked on the same Networking page (see <a href="azure-basics.html">Azure Basics</a>).</li>
           <li>Run the backend. Its log line <code>Successfully connected to MySQL</code> confirms your computer can reach the database; a timeout means your IP isn't in the firewall rules yet.</li>
           <li>Optional: connect SQLTools for browsing the data (SSL enabled, CA file <code>backend/config/DigiCertGlobalRootG2.crt.pem</code>, a Password mode other than plaintext).</li>
           <li>Install frontend dependencies, create <code>frontend/.env</code>, run Vite, and test the login flow.</li>

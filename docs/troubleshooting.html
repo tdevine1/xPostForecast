@@ -31,6 +31,7 @@
         <li><a class="active-link" aria-current="page" href="troubleshooting.html">5. Troubleshooting</a></li>
 
         <li><a href="azure-scripts.html">6. Azure Scripts</a></li>
+        <li><a href="glossary.html">7. Glossary</a></li>
       </ul>
     </aside>
 
@@ -152,6 +153,11 @@
           Pipeline failures are usually path, test, or secret mismatches. The deploy workflows check their secrets first
           and name anything missing in the log.
         </p>
+        <div class="notice">
+          <strong>How to read a failed run:</strong> open the repository's <strong>Actions</strong> tab, click the run with the red X, click the job
+          with the red X, then click the step with the red X. <strong>The last few lines of that step say what went wrong.</strong> Read them before
+          changing anything. If you're unsure of a word, see the <a href="glossary.html">Glossary</a>.
+        </div>
         <table>
           <thead>
             <tr>
@@ -184,7 +190,7 @@
             <tr>
               <td><strong>Download publish profile</strong> is greyed out</td>
               <td>SCM basic-auth publishing disabled</td>
-              <td>App Service → Configuration → General settings → SCM Basic Auth Publishing Credentials: On.</td>
+              <td>Turn it on. Command line (works every time): the <code>az resource update … basicPublishingCredentialsPolicies … --set properties.allow=true</code> command in <a href="deployment-steps.html#per-semester">Deployment Steps</a>. Portal: it is a setting called "SCM Basic Auth Publishing Credentials" / "Basic authentication" in the app's configuration, or on the Deployment tab when creating the app. Wait a minute, then reload the Overview page.</td>
             </tr>
             <tr>
               <td>Deployed site calls <code>undefined/auth/...</code>; console shows <code>Frontend API Base URL: undefined</code></td>
@@ -206,6 +212,26 @@
               <td>Missing <code>app_location</code> in close job config</td>
               <td>Add the same <code>app_location</code> value as the main deploy job.</td>
             </tr>
+            <tr>
+              <td>The map's background is grey squares reading <strong>"Access blocked: App is not following the tile usage policy"</strong>, but the coloured layer and everything else works</td>
+              <td>OpenStreetMap requires a <code>Referer</code> header on tile requests. Azure Static Web Apps sent <code>Referrer-Policy: same-origin</code>, which makes the browser leave it out for other sites. It works on your laptop (the browser default sends it) and fails only on Azure.</td>
+              <td>In <code>MapComponent.jsx</code> add <code>referrerPolicy="strict-origin-when-cross-origin"</code> to the <code>TileLayer</code>, and add <code>"globalHeaders": { "Referrer-Policy": "strict-origin-when-cross-origin" }</code> to <code>frontend/public/staticwebapp.config.json</code>. Redeploy the frontend, then hard-reload the page (Ctrl+Shift+R). Check with <code>curl -I</code> that the site now sends the new header.</td>
+            </tr>
+            <tr>
+              <td>The deployed site can't reach the backend: console errors such as <code>ERR_NAME_NOT_RESOLVED</code>, or requests go to an address that doesn't exist</td>
+              <td><code>VITE_BACKEND_API_URL</code> holds an address that was guessed or typed from memory. Apps created in the portal have a random suffix in their address.</td>
+              <td>Copy the backend's <strong>Default domain</strong> from its Overview page, put <code>https://</code> in front, remove any slash at the end, replace the secret, then <strong>redeploy the frontend</strong> (the address is baked in when the site is built).</td>
+            </tr>
+            <tr>
+              <td>"Repository secret AZURE_STATIC_WEB_APPS_API_TOKEN is not set", yet a secret with a similar name exists</td>
+              <td>An earlier Azure setup created <code>AZURE_STATIC_WEB_APPS_API_TOKEN_&lt;SOMETHING&gt;</code>. The workflow only reads the plain name.</td>
+              <td>Add a new secret named exactly <code>AZURE_STATIC_WEB_APPS_API_TOKEN</code> with the token from the Static Web App's <strong>Manage deployment token</strong>.</td>
+            </tr>
+            <tr>
+              <td>The workflow is green but the live site looks unchanged</td>
+              <td>Your browser kept the old page or script in its cache</td>
+              <td>Hard-reload with Ctrl+Shift+R, or open the site in a private window.</td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -223,7 +249,12 @@
         <h3>App Service Runtime Issues</h3>
         <ul>
           <li>If the backend does not start on Azure, read the first error in the log stream; the app listens on <code>process.env.PORT</code> automatically.</li>
-          <li>If the health endpoint fails, confirm the environment variables were applied and the app restarted.</li>
+          <li>
+            <strong>The very first request after a deploy hangs for a minute or more, then everything works.</strong> This is a
+            <a href="glossary.html#cold-start">cold start</a>: the app on the Basic plan is waking up. It isn't a failed deploy. Wait, then try
+            <code>/health</code> again; the second request should answer in well under a second. Don't redeploy just because the first request was slow.
+          </li>
+          <li>If the health endpoint fails <em>repeatedly</em>, confirm the environment variables were applied and the app restarted.</li>
           <li>If <code>/health</code> shows <code>"env": "development"</code>, <code>NODE_ENV</code> is not set to <code>production</code>.</li>
           <li>Use App Service Log Stream while restarting the app to capture startup errors immediately.</li>
         </ul>

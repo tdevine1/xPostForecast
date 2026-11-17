@@ -18,8 +18,10 @@ The site has two audiences, chosen from the landing page (`index.html`):
 | `instructors.html` | Instructor home |
 | `getting-started.html`, `github-setup.html`, `azure-basics.html`, `deployment-steps.html`, `troubleshooting.html` | Instructor guide pages |
 | `azure-scripts.html`, `scripts/` | Instructor guide page and the downloadable PowerShell scripts (MySQL servers, App Services, Static Web Apps, access, cleanup). Scripts are parameterized: no passwords or student e-mails are stored in them |
+| `glossary.html` | Plain-English definitions of the Azure, GitHub, and web terms used in every guide; linked from each sidebar |
 | `students/ai-guide.html` | Student guide: developing with AI (includes a small prompt builder written in plain JavaScript) |
 | `students/sonarqube.html` | Student guide: SonarQube Cloud setup, coverage reports, the CI job, and using the results in the Milestone 6 report. Matches `sonar-project.properties` and the `sonar` job in `.github/workflows/ci.yml` |
+| `students/github-workflows.html` | Student guide: write your own GitHub Actions workflows (CI, deploy backend, deploy frontend) with every line explained. The snippets match the real workflows in `.github/workflows/` |
 | `site.css` | The one stylesheet every page uses |
 
 ## Editing

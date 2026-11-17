@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A beginner's guide to writing GitHub Actions workflows that test and deploy a React and Node.js project to Azure." />
+  <title>Writing GitHub Workflows | CS 330 Student Guide</title>
+  <link rel="stylesheet" href="../site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="../WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Writing GitHub Workflows</h1>
+        <p>CS 330 student guide: make GitHub test and deploy your project for you.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="../index.html">All guides</a></li>
+        <li><a href="ai-guide.html">Developing with AI</a></li>
+        <li><a href="sonarqube.html">Testing with SonarQube Cloud</a></li>
+        <li>
+          <a class="active-link" aria-current="page" href="github-workflows.html">Writing GitHub workflows</a>
+          <ul class="sub">
+            <li><a href="#what">1. What a workflow is</a></li>
+            <li><a href="#yaml">2. YAML in two minutes</a></li>
+            <li><a href="#hello">3. Your first workflow</a></li>
+            <li><a href="#ci">4. Check every push (CI)</a></li>
+            <li><a href="#secrets">5. Secrets and variables</a></li>
+            <li><a href="#backend">6. Deploy the backend</a></li>
+            <li><a href="#frontend">7. Deploy the frontend</a></li>
+            <li><a href="#sonar">8. Add SonarQube</a></li>
+            <li><a href="#failed">9. When a run fails</a></li>
+            <li><a href="#safety">10. Keep it safe</a></li>
+            <li><a href="#checklist">11. Checklist</a></li>
+          </ul>
+        </li>
+        <li><a href="../glossary.html">Glossary</a></li>
+      </ul>
+      <h2>Project Links</h2>
+      <ul>
+        <li><a href="https://github.com/tdevine1/xPostForecast">Reference app on GitHub</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast/tree/main/.github/workflows">Reference workflows</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Teach GitHub to do the boring parts</h2>
+        <p>
+          Every time you push code, someone has to run the checks, build the site, and upload it to Azure. A
+          <strong>workflow</strong> is a set of written instructions that makes GitHub do all of that for you,
+          the same way every time. This guide builds three workflows from nothing, explains every line, and tells you
+          what to do when one turns red.
+        </p>
+        <div class="notice">
+          <strong>Before you start:</strong> you need your own repository with <code>frontend/</code> and
+          <code>backend/</code> folders side by side (Sprint 1), working <code>npm test</code> in both, and for the
+          deploy workflows the Azure resources your instructor created (Sprint 4). New words are explained in the
+          <a href="../glossary.html">Glossary</a>.
+        </div>
+        <div class="notice">
+          <strong>This repo is an example, not a template.</strong> The reference app's workflows are on GitHub. Read
+          them, but type your own; you will learn far more, and your folder names and secrets will be yours.
+        </div>
+      </section>
+
+      <section class="section" id="what">
+        <h3>1. What a workflow is</h3>
+        <p>
+          Picture a checklist taped to a robot: "when someone pushes code, download it, install the packages, run the
+          tests, and tell me if anything fails." GitHub Actions is that robot, and a workflow file is the checklist.
+        </p>
+        <table>
+          <thead>
+            <tr><th>Word</th><th>Plain meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Workflow</strong></td><td>One checklist, saved as a file in <code>.github/workflows/</code> (the folder name must be exact).</td></tr>
+            <tr><td><strong>Trigger</strong> (<code>on:</code>)</td><td>What starts it: a push, a pull request, or a button you click.</td></tr>
+            <tr><td><strong>Job</strong></td><td>A group of steps that run together on one fresh computer. Different jobs run side by side.</td></tr>
+            <tr><td><strong>Runner</strong> (<code>runs-on:</code>)</td><td>The temporary computer GitHub lends the job. It starts <em>empty</em>, with no copy of your code.</td></tr>
+            <tr><td><strong>Step</strong></td><td>One thing to do, in order. Either run a command (<code>run:</code>) or use a ready-made action (<code>uses:</code>). If a step fails, the job stops.</td></tr>
+            <tr><td><strong>Action</strong></td><td>A step someone else already wrote, like "download the repo" or "deploy to Azure".</td></tr>
+          </tbody>
+        </table>
+        <p>Where to watch it work: your repository's <strong>Actions</strong> tab shows every run, with a green check or a red X.</p>
+      </section>
+
+      <section class="section" id="yaml">
+        <h3>2. YAML in two minutes</h3>
+        <p>Workflows are written in YAML, a format that is picky about spacing. Learn these four rules and you will avoid most errors:</p>
+        <ol class="step-list">
+          <li><strong>Indentation means nesting.</strong> Use <strong>spaces, never the Tab key</strong>. Two spaces per level is standard. A line indented under another belongs to it.</li>
+          <li><strong><code>key: value</code></strong> sets a setting. There must be a space after the colon.</li>
+          <li><strong>A dash starts a list item.</strong> A list of steps is a column of lines that each begin with <code>- </code>.</li>
+          <li><strong>A line starting with <code>#</code> is a comment</strong> for people; GitHub ignores it. The examples below use comments to explain themselves.</li>
+        </ol>
+        <p>
+          If the spacing is wrong, GitHub won't even start the run. The Actions tab shows <em>"Invalid workflow file"</em>
+          with the line number to fix.
+        </p>
+      </section>
+
+      <section class="section" id="hello">
+        <h3>3. Your first workflow</h3>
+        <p>Start tiny so you can see the pieces work. Create <code>.github/workflows/hello.yml</code>:</p>
+<pre><code>name: Hello                  # the name shown in the Actions tab
+
+on: push                     # run every time someone pushes
+
+jobs:
+  say-hello:                 # a job; you choose its name
+    runs-on: ubuntu-latest   # the computer to use: a fresh Linux machine
+    steps:
+      - run: echo "Hello from GitHub Actions"     # one step: run a command
+</code></pre>
+        <ol class="step-list">
+          <li>Save the file, then commit and push it.</li>
+          <li>Open the <strong>Actions</strong> tab. A run named <em>Hello</em> appears within seconds.</li>
+          <li>Click the run, click the <code>say-hello</code> job, and open the step. You will see your message in the log.</li>
+        </ol>
+        <p>You now know the whole pattern: <em>a trigger starts a job; the job runs steps on a runner</em>. Delete <code>hello.yml</code> when you are done.</p>
+      </section>
+
+      <section class="section" id="ci">
+        <h3>4. Check every push (CI)</h3>
+        <p>
+          <strong>Continuous integration (CI)</strong> means a robot checks every change before it can cause harm. Ours
+          will lint (proofread), test, and build both halves of the app, so you find a mistake in seconds instead of after
+          a failed deployment. Create <code>.github/workflows/ci.yml</code>:
+        </p>
+<pre><code>name: CI
+
+on:
+  push:            # run on every push to any branch
+  pull_request:    # and on every pull request
+
+jobs:
+  frontend:                                # job 1: checks the website code
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend        # run every command inside the frontend/ folder
+    steps:
+      - uses: actions/checkout@v7          # download your repository onto the empty runner
+
+      - uses: actions/setup-node@v7        # install Node.js on the runner
+        with:
+          node-version: '24'               # use Node 24, the version this course uses
+          cache: npm                       # remember downloaded packages to go faster next time
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci                        # install exactly what package-lock.json lists
+      - run: npm run lint                  # proofread the code
+      - run: npm test                      # run the tests
+      - run: npm run build                 # make sure the site builds
+
+  backend:                                 # job 2: checks the server code (runs at the same time)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+</code></pre>
+        <h4>Why each choice</h4>
+        <ul>
+          <li><strong><code>actions/checkout</code> comes first</strong> because the runner starts empty. Without it, there is no code to test.</li>
+          <li><strong><code>npm ci</code>, not <code>npm install</code>.</strong> <code>ci</code> installs exactly the versions in <code>package-lock.json</code>, so the robot and your laptop test the same thing. If it fails with a lock file error, run <code>npm install</code> on your computer and commit the updated <code>package-lock.json</code>.</li>
+          <li><strong><code>working-directory</code></strong> saves you from typing <code>cd frontend</code> before every command. If a step fails with "package.json not found", this line is almost always wrong.</li>
+          <li><strong>Two jobs, not one.</strong> They run side by side and report separately, so you can see at a glance whether the frontend or the backend is the problem.</li>
+          <li><strong>Run the same commands on your computer first.</strong> If <code>npm run lint</code> and <code>npm test</code> don't pass locally, they won't pass in CI.</li>
+        </ul>
+        <div class="notice">
+          <strong>Does your project have a <code>lint</code> script or tests?</strong> A step that runs a script that doesn't
+          exist fails. If your project has no tests yet, delete that line rather than faking one, and add tests when you can.
+          Check your <code>package.json</code> "scripts" section.
+        </div>
+      </section>
+
+      <section class="section" id="secrets">
+        <h3>5. Secrets and variables</h3>
+        <p>
+          The deploy workflows need things you must not put in your code: passwords for uploading to Azure. GitHub
+          stores them outside your code, in two kinds of place:
+        </p>
+        <div class="grid-two">
+          <div class="card">
+            <h4>Secret</h4>
+            <p>Hidden and encrypted. After you save it, nobody (including you) can read it again, and it is blanked out of logs. Use it for <strong>anything that works like a password</strong>.</p>
+          </div>
+          <div class="card">
+            <h4>Variable</h4>
+            <p>Plain and visible. Use it for settings that are <strong>not sensitive</strong>, such as the name of your Azure app.</p>
+          </div>
+        </div>
+        <p>You add both in your repository under <strong>Settings &rarr; Secrets and variables &rarr; Actions</strong> (secrets on one tab, variables on the other). The workflows below use these names. <strong>They must match exactly, including capitals.</strong></p>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Kind</th><th>Value</th><th>Where to get it</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>APP_SERVICE_PUBLISH_PROFILE</code></td><td>Secret</td><td>The whole contents of a file</td><td>Azure portal &rarr; your App Service &rarr; Overview &rarr; <strong>Download publish profile</strong>. Open the file in a text editor, copy everything, then <strong>delete the downloaded file</strong>. (If the button is greyed out, ask your instructor to turn on basic authentication.)</td></tr>
+            <tr><td><code>AZURE_WEBAPP_NAME</code></td><td>Variable</td><td>Your App Service's name</td><td>The name at the top of the App Service page.</td></tr>
+            <tr><td><code>AZURE_STATIC_WEB_APPS_API_TOKEN</code></td><td>Secret</td><td>A long token</td><td>Azure portal &rarr; your Static Web App &rarr; Overview &rarr; <strong>Manage deployment token</strong> &rarr; copy.</td></tr>
+            <tr><td><code>VITE_BACKEND_API_URL</code></td><td>Secret</td><td>Your backend's web address, with <strong>no slash at the end</strong></td><td>Azure portal &rarr; your App Service &rarr; Overview &rarr; <strong>Default domain</strong>. Copy it exactly, add <code>https://</code> in front. Don't guess it: new apps can have a random suffix.</td></tr>
+          </tbody>
+        </table>
+        <div class="danger-note">
+          <strong>Never paste a publish profile, token, or password into your code, a chat, an AI tool, or a commit.</strong>
+          A secret that reaches GitHub in a file is public the moment it is pushed, and deleting the file later doesn't
+          remove it from history. If one leaks, replace it in Azure and update the secret.
+        </div>
+        <p><strong>Who can do this?</strong> Only a repository <strong>Admin</strong> can open the Settings tab. Keep Admin to one teammate; everyone else works with Write access and can still use the secrets through the workflows.</p>
+      </section>
+
+      <section class="section" id="backend">
+        <h3>6. Deploy the backend</h3>
+        <p>
+          This workflow uploads your <code>backend/</code> folder to your Azure App Service whenever backend code changes
+          on <code>main</code>. Create <code>.github/workflows/deploy-backend.yml</code>:
+        </p>
+<pre><code>name: Deploy backend (App Service)
+
+on:
+  push:
+    branches: [main]                 # only deploy from the main branch
+    paths:                           # ...and only when these files changed
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:                 # also add a "Run workflow" button in the Actions tab
+
+concurrency: deploy-backend          # never run two backend deployments at once
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read                 # the job may read the repo and nothing more
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'         # keep this equal to the Node version set on the App Service
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # Fail early, with a clear message, if a setting was forgotten.
+      - name: Check repository settings
+        env:
+          APP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          HAS_PROFILE: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE != '' }}
+        run: |
+          [ -n "$APP_NAME" ] || { echo "::error::Repository variable AZURE_WEBAPP_NAME is not set"; exit 1; }
+          [ "$HAS_PROFILE" = "true" ] || { echo "::error::Repository secret APP_SERVICE_PUBLISH_PROFILE is not set"; exit 1; }
+
+      - run: npm ci
+      - run: npm test                # a failing test stops the deployment, so broken code never ships
+
+      - name: Remove dev-only packages before upload
+        run: npm prune --omit=dev    # the server doesn't need lint or test tools
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}                       # which Azure app to update
+          publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}   # the password to upload with
+          package: backend                                              # which folder to upload
+</code></pre>
+        <h4>The new ideas</h4>
+        <ul>
+          <li><strong><code>on: push: branches / paths</code>.</strong> Without <code>paths</code>, every push (even a typo fix in the README) would redeploy the backend.</li>
+          <li><strong><code>workflow_dispatch</code>.</strong> Adds a <em>Run workflow</em> button, so you can deploy right after setting up Azure without making a fake commit.</li>
+          <li><strong><code>${{ vars.NAME }}</code> and <code>${{ secrets.NAME }}</code>.</strong> This is how a workflow reads a variable or a secret. The value is filled in at run time and never appears in the file.</li>
+          <li><strong>The "Check repository settings" step</strong> turns a confusing Azure error into a plain message such as <em>"Repository secret APP_SERVICE_PUBLISH_PROFILE is not set"</em>.</li>
+          <li><strong><code>npm test</code> before the deploy.</strong> If a test fails the job stops, so broken code is never uploaded.</li>
+          <li><strong><code>concurrency</code>.</strong> If two pushes land close together, the second waits for the first, so the two uploads can't collide.</li>
+          <li><strong>Your Azure app must have the matching settings first</strong> (database address, <code>JWT_SECRET</code>, <code>FRONTEND_URL</code>, <code>NODE_ENV=production</code>). The workflow uploads code; it does not set these. See the <a href="https://github.com/tdevine1/xPostForecast/blob/main/backend/README.md">backend README</a>.</li>
+        </ul>
+        <p>
+          <strong>First deploy:</strong> Actions tab &rarr; <em>Deploy backend (App Service)</em> &rarr; <strong>Run workflow</strong> (choose the <code>main</code> branch in the small menu, then click the green button). The button only appears once the workflow file has been pushed to your default branch. Then open
+          <code>https://&lt;your default domain&gt;/health</code>. The very first request can take a minute or more while the
+          app wakes up (a "cold start"); after that it answers in a fraction of a second with
+          <code>{"ok":true,"env":"production"}</code>.
+        </p>
+      </section>
+
+      <section class="section" id="frontend">
+        <h3>7. Deploy the frontend</h3>
+        <p>
+          The frontend is built <em>in the workflow</em> and the finished site is uploaded to your Static Web App.
+          Create <code>.github/workflows/deploy-frontend.yml</code>:
+        </p>
+<pre><code>name: Deploy frontend (Static Web Apps)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
+
+concurrency: deploy-frontend
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Check repository settings
+        env:
+          VITE_BACKEND_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}
+          HAS_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != '' }}
+        run: |
+          [ -n "$VITE_BACKEND_API_URL" ] || { echo "::error::Repository secret VITE_BACKEND_API_URL is not set"; exit 1; }
+          case "$VITE_BACKEND_API_URL" in */) echo "::error::VITE_BACKEND_API_URL must not end with /"; exit 1;; esac
+          [ "$HAS_TOKEN" = "true" ] || { echo "::error::Repository secret AZURE_STATIC_WEB_APPS_API_TOKEN is not set"; exit 1; }
+
+      - run: npm ci
+      - run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # Vite copies this value INTO the built website files, so it must be set while building.
+          VITE_BACKEND_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: frontend/dist     # the finished site, relative to the repo root
+          skip_app_build: true            # we already built it above; don't let Azure build again
+</code></pre>
+        <h4>The new ideas</h4>
+        <ul>
+          <li><strong>The backend address is baked in at build time.</strong> <code>VITE_BACKEND_API_URL</code> is copied into the website files when you run <code>npm run build</code>. Changing the secret later does nothing until you build and deploy again.</li>
+          <li><strong>No slash at the end of that address.</strong> The app adds paths such as <code>/auth/login</code> itself, so <code>https://x.net/</code> would become <code>https://x.net//auth/login</code>.</li>
+          <li><strong><code>app_location: frontend/dist</code> with <code>skip_app_build: true</code></strong> means "upload this finished folder as it is".</li>
+          <li><strong><code>frontend/public/staticwebapp.config.json</code> must exist.</strong> It makes refreshing a page such as <code>/map</code> work instead of showing "404 Not Found".</li>
+          <li><strong>Only one workflow should deploy the frontend.</strong> If Azure also created its own workflow file in your repo, delete one of them, or both will run.</li>
+        </ul>
+        <p><strong>Check it:</strong> open your Static Web App's URL, open the browser's developer tools (F12 &rarr; Console), and look for the line <code>Frontend API Base URL: …</code>. It must show your Azure backend, not <code>localhost</code>.</p>
+      </section>
+
+      <section class="section" id="sonar">
+        <h3>8. Add SonarQube</h3>
+        <p>
+          For Milestone 6, add a third job that sends your code and test coverage to SonarQube Cloud. It reuses the
+          same ideas as the CI jobs above. The full walkthrough, including the exact job to copy, is in the
+          <a href="sonarqube.html">SonarQube guide</a>.
+        </p>
+      </section>
+
+      <section class="section" id="failed">
+        <h3>9. When a run fails</h3>
+        <p>A red X is information, not a disaster. Read it in this order:</p>
+        <ol class="step-list">
+          <li>Open the <strong>Actions</strong> tab and click the failed run.</li>
+          <li>Click the job with the red X (for example <code>backend</code>).</li>
+          <li>Find the step with the red X and click it open. <strong>The last lines of that step say what went wrong.</strong> Read them before you change anything.</li>
+          <li>Fix it, commit, and push. A new run starts on its own.</li>
+        </ol>
+        <table>
+          <thead>
+            <tr><th>What you see</th><th>Likely cause</th><th>Fix</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>"Invalid workflow file" and a line number</td>
+              <td>A YAML spacing mistake (often a Tab, or a missing space after a colon)</td>
+              <td>Fix the line named; use spaces only.</td>
+            </tr>
+            <tr>
+              <td>"No such file or directory" or "package.json not found"</td>
+              <td>Wrong <code>working-directory</code> or folder name</td>
+              <td>Match the folder names in your repo exactly; they are case-sensitive on the runner.</td>
+            </tr>
+            <tr>
+              <td><code>npm ci</code> fails with a lock file message</td>
+              <td><code>package.json</code> and <code>package-lock.json</code> disagree</td>
+              <td>Run <code>npm install</code> locally and commit the updated lock file.</td>
+            </tr>
+            <tr>
+              <td>"Missing script: lint" (or <code>test</code>)</td>
+              <td>Your <code>package.json</code> has no script with that name</td>
+              <td>Add the script, or remove that step.</td>
+            </tr>
+            <tr>
+              <td>A test fails only in GitHub</td>
+              <td>It depends on something on your laptop (a <code>.env</code>, a local database)</td>
+              <td>Make the test self-contained; the runner has none of your files that aren't in Git.</td>
+            </tr>
+            <tr>
+              <td>"Repository secret ... is not set"</td>
+              <td>A secret is missing or its name differs by even one letter or capital</td>
+              <td>Re-check the table in section 5.</td>
+            </tr>
+            <tr>
+              <td>The deploy step says authentication failed</td>
+              <td>An old or wrong publish profile or token</td>
+              <td>Download a fresh one from Azure and replace the secret.</td>
+            </tr>
+            <tr>
+              <td>Green run, but the site still shows old behavior</td>
+              <td>Your browser cached the old page, or the app is still waking up</td>
+              <td>Hard-reload (Ctrl+Shift+R). For the backend, wait a minute and try <code>/health</code> again.</td>
+            </tr>
+            <tr>
+              <td>Green run, but the map's background is grey boxes saying "Access blocked"</td>
+              <td>The site tells the browser not to send a <code>Referer</code> header, and OpenStreetMap requires one</td>
+              <td>Set <code>referrerPolicy="strict-origin-when-cross-origin"</code> on the map's <code>TileLayer</code> and add a <code>Referrer-Policy</code> header in <code>staticwebapp.config.json</code>. The reference app does both.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="safety">
+        <h3>10. Keep it safe</h3>
+        <ul>
+          <li><strong>Secrets live only in GitHub's Secrets tab and Azure's settings</strong>, never in a file you commit. Run <code>git status</code> before every <code>git add</code> and check that no <code>.env</code> file is listed.</li>
+          <li><strong>Least privilege.</strong> One Admin; everyone else has Write. The deploy workflows ask for <code>permissions: contents: read</code>, only what they need.</li>
+          <li><strong>Know what you use.</strong> Actions are written like <code>actions/checkout@v7</code>. The <code>@v7</code> means "version 7 and its later fixes", so the action's authors can still update it under you. Stick to actions from GitHub (<code>actions/…</code>) and Microsoft (<code>azure/…</code>, <code>Azure/…</code>), and read an action's page before adding a new one.</li>
+          <li><strong>Pull requests from forks don't receive your secrets.</strong> That is a safety feature, so don't try to work around it.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="checklist">
+        <h3>11. Checklist</h3>
+        <ul class="checklist">
+          <li>I understand a workflow is a trigger, jobs, and steps, and I can explain what <code>actions/checkout</code> is for.</li>
+          <li><code>ci.yml</code> is green on <code>main</code>: lint, test, and build pass for both folders.</li>
+          <li>The three secrets and one variable exist with exactly the names in section 5.</li>
+          <li>The backend deploy is green and <code>/health</code> returns <code>{"ok":true,"env":"production"}</code>.</li>
+          <li>The frontend deploy is green and the console shows my Azure backend as <code>Frontend API Base URL</code>.</li>
+          <li>I can register, log in, refresh on <code>/map</code>, fetch a month of data, and log out on the live site.</li>
+          <li>No secret appears in any file in my repository.</li>
+        </ul>
+        <div class="button-row">
+          <a class="button gold" href="sonarqube.html">Next: SonarQube</a>
+          <a class="button" href="../glossary.html">Glossary</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University · CS 330</p>
+    </div>
+  </footer>
+</body>
+</html>

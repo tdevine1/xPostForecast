@@ -31,6 +31,7 @@
         <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
 
         <li><a href="azure-scripts.html">6. Azure Scripts</a></li>
+        <li><a href="glossary.html">7. Glossary</a></li>
       </ul>
     </aside>
 
@@ -40,6 +41,12 @@
         <p>
           This page combines the repository, secrets, and GitHub Actions requirements from the Sprint 4 guides so
           faculty and staff can verify the CI/CD pipeline configuration in one place.
+        </p>
+        <p>
+          If this is your first time with GitHub Actions: a <strong>workflow</strong> is a set of written instructions that makes
+          GitHub test and deploy the project automatically whenever code is pushed. A <strong>secret</strong> is a hidden password
+          the workflow needs. Both are explained in the <a href="glossary.html#github">Glossary</a>, and students are taught to write
+          their own in the <a href="students/github-workflows.html">student workflows guide</a>.
         </p>
         <div class="button-row">
           <a class="button gold" href="azure-basics.html">Next: Azure Basics</a>
@@ -53,7 +60,12 @@
           secret names, or files that should never have been committed.
         </p>
         <ul>
-          <li>Confirm instructors, staff, and project teams all have the correct repo permissions.</li>
+          <li>
+            Confirm instructors, staff, and project teams all have the correct repo permissions. Follow the
+            <strong>principle of least privilege</strong>: give each person only the access they need. <strong>Write</strong> lets someone push code and
+            use the workflows. <strong>Admin</strong> can also open Settings, add or read secrets' names, change who has access, and delete the repository,
+            so keep it to one person per team (and the instructor). Every team member must be added to the repo so commits are made under their own account.
+          </li>
           <li>Use <code>main</code> as the deployment branch: both deploy workflows run on pushes to <code>main</code>.</li>
           <li>Ensure <code>.gitignore</code> excludes <code>.env</code>, <code>node_modules</code>, <code>dist</code>, <code>.vscode/*</code> (except <code>extensions.json</code>), and <code>*.PublishSettings</code>; check <code>git status</code> before every commit.</li>
           <li>Use pull requests for larger changes: the CI workflow tests every push and pull request.</li>
@@ -75,7 +87,7 @@ git push origin main            # triggers CI, and deployment if frontend/ or ba
             <tr>
               <td><code>ci.yml</code></td>
               <td>Every push and pull request, on every branch</td>
-              <td>Lint, test, and build the frontend; lint and test the backend</td>
+              <td>Lint, test, and build the frontend; lint and test the backend. A third job, <code>sonar</code>, sends code quality and coverage to SonarQube Cloud, and only runs when <code>SONAR_ENABLED</code> is <code>true</code></td>
             </tr>
             <tr>
               <td><code>deploy-backend.yml</code></td>
@@ -98,8 +110,24 @@ git push origin main            # triggers CI, and deployment if frontend/ or ba
       <section class="section">
         <h3>Required GitHub Secrets and Variables</h3>
         <p>
-          Secrets are required because Azure deployments need credentials that must never be committed to source
-          control. Add them under <strong>Settings → Secrets and variables → Actions</strong>.
+          Azure deployments need credentials, and credentials must never be committed to source control, because anything
+          pushed to GitHub is as good as public. GitHub therefore keeps them in two places outside your code. Add both under
+          <strong>Settings → Secrets and variables → Actions</strong>, on the <strong>Secrets</strong> tab or the <strong>Variables</strong> tab. Only a repository
+          <strong>Admin</strong> can see the Settings tab.
+        </p>
+        <div class="grid-two">
+          <div class="card">
+            <h4>Secret</h4>
+            <p>Hidden and encrypted. After saving, nobody can read it again, and GitHub blanks it out of logs. Use for anything that works like a password.</p>
+          </div>
+          <div class="card">
+            <h4>Variable</h4>
+            <p>Visible to anyone with access. Use for settings that are not sensitive, such as an app's name or an on/off switch.</p>
+          </div>
+        </div>
+        <p>
+          Names must match the workflow files <strong>exactly, including capital letters</strong>. A name that is one letter off is simply a different
+          setting, and the workflow can't see it.
         </p>
         <table>
           <thead>
@@ -121,7 +149,7 @@ git push origin main            # triggers CI, and deployment if frontend/ or ba
               <td><code>APP_SERVICE_PUBLISH_PROFILE</code></td>
               <td>Secret</td>
               <td><code>deploy-backend.yml</code></td>
-              <td>Full XML contents of the App Service publish profile</td>
+              <td>Full contents of the App Service publish profile: in the Azure portal open the App Service, click <strong>Overview → Download publish profile</strong>, open the downloaded file in a text editor, and copy all of it. Delete the downloaded file afterwards.</td>
             </tr>
             <tr>
               <td><code>AZURE_WEBAPP_NAME</code></td>
@@ -133,24 +161,41 @@ git push origin main            # triggers CI, and deployment if frontend/ or ba
               <td><code>VITE_BACKEND_API_URL</code></td>
               <td>Secret</td>
               <td><code>deploy-frontend.yml</code> build step</td>
-              <td><code>https://&lt;backend-app&gt;.azurewebsites.net</code> (no trailing slash)</td>
+              <td><code>https://</code> + the backend's <strong>Default domain</strong>, copied from the App Service <strong>Overview</strong> page, with <strong>no slash at the end</strong>. Copy it; don't type it from memory, because apps made in the portal have a random suffix.</td>
             </tr>
             <tr>
               <td><code>AZURE_STATIC_WEB_APPS_API_TOKEN</code></td>
               <td>Secret</td>
               <td><code>deploy-frontend.yml</code></td>
-              <td>From the Static Web App's <strong>Manage deployment token</strong></td>
+              <td>In the Azure portal open the Static Web App, click <strong>Overview → Manage deployment token</strong>, and copy the token</td>
+            </tr>
+            <tr>
+              <td><code>SONAR_TOKEN</code></td>
+              <td>Secret</td>
+              <td><code>ci.yml</code> <code>sonar</code> job</td>
+              <td>From SonarQube Cloud: <strong>My Account → Security → Generate token</strong> (see the <a href="students/sonarqube.html">SonarQube guide</a>)</td>
+            </tr>
+            <tr>
+              <td><code>SONAR_ENABLED</code></td>
+              <td>Variable</td>
+              <td><code>ci.yml</code> <code>sonar</code> job</td>
+              <td><code>true</code> to turn the SonarQube job on; anything else skips it</td>
             </tr>
           </tbody>
         </table>
         <p>
           Both deploy workflows check for these first and fail with a clear message naming anything that is missing.
         </p>
+        <div class="danger-note">
+          <strong>Beware of leftovers from last semester.</strong> Secrets and variables stay in the repository after the Azure resources are deleted, and they keep their old
+          values. When you set up a new semester, <strong>replace</strong> the old ones; don't add look-alikes. In particular, a secret named
+          <code>AZURE_STATIC_WEB_APPS_API_TOKEN_&lt;SOMETHING&gt;</code> was created automatically by an earlier Azure setup, and our workflow does <strong>not</strong>
+          read it. It needs the plain name <code>AZURE_STATIC_WEB_APPS_API_TOKEN</code>.
+        </div>
         <div class="notice">
           <strong>Student repositories:</strong> if you connect a group's Static Web App to their GitHub repo in the
           Azure Portal, Azure commits its own workflow (<code>azure-static-web-apps-&lt;name&gt;.yml</code>) and creates
-          a secret named <code>AZURE_STATIC_WEB_APPS_API_TOKEN_&lt;NAME&gt;</code>. That's option A in the student
-          guide; students then only add <code>VITE_BACKEND_API_URL</code> and fix <code>app_location</code>.
+          a secret named <code>AZURE_STATIC_WEB_APPS_API_TOKEN_&lt;NAME&gt;</code>. That's <a href="https://github.com/tdevine1/xPostForecast/blob/main/frontend/README.md#option-a-fix-the-azure-generated-workflow">option A in the frontend guide</a>; students then only add <code>VITE_BACKEND_API_URL</code> and fix <code>app_location</code>.
         </div>
       </section>
 

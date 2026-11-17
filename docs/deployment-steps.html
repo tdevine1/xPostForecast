@@ -31,6 +31,7 @@
         <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
 
         <li><a href="azure-scripts.html">6. Azure Scripts</a></li>
+        <li><a href="glossary.html">7. Glossary</a></li>
       </ul>
     </aside>
 
@@ -40,6 +41,10 @@
         <p>
           Use this as the single sequence for professors and staff supporting class teams. It combines local setup,
           integration, CI/CD, and production validation into one ordered process.
+        </p>
+        <p>
+          Never done this before? That's fine. Each step says what it does, why, and how you can tell it worked. Unfamiliar
+          words are explained in the <a href="glossary.html">Glossary</a>.
         </p>
         <div class="notice">
           <strong>WVU note:</strong> If cloud resources are missing, submit a request to <strong>Statler ITS</strong>
@@ -61,34 +66,199 @@
           <li>Set up the frontend locally: <code>npm install</code>, <code>frontend/.env</code>, <code>npm run dev</code>.</li>
           <li>Verify registration, login, refresh, and logout work locally.</li>
           <li>Validate the Sprint 3 data path: choose a month, Fetch Data, see the map fill in.</li>
-          <li>Add the GitHub secrets and variable (see <a href="github-setup.html">GitHub Setup</a>).</li>
+          <li>Add the GitHub secrets and variables (see <a href="github-setup.html">GitHub Setup</a>).</li>
           <li>Set the App Service environment variables, deploy the backend, and verify <code>/health</code>.</li>
           <li>Deploy the frontend through GitHub Actions.</li>
           <li>Perform end-to-end production tests: login, refresh, map fetch, logout, and backend requests in the browser's network tools.</li>
         </ol>
       </section>
 
-      <section class="section">
+      <section class="section" id="per-semester">
         <h3>Per-Semester Setup of the Reference Deployment</h3>
         <p>
-          The reference app's Azure resources are torn down and rebuilt each semester. To bring the demo back up:
+          The reference app is the finished example that students are shown. Its Azure resources are deleted at the end of
+          each semester to save money and rebuilt at the start of the next. This section rebuilds them from nothing.
+          Allow about an hour, most of it Azure thinking. Every value you need is spelled out. If a word is new, the
+          <a href="glossary.html">Glossary</a> explains it.
         </p>
-        <p>For a whole class, the <a href="azure-scripts.html">Azure Scripts</a> page has PowerShell scripts that create the servers, backends, and frontends for every group at once.</p>
+        <div class="danger-note">
+          <strong>Watch the sizes, because they cost money.</strong> Some of what you create is billed by the hour for as
+          long as it exists. The portal's default choices are far larger, and more expensive, than this project needs.
+          Use exactly the sizes named below: App Service plan <strong>Basic B1</strong>, Static Web App <strong>Free</strong>,
+          MySQL <strong>Standard_B1ms</strong>. Check current prices on Azure's pricing pages.
+        </div>
+        <p>
+          <strong>Doing a whole class?</strong> The <a href="azure-scripts.html">Azure Scripts</a> page creates the servers,
+          backends, and frontends for every group in one go. The steps below show what those scripts do, so you
+          understand each piece.
+        </p>
         <ol class="step-list">
-          <li>Request the resource group through Statler ITS.</li>
-          <li><strong>MySQL Flexible Server:</strong> create it; in <strong>Networking</strong> add your IP and enable access from Azure services. Run <code>backend/db/schema.sql</code>: <strong>Connect</strong> → Cloud Shell, run the <code>mysql</code> command shown, and paste the file at the <code>mysql&gt;</code> prompt (or run it with SQLTools).</li>
-          <li><strong>App Service:</strong> Web App, Linux, runtime <strong>Node 24 LTS</strong>. Turn on <strong>SCM Basic Auth Publishing Credentials</strong> (Configuration → General settings), then <strong>Download publish profile</strong>.</li>
-          <li><strong>Static Web App:</strong> deployment source <strong>Other</strong> (so Azure doesn't commit its own workflow to the repo). Copy the token from <strong>Manage deployment token</strong>.</li>
-          <li><strong>App Service environment variables:</strong> the eight settings on <a href="azure-basics.html">Azure Basics</a>, with <code>FRONTEND_URL</code> set to the new SWA URL and a fresh <code>JWT_SECRET</code>.</li>
-          <li><strong>GitHub</strong> (Settings → Secrets and variables → Actions): replace <code>APP_SERVICE_PUBLISH_PROFILE</code>, <code>AZURE_STATIC_WEB_APPS_API_TOKEN</code>, and <code>VITE_BACKEND_API_URL</code>; set the variables <code>AZURE_WEBAPP_NAME</code> and <code>DEPLOY_TO_AZURE</code> = <code>true</code>.</li>
-          <li><strong>Deploy:</strong> Actions → run <strong>Deploy backend (App Service)</strong>, then <strong>Deploy frontend (Static Web Apps)</strong>.</li>
-          <li>Work through the Final Acceptance Checklist below.</li>
+          <li>
+            <strong>Get the resource group.</strong> A <a href="glossary.html#resource-group">resource group</a> is the folder
+            that holds the demo's Azure resources. WVU doesn't let teams create their own, so ask <strong>Statler ITS</strong>
+            for one named like <code>&lt;term&gt;-CS330-&lt;section&gt;-&lt;crn&gt;-DEMO</code>, for example
+            <code>202608-CS330-001-84715-DEMO</code>.<br />
+            <em>You know it worked when</em> the name appears in the Azure portal under <strong>Resource groups</strong>.
+          </li>
+          <li>
+            <strong>Create the MySQL server</strong> (it stores the users). In the portal: <strong>Azure Database for MySQL
+            flexible servers &rarr; Create</strong>. Use your resource group, a name such as <code>xpostforecast-db</code>, region
+            <strong>East US</strong>, admin user <code>mysqladmin</code>, and size <strong>Standard_B1ms</strong> (under the <em>Burstable</em> compute tier). Choose MySQL version 8.x and <strong>Public access</strong> as the connectivity method. These names are examples; the <a href="azure-scripts.html">scripts</a> use a <code>&lt;resource group&gt;-mysql-db</code> pattern instead. Either works, as long as you use the same names everywhere. Choose a strong password,
+            save it in a password manager, and don't reuse it anywhere. Then open the server's <strong>Networking</strong> page and:
+            <ul>
+              <li>Tick <strong>Allow public access from any Azure service within Azure to this server</strong>. Without this, the backend (an Azure service) can't reach the database.</li>
+              <li>Add <strong>your own IP address</strong> with <strong>Add current client IP address</strong>, then <strong>Save</strong>. This lets your computer connect. Never add the "0.0.0.0 - 255.255.255.255" range, which opens the database to the whole internet.</li>
+            </ul>
+            Next create the table the app needs (the database <a href="glossary.html#schema">schema</a>): open the server's <strong>Connect</strong> page, click <strong>Cloud Shell</strong>, run the
+            <code>mysql</code> command it shows (you will be asked for the password), then paste the whole contents of
+            <code>backend/db/schema.sql</code> at the <code>mysql&gt;</code> prompt. Cloud Shell runs inside Azure, so it needs no rule for your own IP address, but it does depend on the <strong>Allow public access from any Azure service</strong> tick-box above.<br />
+            <em>You know it worked when</em> <code>USE authdb; SHOW TABLES;</code> lists a table named <code>users</code>.
+          </li>
+          <li>
+            <strong>Create the backend (an App Service).</strong> This is where the Node.js server will run. Create it with the
+            command line, not the portal's form. The form picks an expensive default size, gives the app an address with a random
+            suffix (which breaks every address in these docs), and leaves publishing switched off. Click the <code>&gt;_</code> icon at the
+            top of the portal to open <a href="glossary.html#cloud-shell">Cloud Shell</a> (choose <strong>Bash</strong>), and run these three
+            commands, replacing the three names in angle brackets:
+<pre><code>az appservice plan create --resource-group &lt;resource-group&gt; --name &lt;plan-name&gt; --is-linux --sku B1 --location eastus
+az webapp create --resource-group &lt;resource-group&gt; --plan &lt;plan-name&gt; --name &lt;app-name&gt; --runtime "NODE:24-lts"
+az resource update --resource-group &lt;resource-group&gt; --namespace Microsoft.Web --resource-type basicPublishingCredentialsPolicies --parent sites/&lt;app-name&gt; --name scm --set properties.allow=true</code></pre>
+            <ul>
+              <li><strong>Before you start:</strong> Cloud Shell uses your default subscription. Check it with <code>az account show --query name -o tsv</code>. It should be the WVU course subscription (for example <code>ind-statler-mhseery</code>). Change it with <code>az account set --subscription "&lt;name&gt;"</code>. If Cloud Shell offers storage options the first time, choose <em>No storage account required</em>; nothing here needs saved files. App names are unique across all of Azure, so if yours is taken, add your initials.</li>
+              <li>The first creates the rented computer (<strong>Basic B1</strong>, Linux). The second creates the app on it using <strong>Node 24 LTS</strong>, matching the workflows. The third switches on publishing credentials; without it the <strong>Download publish profile</strong> button is greyed out.</li>
+              <li>Example names: plan <code>202608-cs330-demo-plan</code>, app <code>202608-cs330-demo-backend</code>.</li>
+              <li>If you reuse an existing plan, skip the first command and use that plan's name in the second.</li>
+            </ul>
+            <em>You know it worked when</em> <code>https://&lt;app-name&gt;.azurewebsites.net</code> shows Azure's "Your web app is running" page.
+            If you must use the portal form instead, pick <strong>Basic B1</strong> (not Premium), turn on <strong>Basic authentication</strong> on its
+            Deployment tab, and afterwards copy the real address from the app's <strong>Overview &rarr; Default domain</strong>, since it
+            will have a random suffix.
+          </li>
+          <li>
+            <strong>Create the frontend (a Static Web App).</strong> This hosts the website files. Portal: <strong>Static Web Apps &rarr; Create</strong>.
+            Use your resource group, a name such as <code>202608-cs330-demo-frontend</code>, plan type <strong>Free</strong>
+            (the form defaults to a paid plan), and deployment source <strong>Other</strong>. "Other" matters: with "GitHub" Azure
+            adds its own workflow file to your repository and the two would fight.<br />
+            <em>You know it worked when</em> the app's Overview page shows a URL ending in <code>.azurestaticapps.net</code> and the
+            status <em>Waiting for deployment</em>. Copy that URL; you need it in the next step.
+          </li>
+          <li>
+            <strong>Give the backend its settings.</strong> A program shouldn't have its database address or passwords written
+            inside it, so Azure hands them over as settings when it starts. On the app: <strong>Settings &rarr; Environment variables
+            &rarr; App settings</strong>, add the eight below, then click <strong>Apply</strong> (the app restarts). The six that aren't secret
+            can be set in one command in Cloud Shell:
+<pre><code>az webapp config appsettings set --resource-group &lt;resource-group&gt; --name &lt;app-name&gt; --settings DB_HOST=&lt;server&gt;.mysql.database.azure.com DB_USER=mysqladmin DB_NAME=authdb DB_PORT=3306 NODE_ENV=production FRONTEND_URL=https://&lt;static-web-app-url-without-slash&gt;</code></pre>
+            <table>
+              <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+              <tbody>
+                <tr><td><code>DB_HOST</code></td><td><code>&lt;server&gt;.mysql.database.azure.com</code></td><td>Where the database is.</td></tr>
+                <tr><td><code>DB_USER</code></td><td><code>mysqladmin</code></td><td>The database login name.</td></tr>
+                <tr><td><code>DB_PASSWORD</code></td><td>The password from step 2 (<strong>add in the portal</strong>)</td><td>The database login password. Must be named exactly this.</td></tr>
+                <tr><td><code>DB_NAME</code></td><td><code>authdb</code></td><td>Which database holds the users table.</td></tr>
+                <tr><td><code>DB_PORT</code></td><td><code>3306</code></td><td>MySQL's standard port.</td></tr>
+                <tr><td><code>FRONTEND_URL</code></td><td><code>https://</code> + the Static Web App URL, with <strong>no slash at the end</strong></td><td>The only website allowed to call the backend (CORS). A wrong value makes logins fail in the browser.</td></tr>
+                <tr><td><code>JWT_SECRET</code></td><td>A new random value (<strong>add in the portal</strong>), see below</td><td>The key that signs login cookies. Anyone who has it can forge a login, so use a different one from your laptop's.</td></tr>
+                <tr><td><code>NODE_ENV</code></td><td><code>production</code></td><td>Switches on the cookie settings that cross-site login needs.</td></tr>
+              </tbody>
+            </table>
+            Make a <code>JWT_SECRET</code> by running this on your own computer (Node 24) and pasting the result, without any spaces:
+<pre><code>node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code></pre>
+            <strong>Do not add a <code>PORT</code> setting.</strong> Azure chooses the port itself and the app obeys it.
+          </li>
+          <li>
+            <strong>Give GitHub permission to deploy.</strong> The deploy workflows need three secrets and two variables in the repository
+            (<strong>Settings &rarr; Secrets and variables &rarr; Actions</strong>; only a repository Admin can see Settings). Names must match exactly, capitals included. Full details are on
+            <a href="github-setup.html">GitHub Setup</a>.
+            <table>
+              <thead><tr><th>Name</th><th>Kind</th><th>Value and where it comes from</th></tr></thead>
+              <tbody>
+                <tr><td><code>APP_SERVICE_PUBLISH_PROFILE</code></td><td>Secret</td><td>Backend app &rarr; Overview &rarr; <strong>Download publish profile</strong>; paste the whole file contents.</td></tr>
+                <tr><td><code>AZURE_STATIC_WEB_APPS_API_TOKEN</code></td><td>Secret</td><td>Static Web App &rarr; Overview &rarr; <strong>Manage deployment token</strong> &rarr; copy.</td></tr>
+                <tr><td><code>VITE_BACKEND_API_URL</code></td><td>Secret</td><td><code>https://</code> + the backend's <strong>Default domain</strong> from its Overview page, no slash at the end.</td></tr>
+                <tr><td><code>AZURE_WEBAPP_NAME</code></td><td>Variable</td><td>The backend app's name, for example <code>202608-cs330-demo-backend</code>.</td></tr>
+                <tr><td><code>DEPLOY_TO_AZURE</code></td><td>Variable</td><td><code>true</code>. Set it <strong>last</strong>, once the others exist.</td></tr>
+              </tbody>
+            </table>
+            Old secrets from last semester are left behind in the repository and keep their old values. Replace them; don't add duplicates with slightly different names.
+          </li>
+          <li>
+            <strong>Deploy.</strong> In the repository's <strong>Actions</strong> tab, choose <strong>Deploy backend (App Service)</strong>, click
+            <strong>Run workflow</strong>, and wait for the green check (about a minute). Then do the same for
+            <strong>Deploy frontend (Static Web Apps)</strong>. Running them by hand means you don't have to push a fake change.<br />
+            <em>You know it worked when</em> both show a green check. If one is red, open it, click the red step, and read the last lines; the
+            <a href="troubleshooting.html">Troubleshooting</a> page lists the usual causes.
+          </li>
+          <li>
+            <strong>Check the live site</strong> with the next section, then the Final Acceptance Checklist at the bottom of the page.
+          </li>
         </ol>
         <p>
-          At the end of the semester, after the resources are deleted, set <code>DEPLOY_TO_AZURE</code> to
-          <code>false</code> (deploy workflows then show as skipped instead of failing) and delete those secrets so
-          stale credentials don't linger in the repository settings.
+          <strong>At the end of the semester</strong>, after the resources are deleted (the
+          <a href="azure-scripts.html#remove">Remove script</a> does it), set <code>DEPLOY_TO_AZURE</code> to <code>false</code>
+          so the deploy workflows show as skipped instead of failing, and delete the three Azure secrets so stale credentials
+          don't linger in the repository settings.
         </p>
+      </section>
+
+      <section class="section" id="check-live">
+        <h3>Check the live site yourself</h3>
+        <p>
+          A green workflow only proves that files were uploaded. These checks prove the pieces work together. Run the commands in
+          <a href="glossary.html#cloud-shell">Cloud Shell</a>, in <strong>Bash mode</strong>. The toolbar at the top-left of Cloud Shell shows "Switch to PowerShell" when you are in Bash; if it says "Switch to Bash", click it. These are Bash commands and will not run in PowerShell. Replace the two addresses with your own.
+        </p>
+<pre><code>BACKEND=https://&lt;backend default domain&gt;
+SITE=https://&lt;static web app url&gt;
+
+# 1. Is the backend alive?
+curl -s -w "\nHTTP %{http_code}\n" $BACKEND/health
+
+# 2. Will the backend accept calls from the website? (the browser asks this before logging in)
+curl -s -i -X OPTIONS $BACKEND/auth/login -H "Origin: $SITE" -H "Access-Control-Request-Method: POST" | grep -i -E "^HTTP|access-control-allow"
+
+# 3. Can the backend reach the database? (a made-up user must get a clean "wrong credentials", not a crash)
+curl -s -w "\nHTTP %{http_code}\n" -X POST $BACKEND/auth/login -H "Content-Type: application/json" -d '{"username":"nobody-here","password":"not-a-real-password"}'
+
+# 4. Does the website send the right headers, and does refreshing /map work?
+curl -s -I $SITE/ | grep -i referrer-policy
+curl -s -o /dev/null -w "HTTP %{http_code}\n" $SITE/map</code></pre>
+        <table>
+          <thead><tr><th>Check</th><th>Good result</th><th>If not</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>1. <code>/health</code></td>
+              <td><code>{"ok":true,"env":"production"}</code> and <code>HTTP 200</code></td>
+              <td>The <strong>first</strong> request after a deploy can take a minute or more (a <a href="glossary.html#cold-start">cold start</a>); try again. <code>"env":"development"</code> means <code>NODE_ENV</code> isn't set. Still failing: open the app's <strong>Monitoring &rarr; <a href="glossary.html#log-stream">Log stream</a></strong>.</td>
+            </tr>
+            <tr>
+              <td>2. CORS</td>
+              <td><code>HTTP 204</code> and <code>Access-Control-Allow-Origin</code> equal to your website's address, plus <code>Access-Control-Allow-Credentials: true</code></td>
+              <td>The address differs from <code>FRONTEND_URL</code> (a slash, <code>http</code> vs <code>https</code>, or a typo). Fix the setting and Apply.</td>
+            </tr>
+            <tr>
+              <td>3. Database</td>
+              <td><code>HTTP 401</code> and <code>{"error":"Invalid credentials"}</code>. The 401 means the app asked the database and got "no such user".</td>
+              <td><code>HTTP 429</code> means you have run this check too many times (the limit is 20 login attempts per 15 minutes per address): wait 15 minutes. <code>HTTP 500</code> means the database couldn't be reached: check <code>DB_*</code> settings, the password, and that "Allow public access from any Azure service" is ticked.</td>
+            </tr>
+            <tr>
+              <td>4. Website</td>
+              <td><code>Referrer-Policy: strict-origin-when-cross-origin</code> and <code>/map</code> returns <code>HTTP 200</code></td>
+              <td>Missing header: redeploy the frontend. A 404 on <code>/map</code>: <code>staticwebapp.config.json</code> isn't in <code>frontend/public/</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Anything that involves a real password has to be done by a person in a browser, so finish with a hands-on pass
+          on the live site (the Final Acceptance Checklist below spells out the same things). Use a throwaway password you don't
+          use anywhere else:
+        </p>
+        <ol class="step-list">
+          <li>Open the Static Web App URL and open the browser's developer tools (F12 &rarr; <strong>Console</strong>). The line <code>Frontend API Base URL: …</code> should show your Azure backend, not <code>localhost</code>.</li>
+          <li><strong>Register</strong> a test account, then <strong>log in</strong>. You should land on the map page.</li>
+          <li>Pick a month and click <strong>Fetch Data</strong>. A coloured temperature layer should appear <strong>on top of a real street map</strong>. Grey squares saying "Access blocked" mean the map-tile problem on the Troubleshooting page.</li>
+          <li><strong>Refresh the page</strong> while on <code>/map</code>. You should stay logged in and see the map again.</li>
+          <li><strong>Log out</strong>. You should return to the login page, and visiting <code>/map</code> should send you back to log in.</li>
+        </ol>
+        <p>Temperature data needs a login on purpose, so a plain web request to <code>/temperature/…</code> without logging in correctly returns <code>HTTP 401</code>.</p>
       </section>
 
       <section class="section">
@@ -131,6 +301,7 @@ git push origin main</code></pre>
               <li>Workflow paths use <code>backend</code></li>
               <li><code>APP_SERVICE_PUBLISH_PROFILE</code> secret and <code>AZURE_WEBAPP_NAME</code> variable are present</li>
               <li>Runtime is Node 24 LTS; <code>PORT</code> is not set by hand</li>
+              <li>The address used for <code>VITE_BACKEND_API_URL</code> was copied from the app's <strong>Default domain</strong>, not guessed</li>
               <li>App settings contain DB, JWT, <code>FRONTEND_URL</code>, and <code>NODE_ENV=production</code></li>
               <li><code>/health</code> returns <code>{"ok":true,"env":"production"}</code></li>
             </ul>
@@ -140,7 +311,7 @@ git push origin main</code></pre>
             <ul>
               <li>The deploy step uploads <code>frontend/dist</code> (or, in an Azure-generated workflow, <code>app_location: "frontend"</code> with <code>output_location: "dist"</code>)</li>
               <li><code>VITE_BACKEND_API_URL</code> is provided to the build</li>
-              <li><code>staticwebapp.config.json</code> is in <code>frontend/public/</code></li>
+              <li><code>staticwebapp.config.json</code> is in <code>frontend/public/</code> (it fixes page refreshes and sets <code>Referrer-Policy</code>)</li>
               <li>Build and tests succeed in GitHub Actions</li>
               <li>Browser console shows the Azure backend as <code>Frontend API Base URL</code></li>
             </ul>
@@ -158,10 +329,11 @@ git push origin main</code></pre>
           <li>Frontend site loads at the SWA URL without errors in the console.</li>
           <li>Users can register and log in using the production backend.</li>
           <li>Refreshing on <code>/map</code> keeps the user logged in (no 404, no redirect to login).</li>
-          <li>Temperature data requests return points and the map renders markers.</li>
+          <li>Temperature data requests return points and the map shows the coloured layer on top of a real street map (no grey "Access blocked" squares).</li>
           <li>Logout returns to the login page, and <code>/map</code> then redirects to login.</li>
           <li>No CORS errors in the browser console.</li>
           <li>The App Service log stream shows no startup crashes or database connection failures.</li>
+          <li>The first <code>/health</code> request after a deploy may be slow (a cold start); the second answers quickly with <code>{"ok":true,"env":"production"}</code>.</li>
         </ul>
         <div class="button-row">
           <a class="button gold" href="troubleshooting.html">Open Troubleshooting</a>

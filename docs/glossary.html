@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Plain-English definitions of the Azure, GitHub, and web development terms used in the CS 330 guides." />
+  <title>Glossary | WVU Cloud Deployment Docs</title>
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Glossary</h1>
+        <p>The words these guides use, explained in plain English.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Instructor Guide</h2>
+      <ul>
+        <li><a href="index.html">All guides</a></li>
+        <li><a href="instructors.html">Instructor Home</a></li>
+        <li><a href="getting-started.html">1. Getting Started</a></li>
+        <li><a href="github-setup.html">2. GitHub Setup</a></li>
+        <li><a href="azure-basics.html">3. Azure Basics</a></li>
+        <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
+        <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
+        <li><a href="azure-scripts.html">6. Azure Scripts</a></li>
+        <li><a class="active-link" aria-current="page" href="glossary.html">7. Glossary</a></li>
+      </ul>
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="students/ai-guide.html">Developing with AI</a></li>
+        <li><a href="students/sonarqube.html">Testing with SonarQube Cloud</a></li>
+        <li><a href="students/github-workflows.html">Writing GitHub workflows</a></li>
+      </ul>
+      <h2>On this page</h2>
+      <ul>
+        <li><a href="#azure">Azure terms</a></li>
+        <li><a href="#github">GitHub terms</a></li>
+        <li><a href="#app">App and web terms</a></li>
+        <li><a href="#testing">Testing and quality terms</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>If a word is new, look here</h2>
+        <p>
+          Cloud computing has a lot of vocabulary, and the guides use it from the first page. Each entry says what
+          the thing <em>is</em>, using an everyday comparison where one helps, and where you will meet it in this
+          course. Nobody expects you to know these words already.
+        </p>
+      </section>
+
+      <section class="section" id="azure">
+        <h3>Azure terms</h3>
+        <p>Azure is Microsoft's cloud: computers, storage, and databases you rent by the hour instead of owning.</p>
+        <table>
+          <thead>
+            <tr><th>Term</th><th>What it means</th><th>Where you see it</th></tr>
+          </thead>
+          <tbody>
+            <tr id="subscription"><td><strong>Subscription</strong></td><td>The billing account that Azure charges for everything you create. Think of it as the credit card tab the resources run up.</td><td>The WVU course subscription is <code>ind-statler-mhseery</code>.</td></tr>
+            <tr id="entra-id"><td><strong>Microsoft Entra ID</strong></td><td>WVU's sign-in directory (it used to be called Azure Active Directory). Azure looks people up here by e-mail address when you give them access.</td><td>The <code>Add-UsersToResourceGroup.ps1</code> script.</td></tr>
+            <tr id="contributor"><td><strong>Contributor (role)</strong></td><td>A permission level on a resource group: the person can create, change, and delete the resources in it, but can't give other people access. It is what a team needs to configure its own app.</td><td>Access control (IAM) on a resource group.</td></tr>
+            <tr id="resource-group"><td><strong>Resource group</strong></td><td>A folder that holds one team's Azure resources. <strong>Deleting the folder deletes everything inside it</strong>, which is how a semester is cleaned up. WVU's Statler ITS creates these for us.</td><td><code>202608-CS330-001-84715-Group01</code></td></tr>
+            <tr id="region"><td><strong>Region</strong></td><td>The physical place Azure's computers are. Resources that talk to each other work best in the same region.</td><td><code>East US</code> for the database and backend.</td></tr>
+            <tr id="sku"><td><strong>SKU / tier / pricing plan</strong></td><td>The size and price level of a resource, such as Free, Basic, or Premium. Bigger costs more, every hour it exists.</td><td>Backend plan <code>Basic B1</code>; Static Web App <code>Free</code>.</td></tr>
+            <tr id="app-service-plan"><td><strong>App Service plan</strong></td><td>The rented computer that web apps run on. <strong>You are billed for it while it exists, even if no app is on it.</strong> Several apps can share one plan.</td><td><code>ASP-…-a773</code></td></tr>
+            <tr id="app-service"><td><strong>App Service (web app)</strong></td><td>Your program, running on an App Service plan. In this project it is the Node.js backend.</td><td><code>202608-cs330-demo-backend</code></td></tr>
+            <tr id="static-web-app"><td><strong>Static Web App (SWA)</strong></td><td>Hosting for website files that are already built (HTML, JavaScript, CSS). It runs no server code of its own, so it can be free.</td><td>Hosts the React frontend.</td></tr>
+            <tr id="mysql"><td><strong>Azure Database for MySQL Flexible Server</strong></td><td>A MySQL database that Azure runs and backs up for you. It stores the users table.</td><td><code>xpostforecast-db</code></td></tr>
+            <tr id="schema"><td><strong>Schema</strong></td><td>The blueprint of a database: which tables exist and what columns they have. Our schema is one <code>users</code> table, created by running <code>backend/db/schema.sql</code> once.</td><td>The "create the table" step of the runbook.</td></tr>
+            <tr id="firewall"><td><strong>Firewall rule</strong></td><td>An allow-list of internet addresses (IPs) that may connect to the database. If your address isn't on it, the connection times out.</td><td>MySQL server → Networking.</td></tr>
+            <tr id="tls"><td><strong>TLS and CA certificate</strong></td><td>TLS is the encryption that protects data travelling between two computers (the padlock in a browser uses it). A CA certificate is the public file a program uses to check it is really talking to Azure's server and not an impostor. The certificate is public, not secret.</td><td><code>backend/config/DigiCertGlobalRootG2.crt.pem</code></td></tr>
+            <tr id="publish-profile"><td><strong>Publish profile</strong></td><td>A small file of login details for one App Service. GitHub uses it to upload new code. <strong>Treat it like a password.</strong></td><td>App Service → Overview → Download publish profile.</td></tr>
+            <tr id="basic-auth"><td><strong>SCM basic authentication</strong></td><td>A setting on an App Service that allows publishing with a username and password (which the publish profile contains). New apps have it <strong>off</strong>, which greys out <em>Download publish profile</em>.</td><td>Created off; the runbook turns it on.</td></tr>
+            <tr id="deployment-token"><td><strong>Deployment token</strong></td><td>The password GitHub uses to upload a website to one Static Web App.</td><td>Static Web App → Manage deployment token.</td></tr>
+            <tr id="app-settings"><td><strong>Application settings (environment variables)</strong></td><td>Values your program reads when it starts, such as the database address. They live in Azure, not in your code, so secrets never go into GitHub.</td><td>App Service → Settings → Environment variables.</td></tr>
+            <tr id="hostname"><td><strong>Default domain (host name)</strong></td><td>The web address Azure gives an app. Apps created in the portal get a random-looking suffix; apps created with the command line get a plain one. <strong>Always copy it from the Overview page; never guess it.</strong></td><td><code>202608-cs330-demo-backend.azurewebsites.net</code></td></tr>
+            <tr id="cold-start"><td><strong>Cold start</strong></td><td>The first request after a deploy or a quiet period is slow (a minute or more) while the app wakes up. After that it answers in a fraction of a second.</td><td>Your first <code>/health</code> check.</td></tr>
+            <tr id="always-on"><td><strong>Always On</strong></td><td>An App Service setting that keeps the app awake so the first visitor doesn't wait through a cold start. It is available on Basic plans and above (not Free), and costs nothing extra on a plan you already pay for.</td><td>App Service → Settings → Configuration → General settings.</td></tr>
+            <tr id="log-stream"><td><strong>Log stream</strong></td><td>A live feed of what your running app is printing, like watching the app's diary being written. It is where startup and database errors show up.</td><td>App Service → Monitoring → Log stream.</td></tr>
+            <tr id="cloud-shell"><td><strong>Cloud Shell</strong></td><td>A command line that runs inside the Azure portal, already signed in, with the Azure tools installed. Click the <code>&gt;_</code> icon at the top.</td><td>Creating the database schema; running <code>az</code> commands.</td></tr>
+            <tr id="az-cli"><td><strong>Azure CLI (<code>az</code>) and Az PowerShell</strong></td><td>Two different command-line tools for Azure. They sign in separately: <code>az login</code> for the first, <code>Connect-AzAccount</code> for the second.</td><td>The scripts on the Azure Scripts page.</td></tr>
+            <tr id="terminal"><td><strong>Terminal and PowerShell</strong></td><td>A terminal is a window where you type commands instead of clicking. PowerShell is the command language built into Windows. In VS Code, open one with <strong>Terminal &rarr; New Terminal</strong>.</td><td>Every guide that shows a code box of commands.</td></tr>
+            <tr id="whatif"><td><strong><code>-WhatIf</code></strong></td><td>A switch you add to a PowerShell command to mean "pretend": it prints what it <em>would</em> do and changes nothing. Always run it first.</td><td>Every script on the Azure Scripts page.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="github">
+        <h3>GitHub terms</h3>
+        <table>
+          <thead>
+            <tr><th>Term</th><th>What it means</th><th>Where you see it</th></tr>
+          </thead>
+          <tbody>
+            <tr id="repository"><td><strong>Repository (repo)</strong></td><td>A project folder whose history GitHub remembers.</td><td>Your team's repo.</td></tr>
+            <tr id="branch"><td><strong>Branch</strong></td><td>A separate line of work in a repo. <code>main</code> is the main one; deployments here run from it.</td><td><code>main</code>, <code>sprint-1</code>.</td></tr>
+            <tr id="github-actions"><td><strong>GitHub Actions</strong></td><td>GitHub's built-in robot. It runs tasks you describe whenever something happens in the repo, such as a push.</td><td>The <strong>Actions</strong> tab.</td></tr>
+            <tr id="workflow"><td><strong>Workflow</strong></td><td>One automated recipe, written as a file in <code>.github/workflows/</code>. A repo can have several.</td><td><code>ci.yml</code>, <code>deploy-backend.yml</code></td></tr>
+            <tr id="trigger"><td><strong>Trigger</strong></td><td>The event that starts a workflow: a push, a pull request, or a button click.</td><td>The <code>on:</code> section.</td></tr>
+            <tr id="job"><td><strong>Job</strong></td><td>A group of steps that run together on one fresh computer. Separate jobs run side by side.</td><td><code>frontend</code>, <code>backend</code></td></tr>
+            <tr id="step"><td><strong>Step</strong></td><td>One thing a job does: run a command, or use a ready-made action. Steps run in order and stop at the first failure.</td><td>Each line with <code>- run:</code> or <code>- uses:</code></td></tr>
+            <tr id="runner"><td><strong>Runner</strong></td><td>The temporary computer GitHub lends a job. It starts empty, so every job must download your code first.</td><td><code>runs-on: ubuntu-latest</code></td></tr>
+            <tr id="action"><td><strong>Action</strong></td><td>A reusable step somebody else wrote, such as "download the code" or "deploy to Azure".</td><td><code>uses: actions/checkout@v7</code></td></tr>
+            <tr id="ci-cd"><td><strong>CI and CD</strong></td><td>Continuous integration: automatically check (lint, test, build) every change. Continuous delivery or deployment: automatically release a change that passed.</td><td><code>ci.yml</code> is CI; the deploy files are CD.</td></tr>
+            <tr id="secret"><td><strong>Secret</strong></td><td>A hidden value stored in a repo, such as a password or token. Once saved you can't read it again, and it never shows in logs. <strong>Use secrets for anything someone could misuse.</strong></td><td>Settings → Secrets and variables → Actions.</td></tr>
+            <tr id="variable"><td><strong>Variable</strong></td><td>A normal, visible setting that isn't sensitive, such as an app's name.</td><td><code>AZURE_WEBAPP_NAME</code></td></tr>
+            <tr id="roles"><td><strong>Admin and Write roles</strong></td><td>Permission levels. <strong>Write</strong> lets you push code. <strong>Admin</strong> can also change settings, add secrets, and delete the repo. Give Admin to as few people as possible (the principle of least privilege).</td><td>Settings → Collaborators.</td></tr>
+            <tr id="workflow-dispatch"><td><strong>Run workflow button</strong></td><td>A trigger (<code>workflow_dispatch</code>) that lets you start a workflow by hand from the Actions tab, without pushing code.</td><td>Right after setting up new Azure resources.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="app">
+        <h3>App and web terms</h3>
+        <table>
+          <thead>
+            <tr><th>Term</th><th>What it means</th><th>Where you see it</th></tr>
+          </thead>
+          <tbody>
+            <tr id="frontend-backend"><td><strong>Frontend and backend</strong></td><td>The frontend is what runs in the visitor's browser (the map and forms). The backend runs on a server and holds the database logic and logins.</td><td><code>frontend/</code> and <code>backend/</code> folders.</td></tr>
+            <tr id="api"><td><strong>API</strong></td><td>The set of web addresses the backend answers, which the frontend calls to get or save data.</td><td><code>/auth/login</code>, <code>/temperature/…</code></td></tr>
+            <tr id="env-file"><td><strong>.env file</strong></td><td>A local file of settings and passwords for your own computer. It must <strong>never</strong> be committed; <code>.gitignore</code> keeps it out.</td><td><code>backend/.env</code></td></tr>
+            <tr id="vite-build"><td><strong>Vite and build</strong></td><td>Vite turns your React source into plain files a browser can load (the "build"). Values like <code>VITE_BACKEND_API_URL</code> are copied into those files at build time, so they must be right <em>when you build</em>.</td><td><code>npm run build</code></td></tr>
+            <tr id="npm-ci"><td><strong><code>npm ci</code> vs <code>npm install</code></strong></td><td><code>npm install</code> can change <code>package-lock.json</code>; <code>npm ci</code> installs exactly what the lock file lists, so builds are repeatable. Workflows use <code>npm ci</code>.</td><td>Every workflow.</td></tr>
+            <tr id="lts"><td><strong>LTS</strong></td><td>"Long-term support": the release of Node.js that is kept up with fixes for years. This course uses <strong>Node 24 LTS</strong>.</td><td><code>node -v</code> should start with <code>v24</code>.</td></tr>
+            <tr id="cors"><td><strong>CORS</strong></td><td>A browser rule: a page from one website may only call another website's API if that API says it is allowed. The backend allows only the frontend's address.</td><td><code>FRONTEND_URL</code></td></tr>
+            <tr id="jwt"><td><strong>JWT and cookie</strong></td><td>After login the backend gives the browser a signed token (a JWT) stored in a cookie, so you stay logged in. <code>JWT_SECRET</code> is the key it signs with; anyone who has it could forge logins.</td><td><code>JWT_SECRET</code></td></tr>
+            <tr id="cookie-flags"><td><strong>HttpOnly, Secure, SameSite</strong></td><td>Cookie safety flags. Because the frontend and backend are on different sites in production, the cookie must be <code>Secure; SameSite=None</code> or the browser won't send it.</td><td><code>NODE_ENV=production</code></td></tr>
+            <tr id="referer"><td><strong>Referer and Referrer-Policy</strong></td><td>The Referer header tells a site which page a request came from. A site's Referrer-Policy decides when the browser sends it. OpenStreetMap blocks map tiles that arrive without one.</td><td>Troubleshooting: map shows "Access blocked".</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="testing">
+        <h3>Testing and quality terms</h3>
+        <table>
+          <thead>
+            <tr><th>Term</th><th>What it means</th><th>Where you see it</th></tr>
+          </thead>
+          <tbody>
+            <tr id="lint"><td><strong>Lint</strong></td><td>An automatic proofreader for code: it flags unused variables and likely mistakes without running the program.</td><td><code>npm run lint</code></td></tr>
+            <tr id="unit-test"><td><strong>Test</strong></td><td>A small program that runs part of your app and checks it behaves as expected.</td><td><code>npm test</code></td></tr>
+            <tr id="coverage"><td><strong>Coverage</strong></td><td>The share of your code that your tests actually ran. Low coverage means untested code.</td><td><code>npm run test:coverage</code></td></tr>
+            <tr id="static-analysis"><td><strong>Static analysis</strong></td><td>Reading code without running it to find bugs, security problems, and messy code. SonarQube does this.</td><td>The SonarQube guide.</td></tr>
+            <tr id="quality-gate"><td><strong>Quality Gate</strong></td><td>SonarQube's pass/fail verdict on recently changed code.</td><td>SonarQube Overview page.</td></tr>
+            <tr id="token"><td><strong>Access token</strong></td><td>A long random string that proves who you are to a service without sending a password. Treat it like a password.</td><td><code>SONAR_TOKEN</code></td></tr>
+          </tbody>
+        </table>
+        <div class="button-row">
+          <a class="button gold" href="instructors.html">Instructor Home</a>
+          <a class="button" href="students/github-workflows.html">Writing GitHub workflows</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>WVU Cloud Deployment Docs | Glossary.</p>
+    </div>
+  </footer>
+</body>
+</html>

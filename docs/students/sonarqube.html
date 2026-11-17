@@ -40,6 +40,8 @@
             <li><a href="#links">11. References</a></li>
           </ul>
         </li>
+        <li><a href="github-workflows.html">Writing GitHub workflows</a></li>
+        <li><a href="../glossary.html">Glossary</a></li>
       </ul>
       <h2>Project Links</h2>
       <ul>
@@ -67,6 +69,19 @@
           what else is required (unit testing documents, Selenium, the testing report). If they and this guide ever
           disagree, the assignment wins.
         </div>
+      </section>
+
+      <section class="section" id="words">
+        <h3>Words you will see</h3>
+        <ul>
+          <li><strong>SonarQube Cloud:</strong> a website that reads your code and reports problems, free for small projects.</li>
+          <li><strong>Static analysis:</strong> reading code <em>without running it</em> to spot bugs, security risks, and messy code.</li>
+          <li><strong>Test coverage:</strong> what percentage of your code your tests actually ran. Untested code is where bugs hide.</li>
+          <li><strong>Token:</strong> a long random string that proves who you are to a service, like a password you can revoke. Never share or commit one.</li>
+          <li><strong>Secret:</strong> GitHub's hidden storage for a token, so a workflow can use it without it appearing in your code.</li>
+          <li><strong>Workflow:</strong> the written instructions GitHub follows after each push. Never written one? See <a href="github-workflows.html">Writing GitHub workflows</a> first.</li>
+        </ul>
+        <p>More definitions are in the <a href="../glossary.html">Glossary</a>.</p>
       </section>
 
       <section class="section" id="what">
@@ -214,7 +229,7 @@ sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/l
         </p>
 
         <h4>c. The workflow job</h4>
-        <p>Add a <code>sonar</code> job to your existing <code>.github/workflows/ci.yml</code>, alongside your test jobs:</p>
+        <p>Add a <code>sonar</code> job to your existing <code>.github/workflows/ci.yml</code>, alongside your test jobs. Each line follows the same ideas as the CI jobs in <a href="github-workflows.html#ci">Writing GitHub workflows</a>:</p>
         <pre><code>  sonar:
     if: ${{ vars.SONAR_ENABLED == 'true' }}
     runs-on: ubuntu-latest

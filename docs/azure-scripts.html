@@ -30,6 +30,7 @@
         <li><a href="deployment-steps.html">4. Deployment Steps</a></li>
         <li><a href="troubleshooting.html">5. Troubleshooting</a></li>
         <li><a class="active-link" aria-current="page" href="azure-scripts.html">6. Azure Scripts</a></li>
+        <li><a href="glossary.html">7. Glossary</a></li>
       </ul>
     </aside>
 
@@ -41,10 +42,47 @@
           PowerShell scripts do the repetitive parts for every group at once: servers, backends, frontends,
           access, and end-of-semester cleanup. Run them from your own computer or from Azure Cloud Shell.
         </p>
+        <p>
+          <strong>New to scripts?</strong> A script is a text file of commands that a computer runs in order, so you type one line instead of
+          clicking through the portal ten times. These ones are written in PowerShell, which is built into Windows. Nothing here
+          changes anything until you run it, and every script has a safe "pretend" mode (<code>-WhatIf</code>). Unfamiliar words are in the
+          <a href="glossary.html">Glossary</a>.
+        </p>
         <div class="notice">
           <strong>Resource groups come first.</strong> For WVU courses, request them through Statler ITS. The scripts
           create resources <em>inside</em> resource groups that already exist and skip any that don't.
         </div>
+      </section>
+
+      <section class="section" id="running">
+        <h3>Running a script, step by step</h3>
+        <p>Choose one of the two places to run them. Cloud Shell is easiest the first time because the sign-in and tools are already set up.</p>
+        <div class="grid-two">
+          <div class="card">
+            <h4>Option 1: Azure Cloud Shell (no installs)</h4>
+            <ol class="step-list">
+              <li>In the Azure portal click the <code>&gt;_</code> icon at the top, and choose <strong>PowerShell</strong> if asked.</li>
+              <li>Click <strong>Manage files &rarr; Upload</strong> and pick the <code>.ps1</code> file you downloaded.</li>
+              <li>Run it with a leading <code>./</code>, adding <code>-WhatIf</code> the first time:
+<pre><code>./New-GroupStaticWebApps.ps1 -Semester 202608 -Crn 84715 -LastGroup 10 -WhatIf</code></pre></li>
+            </ol>
+          </div>
+          <div class="card">
+            <h4>Option 2: Your own computer</h4>
+            <ol class="step-list">
+              <li>Do the "Before you run anything" steps below once (install the tools, sign in).</li>
+              <li>Open <strong>Windows PowerShell</strong> from the Start menu and move to the folder that holds the script, for example <code>cd $HOME\Downloads</code>.</li>
+              <li>Unblock it and run it, adding <code>-WhatIf</code> the first time:
+<pre><code>Unblock-File .\New-GroupStaticWebApps.ps1
+.\New-GroupStaticWebApps.ps1 -Semester 202608 -Crn 84715 -LastGroup 10 -WhatIf</code></pre></li>
+            </ol>
+          </div>
+        </div>
+        <p>
+          <strong>Reading the result of <code>-WhatIf</code>:</strong> lines starting <code>What if:</code> are things the script <em>would</em> do. Nothing
+          has happened yet. If the list is what you expect, run the same command again without <code>-WhatIf</code>. If a group is skipped with a
+          warning that its resource group "does not exist", check the term code, section, and CRN you typed.
+        </p>
       </section>
 
       <section class="section" id="naming">
@@ -70,6 +108,7 @@
           <li>
             Install the Az PowerShell module once (Cloud Shell already has it):
             <pre><code>Install-Module Az -Scope CurrentUser</code></pre>
+            <p>PowerShell may ask whether to trust the online repository: answer <strong>Y</strong> (or <strong>A</strong> for "yes to all"). It takes several minutes. Check it worked with <code>Get-Module Az -ListAvailable | Select-Object -First 1 Name, Version</code>, which should print a version number.</p>
           </li>
           <li>
             Install the <a href="https://learn.microsoft.com/cli/azure/install-azure-cli">Azure CLI</a>. Only
@@ -81,6 +120,7 @@
 az login
 Select-AzSubscription -Subscription "&lt;subscription name or id&gt;"
 az account set --subscription "&lt;subscription name or id&gt;"</code></pre>
+            <p>The course subscription is named <code>ind-statler-mhseery</code>.</p>
           </li>
           <li>
             Windows blocks scripts downloaded from the web. After downloading, run
@@ -88,7 +128,7 @@ az account set --subscription "&lt;subscription name or id&gt;"</code></pre>
             <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code>.
           </li>
           <li>
-            <strong>Always run with <code>-WhatIf</code> first.</strong> Every script supports it and prints what it
+            <strong>Always run with <a href="glossary.html#whatif"><code>-WhatIf</code></a> first.</strong> Every script supports it and prints what it
             would do without changing anything.
           </li>
         </ol>
@@ -96,6 +136,11 @@ az account set --subscription "&lt;subscription name or id&gt;"</code></pre>
 
       <section class="section" id="order">
         <h3>The semester in order</h3>
+        <div class="danger-note">
+          <strong>These scripts create billable resources.</strong> Running the MySQL and App Service scripts for ten groups creates ten database servers and ten
+          plans, and they cost money by the hour until they are deleted. Run each with <a href="glossary.html#whatif"><code>-WhatIf</code></a> first, and remove
+          everything at the end of the semester with the Remove script.
+        </div>
         <table>
           <thead>
             <tr><th>When</th><th>Script</th><th>What it does</th><th>Download</th></tr>
@@ -120,7 +165,7 @@ az account set --subscription "&lt;subscription name or id&gt;"</code></pre>
           <li>You are <strong>prompted for the administrator password</strong> (typing is hidden). It is never stored in the script. Pass <code>-AdminPassword</code> (a SecureString) to skip the prompt.</li>
           <li>Use a new password each semester and don't build it from a pattern: anyone who learns the pattern knows every semester's password.</li>
           <li>Defaults: region <code>eastus</code>, size <code>Standard_B1ms</code>. Keep the database in the same region as the backend.</li>
-          <li>Afterwards, for each server: allow access from Azure services, add student IPs, and create <code>authdb</code> and the schema (see <a href="deployment-steps.html">Deployment Steps</a> and <a href="azure-basics.html">Azure Basics</a>).</li>
+          <li>Afterwards, for each server: allow access from Azure services, add student IPs, and create <code>authdb</code> and the schema (see <a href="deployment-steps.html#per-semester">Deployment Steps</a> and <a href="azure-basics.html">Azure Basics</a>).</li>
         </ul>
       </section>
 
@@ -152,7 +197,7 @@ az account set --subscription "&lt;subscription name or id&gt;"</code></pre>
 
       <section class="section" id="users">
         <h3>Add-UsersToResourceGroup.ps1</h3>
-        <p>Gives people a role (default <strong>Contributor</strong>) on one resource group. Run it once per team.</p>
+        <p>Gives people a role (default <a href="glossary.html#contributor"><strong>Contributor</strong></a>) on one resource group, after looking each person up in <a href="glossary.html#entra-id">Microsoft Entra ID</a>. Run it once per team.</p>
         <pre><code>.\Add-UsersToResourceGroup.ps1 -ResourceGroupName 202608-CS330-001-84715-Group01 -EmailsFile .\group01.txt -WhatIf</code></pre>
         <ul>
           <li>The e-mail file has one address per line; blank lines and lines starting with <code>#</code> are ignored. Start from <a href="scripts/students.example.txt" download><code>students.example.txt</code></a>.</li>
