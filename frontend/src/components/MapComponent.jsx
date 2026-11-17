@@ -33,9 +33,13 @@ function MapComponent({ temperatures = [] }) {
   return (
     // preferCanvas: draw the ~10,000 circles on one <canvas> instead of 10,000 SVG elements (much faster)
     <MapContainer center={CENTER} zoom={7} preferCanvas style={{ height: '500px', width: '100%' }}>
+      {/* referrerPolicy: OpenStreetMap's tile policy asks apps to send a Referer header. Some hosts (Azure
+          Static Web Apps sent "Referrer-Policy: same-origin") tell the browser to strip it for other sites,
+          and OSM then answers "Access blocked". Setting it on the tiles themselves guarantees it is sent. */}
       <TileLayer
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        referrerPolicy="strict-origin-when-cross-origin"
       />
       {temperatures.map((point) => (
         <CircleMarker
