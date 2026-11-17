@@ -93,6 +93,8 @@ const api = axios.create({
    | `/login`, `/register` | `Login.jsx`, `Register.jsx` | logged-out users (others go to `/map`) |
    | `/map` | `MapPage.jsx` | **logged-in users only** (others go to `/login`) |
 
+**Why `void` appears in front of some calls.** `navigate(...)` and the `verifyAuth()` call in `App.jsx` start background work and return a promise that nothing waits for. A static-analysis tool such as SonarQube Cloud flags an ignored promise, because an error inside it could disappear silently. `void navigate(...)` says "I know this is a background task and I am choosing not to wait". Anything whose result or failure matters is `await`ed inside `try/catch`, as the login request is.
+
 axios **throws** for any non-2xx status, so "logged in" is decided by whether `api.get('/auth/test')` succeeds or throws. (The browser's built-in `fetch` instead resolves for every status and you check `res.ok`.)
 
 ### 3.3 Login and registration
