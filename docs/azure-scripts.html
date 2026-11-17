@@ -163,13 +163,13 @@ az account set --subscription "&lt;subscription name or id&gt;"</code></pre>
 
       <section class="section" id="remove">
         <h3>Remove-GroupResourceGroups.ps1</h3>
-        <p>Deletes a semester's group resource groups, and <strong>everything inside them</strong>. This cannot be undone.</p>
+        <p>Deletes a semester's resource groups, and <strong>everything inside them</strong>, so the class stops costing money. A resource group is a folder of Azure resources; deleting it deletes every resource in it: the MySQL servers with all their data, the App Service plans, the web apps, and the Static Web Apps. The resource groups themselves go too, so Statler ITS has to create them again next semester. <strong>This cannot be undone.</strong></p>
         <pre><code>.\Remove-GroupResourceGroups.ps1 -Semester 202608 -Crn 84715 -LastGroup 10 -WhatIf
 .\Remove-GroupResourceGroups.ps1 -Semester 202608 -Crn 84715 -LastGroup 10</code></pre>
         <ul>
           <li>You must give the semester and CRN: nothing is hardcoded, so it can't act on last term's names by accident.</li>
-          <li>It lists each resource group that exists with its resource count, then asks you to <strong>type the semester code</strong> before deleting anything.</li>
-          <li>The <code>DEMO</code> resource group is only included with <code>-IncludeDemo</code>.</li>
+          <li>It prints every resource group that exists and every resource inside it, by name and type, so you can see exactly what will go. Then it asks you to <strong>type the semester code</strong> before deleting anything.</li>
+          <li>The <code>DEMO</code> resource group is deleted too. Add <code>-ExcludeDemo</code> to keep it.</li>
           <li>After deleting, set <code>DEPLOY_TO_AZURE</code> to <code>false</code> and remove the old secrets in the reference repository (see <a href="deployment-steps.html">Deployment Steps</a>).</li>
         </ul>
       </section>
