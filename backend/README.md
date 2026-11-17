@@ -1,202 +1,258 @@
-# Sprint 4 – Backend Deployment (Azure App Service)
-### Instructor-provisioned App Service: students configure, deploy, and verify
+# xPostForecast Backend
 
-> **Doing Sprint 4 for your own project?** Follow the step-by-step [Sprint 4 student guide](https://tdevine1.github.io/xPostForecast/students/sprint-4.html). This README explains how the reference app is set up.
+The Express API behind xPostForecast. It handles registration and login, stores users in **Azure Database for MySQL**, and serves NOAA temperature data to logged-in users.
 
-> This is the **reference implementation** for Sprint 4's backend deployment. Deploy your own group's `backend/` (from Sprints 1–3) using this as your worked example; don't clone or fork this one.
+> **Setting up this backend yourself?** Read on. **Building your own project for CS 330?** Don't copy this one: follow the [student guides](https://tdevine1.github.io/xPostForecast/), such as the [Sprint 4 deployment guide](https://tdevine1.github.io/xPostForecast/students/sprint-4.html), and use this code to see how a finished backend looks.
 
-Your group's **Azure App Service (Web App for Linux)** has already been created by the instructor. Your team will:
+What it provides:
 
-- Let GitHub Actions deploy to it (publish profile + app name)
-- Add the deploy workflow
-- Configure its **environment variables** (database, JWT secret, frontend URL)
-- Verify the deployment with `/health` and the log stream
+- Registration, login, and logout, with a JWT in an HTTP-only cookie
+- Azure Database for MySQL access over TLS
+- `GET /temperature/:date`, which returns monthly average temperatures for West Virginia as map points (logged-in users only)
+- A `/health` check, for you and for Azure
 
-How the backend itself works (routes, auth, temperature data) is covered in the [Sprint 3 backend guide](https://github.com/tdevine1/xPostForecast/blob/sprint-3/backend/README.md); local setup is in the [Sprint 2 backend guide](https://github.com/tdevine1/xPostForecast/blob/sprint-2/backend/README.md). The code is unchanged in Sprint 4.
-
----
-
-## 1. Prerequisites and Context
-
-You have:
-
-- A working backend in your repo's `backend/` folder (adjust the paths below if yours lives elsewhere)
-- The Azure MySQL database from Sprint 2 (same host, database, user)
-- An App Service created for your group, with the **Node 24 LTS** runtime
-
-The instructor provides:
-
-- The **App Service name** and **URL** (e.g. `https://<your-backend>.azurewebsites.net`). Always copy the address from the app's **Overview → Default domain** rather than typing it: an app created in the portal gets a random-looking suffix (for example `<name>-gmhxfca6exbhgccd.eastus-01.azurewebsites.net`)
-- The **Static Web App URL** (for `FRONTEND_URL`)
+The frontend that talks to it is in [`../frontend/README.md`](../frontend/README.md). The overall picture is in the [root README](../README.md).
 
 ---
 
-## 2. Give GitHub Permission to Deploy
+## 1. What it is made of
 
-GitHub Actions authenticates to App Service with the App Service's **publish profile**.
+**Tech stack**
 
-### 2.1 Download the publish profile
+- **Runtime:** Node.js 24 LTS (ES modules, built-in `fetch`)
+- **Framework:** Express 5
+- **Database:** Azure Database for MySQL via `mysql2/promise`
+- **Auth:** JWT (`jsonwebtoken`) in an HTTP-only cookie (`cookie-parser`); passwords hashed with `bcryptjs`; `express-rate-limit` on login and register
+- **Climate data:** Microsoft Planetary Computer STAC API, with `geotiff` to read Cloud Optimized GeoTIFFs
+- **Tests:** Vitest + Supertest; **lint:** oxlint
 
-1. Azure Portal → **App Services** → your group's App Service.
-2. On the **Overview** page, click **Download publish profile** in the toolbar.
+**Folder structure** (each folder also has its own short README):
 
-This downloads an XML file (`<app-name>.PublishSettings`).
-
-![App Service Publish Profile](../images/appservice-publish-profile.png)
-
-> If **Download publish profile** is greyed out, basic-auth publishing is turned off for the app. Ask your instructor to enable **Settings → Configuration → General settings → SCM Basic Auth Publishing Credentials**.
-
-### 2.2 Add it to GitHub
-
-In your GitHub repo: **Settings → Secrets and variables → Actions**.
-
-> **Admin only:** the **Settings** tab (and secrets) is only visible to a repo **Admin**. Following the principle of least privilege, only one teammate has Admin (see Sprint 1, section 3); that person adds the secrets, and everyone else keeps **Write** access.
-
-1. **Secrets** tab → **New repository secret**:
-   - Name: `APP_SERVICE_PUBLISH_PROFILE`
-   - Value: the **entire** contents of the `.PublishSettings` file
-2. **Variables** tab → **New repository variable**:
-   - Name: `AZURE_WEBAPP_NAME`
-   - Value: your App Service's name (exactly as shown in the portal)
-
-The publish profile is a password for deploying to your app: it belongs in a **secret** and must never be committed. The app name isn't sensitive, so it's a plain **variable**.
-
-![GitHub Secrets](../images/github-secrets.png)
-
-*(This screenshot is from a repo whose secrets were generated by Azure, so the names differ; use the names above.)*
-
-> Delete the downloaded `.PublishSettings` file afterwards, or at least keep it out of your repo folder. This repo's `.gitignore` also ignores `*.PublishSettings` as a safety net, the same idea as ignoring `.vscode/settings.json` for SQLTools passwords in Sprint 2.
-
----
-
-## 3. Add the Deploy Workflow
-
-> **New to workflows?** The [Writing GitHub Workflows guide](https://tdevine1.github.io/xPostForecast/students/github-workflows.html) builds this file from scratch and explains every line, including what `on:`, `jobs:`, and `steps:` mean. Words like *secret* and *runner* are in the [Glossary](https://tdevine1.github.io/xPostForecast/glossary.html).
-
-Create `.github/workflows/deploy-backend.yml` (this repo's [`deploy-backend.yml`](../.github/workflows/deploy-backend.yml)):
-
-```yaml
-name: Deploy backend (App Service)
-
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/deploy-backend.yml'
-  workflow_dispatch:
-
-concurrency: deploy-backend
-
-jobs:
-  build-test-deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
-
-      # (this repo's file also has an `if:` that skips the job unless the repository variable
-      #  DEPLOY_TO_AZURE is true, and a step that fails early if the secret or variable is missing)
-
-      - run: npm ci
-      - run: npm test
-
-      - name: Remove dev-only packages before upload
-        run: npm prune --omit=dev
-
-      - name: Deploy to Azure App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.APP_SERVICE_PUBLISH_PROFILE }}
-          package: backend
+```text
+backend/
+├── app.js                        middleware + routes (exported; tests import it)
+├── server.js                     entry point: checks settings, starts listening
+├── config/
+│   ├── env.js                    loads backend/.env (local development only)
+│   ├── database.js               MySQL connection pool over TLS
+│   ├── cookies.js                auth cookie options (development vs production)
+│   └── DigiCertGlobalRootG2.crt.pem   CA certificate for Azure MySQL (public, not a secret)
+├── db/schema.sql                 creates the authdb database and users table
+├── middleware/authMiddleware.js  checks the JWT cookie on protected routes
+├── routes/
+│   ├── auth.js                   /auth/register, /login, /test, /logout
+│   └── stac.js                   /temperature/:date
+├── sign/sign.js                  signs Planetary Computer download URLs
+├── tests/                        auth.test.js, temperature.test.js
+├── vitest.config.js              test and coverage settings
+└── .env.example                  template for your .env
 ```
 
-What each part does:
+---
 
-- **`paths`**: only changes under `backend/` (or to this file) trigger a deployment; editing the frontend doesn't redeploy the backend. **`workflow_dispatch`** adds a manual **Run workflow** button in the Actions tab.
-- **`concurrency`**: two pushes in a row can't deploy over each other.
-- **`npm ci`** installs exactly what `package-lock.json` lists. **`npm test`** runs the backend tests; a failing test stops the deployment, so broken code never reaches Azure.
-- **`npm prune --omit=dev`** removes test tools (Vitest, Supertest, oxlint) before upload, so the deployment is smaller.
-- **`package: backend`**: the folder to upload, relative to the repo root (`working-directory` doesn't apply to `uses:` steps).
-- **`node-version`** should match the App Service runtime (Node 24 LTS).
+## 2. Run it locally
 
-> **Azure may already have added a workflow** to your repo (named like `main_<app-name>.yml`) if the App Service's Deployment Center was connected to GitHub. Keep only **one** backend deploy workflow: delete the generated file, or edit it to use the paths above. Also make sure your `test` script really runs tests; npm's default `"test": "echo \"Error: no test specified\" && exit 1"` always fails the deployment.
+You need **Node.js 24 LTS** and an **Azure Database for MySQL – Flexible Server**. The code verifies the server's TLS certificate against Azure's, so it is built for Azure's MySQL.
 
-Commit and push. In the **Actions** tab, **Deploy backend (App Service)** should go green:
+### 2.1 Create the database and allow your computer
+
+1. Create the server in the Azure portal (smallest *Burstable* size, **Standard_B1ms**; see the [instructor runbook](https://tdevine1.github.io/xPostForecast/deployment-steps.html#per-semester) for every setting).
+2. On the server's **Networking** page, tick **Allow public access from any Azure service within Azure to this server** (the deployed backend needs it) and click **Add current client IP address**, then **Save**. Your IP changes between home, campus, and hotspots, so repeat this when you move.
+3. Create the schema. The quickest way needs nothing installed: portal → your MySQL server → **Connect** → open **Cloud Shell** (choose **Bash**; if asked about storage, choose **No storage account required**), run the `mysql` command the page shows, type your admin password at the prompt (never on the command line), then copy all of [`db/schema.sql`](./db/schema.sql) and paste it at the `mysql>` prompt. Check with:
+
+   ```sql
+   SHOW TABLES FROM authdb;
+   DESCRIBE authdb.users;
+   exit
+   ```
+
+The schema creates the `authdb` database and a `users` table with unique `email` and `username` columns and a `password_hash` column. Running it again is harmless. (Browsing the database from VS Code with SQLTools, or running the schema with the `mysql` command-line client, is explained in the [Sprint 2 backend guide](https://github.com/tdevine1/xPostForecast/blob/sprint-2/backend/README.md).)
+
+### 2.2 Install, configure, run
+
+```bash
+cd backend
+npm install
+cp .env.example .env      # then edit .env
+npm run dev               # restarts when you save a file; use `npm start` for a plain start
+```
+
+Fill in `.env` (see section 3), generating a signing secret with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+> **Never commit `.env`.** `.gitignore` excludes it; run `git status` before every commit to be sure.
+
+Expected output:
+
+```text
+Connecting to MySQL at <your-server>.mysql.database.azure.com:3306
+Configured FRONTEND_URL = http://localhost:5173
+NODE_ENV = development
+Server is running on 5175
+Successfully connected to MySQL
+```
+
+(The last two lines can appear in either order.) Then open <http://localhost:5175/health>, which should show `{"ok":true,"env":"development"}`.
+
+---
+
+## 3. Settings (environment variables)
+
+All settings come from the environment, so the same code runs on your laptop (from `.env`) and on Azure (from App Service settings).
+
+| Name | Meaning | Local value | On Azure |
+|---|---|---|---|
+| `PORT` | Port to listen on | `5175` | **Don't set it.** App Service picks one and sets it for you |
+| `FRONTEND_URL` | The one website allowed to call this API (CORS) | `http://localhost:5173` | The Static Web App address, exactly, no trailing slash |
+| `NODE_ENV` | Switches production behavior (section 7.3) | `development` | `production` |
+| `JWT_SECRET` | Secret used to sign login tokens | a generated string | a **different** generated string |
+| `DB_HOST` | MySQL server name | `<server>.mysql.database.azure.com` | same |
+| `DB_USER`, `DB_PASSWORD` | Database login | your admin login | same |
+| `DB_NAME` | Database name | `authdb` | same |
+| `DB_PORT` | Database port | `3306` (optional) | same |
+
+`server.js` refuses to start, and lists what is missing, if `FRONTEND_URL`, `JWT_SECRET`, `DB_HOST`, `DB_USER`, `DB_PASSWORD`, or `DB_NAME` is empty. That is easier to diagnose than a crash later. `config/env.js` reads `.env` with Node's built-in `process.loadEnvFile()`, so no `dotenv` package is needed.
+
+---
+
+## 4. Routes
+
+| Route | Method | Auth | Description |
+|---|---|---|---|
+| `/health` | GET | none | `{ ok: true, env }`; works without touching the database |
+| `/auth/register` | POST | none | `{ email, username, password }` → `201`; `400` missing field or password under 8 characters; `409` username or email taken |
+| `/auth/login` | POST | none | `{ username, password }` → `200` and a `token` cookie; `400` missing field; `401` wrong credentials |
+| `/auth/test` | GET | cookie | `{ ok: true, user }` or `401`; the frontend uses it to ask "am I logged in?" |
+| `/auth/logout` | POST | none | clears the cookie |
+| `/temperature/:date` | GET | **cookie** | temperature points for that month (section 5) |
+
+How logins work:
+
+- Passwords are stored only as **bcrypt hashes**.
+- A successful login sets a cookie that is `HttpOnly` (page JavaScript can't read it) and holds a JWT valid for **1 hour**.
+- Login and register allow at most **20 attempts per IP address per 15 minutes**, which slows down password guessing. The counter lives in memory, so restarting the app resets it.
+- In `app.js` the auth middleware runs *before* the temperature router, so a request without a valid cookie gets `401` and never reaches Planetary Computer:
+
+  ```js
+  app.use('/temperature', authMiddleware, stacRoutes);
+  ```
+
+**CORS and cookies.** The frontend and backend are different origins, so `app.js` allows exactly one, `FRONTEND_URL`, and allows it to send cookies (`credentials: true`). The frontend must opt in on every request (`withCredentials: true`). Cookie flags live in `config/cookies.js`, one place used by login and logout so they always match.
+
+Try the routes with curl (local):
+
+```bash
+curl -i -X POST http://localhost:5175/auth/register -H "Content-Type: application/json" \
+  --data '{"email":"alice@example.com","username":"alice","password":"correct-horse"}'
+
+curl -i -X POST http://localhost:5175/auth/login -H "Content-Type: application/json" \
+  --data '{"username":"alice","password":"correct-horse"}' -c cookies.txt
+
+curl -s http://localhost:5175/auth/test -b cookies.txt
+curl -s http://localhost:5175/temperature/2020-07-01 -b cookies.txt | head -c 300
+```
+
+---
+
+## 5. `GET /temperature/:date` (`routes/stac.js`)
+
+`:date` is `YYYY-MM-DD` (the frontend sends the first of the month); only the year and month are used.
+
+| Status | Body | When |
+|---|---|---|
+| `200` | `[{ "lat": 40.6042, "lon": -82.6042, "tavg": 74.88 }, …]` (about 9,700 points) | Data found |
+| `400` | `{ "error": "Date must be YYYY-MM-DD" }` | Malformed date, or month outside 01–12 |
+| `401` | `{ "error": "Not logged in" }` | No or invalid cookie |
+| `404` | `{ "error": "No temperature data is available for 2022-12" }` | Month not in the dataset (before 1895-01 or after 2022-09) |
+| `502` | `{ "error": "The temperature data service is unavailable. Try again later." }` | Planetary Computer failed or returned something unexpected |
+
+`502 Bad Gateway` means "a server we depend on failed", which tells the frontend (and you) that the problem is not the request.
+
+**How it works**
+
+1. **Cache check.** Results are kept in memory per month (up to 24 months), because historical data never changes. A cached month returns in milliseconds.
+2. **STAC search.** `POST https://planetarycomputer.microsoft.com/api/stac/v1/search` with the collection `noaa-nclimgrid-monthly`, a bounding box around West Virginia, and a date in the middle of the month. Each item covers a whole month. No item means `404`.
+3. **Pick the asset by name.** An item has several assets (`prcp`, `tavg`, `tmax`, `tmin`, …). The code uses `item.assets.tavg`. Picking by name matters: the order of keys in JSON isn't guaranteed.
+4. **Sign the URL** with `sign/sign.js`. The file lives in Azure Blob Storage, which allows downloads only with a short-lived token; Planetary Computer's signing endpoint returns the same URL with a token added.
+5. **Read the grid.** The backend downloads the Cloud Optimized GeoTIFF (about 1.2 MB for the whole U.S.), and `geotiff` decodes only the window covering West Virginia.
+6. **Convert cells to points.** For each cell: skip "no data" values; find the cell's **center**; keep it only if the center is inside the bounding box; convert °C to °F. The result is capped at 10,000 points as a safety limit.
+7. **Cache and return** the JSON array.
+
+`samplePoints()` (step 6) and `c2f()` are exported so they can be tested without the network. The route needs no API key. It does need outbound internet access to `planetarycomputer.microsoft.com` and `*.blob.core.windows.net`, which Azure allows by default.
+
+---
+
+## 6. Tests and quality checks
+
+```bash
+npm test                 # auth + temperature tests
+npm run lint             # oxlint
+npm run test:coverage    # tests plus a coverage report in coverage/ (lcov for SonarQube)
+```
+
+The tests send real HTTP requests to the Express app (imported from `app.js`, so no server or port is needed) and replace the database with a mock, and `fetch` and `geotiff` with fakes, so they run offline in seconds and work in GitHub Actions. They check things that are easy to break without noticing: passwords are stored only as hashes, the cookie is `HttpOnly`, a token signed with the wrong secret is rejected, `/temperature` requires login, and `404` and `502` appear in the right situations.
+
+**SonarQube Cloud** reads the coverage report on every push and reports bugs, security problems, and untested code. The `sonar` job in [`ci.yml`](../.github/workflows/ci.yml) stays off until a repository **Admin** adds the `SONAR_TOKEN` secret and sets the variable `SONAR_ENABLED` to `true`. See the [SonarQube guide](https://tdevine1.github.io/xPostForecast/students/sonarqube.html).
+
+---
+
+## 7. Deploy to Azure App Service
+
+You need an App Service (a *Web App for Linux*) on the **Node 24 LTS** runtime, in a resource group with the MySQL server. Section "Deploy it to Azure" of the [root README](../README.md#deploy-it-to-azure) links to how to create it. Then:
+
+### 7.1 Let GitHub deploy to it
+
+GitHub Actions signs in to App Service with the app's **publish profile**.
+
+1. Azure portal → **App Services** → your app → **Overview** → **Download publish profile**. It downloads an XML file (`<app-name>.PublishSettings`).
+
+   ![App Service Publish Profile](../images/appservice-publish-profile.png)
+
+   If the button is greyed out, basic-auth publishing is off for the app. Turn it on under **Settings → Configuration → General settings → SCM Basic Auth Publishing Credentials**.
+
+2. In your GitHub repository: **Settings → Secrets and variables → Actions** (only a repository **Admin** can see Settings).
+   - **Secrets** tab → **New repository secret**: name `APP_SERVICE_PUBLISH_PROFILE`, value the **entire** contents of the file.
+   - **Variables** tab → **New repository variable**: `AZURE_WEBAPP_NAME` = the App Service's name, exactly as in the portal; and `DEPLOY_TO_AZURE` = `true` (the deploy workflows skip themselves unless this is `true`).
+
+   ![GitHub Secrets](../images/github-secrets.png)
+
+   *(This screenshot is from a repo whose secrets Azure generated, so the names differ. Use the names above.)*
+
+3. Delete the downloaded file. The publish profile is a password for your app: it belongs in a secret and never in git. (`.gitignore` also ignores `*.PublishSettings` as a safety net.)
+
+### 7.2 The deploy workflow
+
+[`.github/workflows/deploy-backend.yml`](../.github/workflows/deploy-backend.yml) runs on every push to `main` that touches `backend/` (and has a **Run workflow** button). It installs with `npm ci`, runs `npm test` (a failing test stops the deployment), removes dev-only packages with `npm prune --omit=dev`, and uploads `backend/` with `azure/webapps-deploy`. It also fails early with a plain message if the secret or variable is missing. Every line is explained in the [workflows guide](https://tdevine1.github.io/xPostForecast/students/github-workflows.html#backend).
+
+Keep only **one** backend deploy workflow. If the App Service's Deployment Center added its own (named like `main_<app-name>.yml`), delete it, or every push deploys twice.
+
+Push to `main`, or choose **Actions → Deploy backend (App Service) → Run workflow**, and wait for the green check:
 
 ![Backend Actions Success](../images/github-actions-backend-success.png)
 
----
+### 7.3 Set the App Service settings
 
-## 4. Configure Environment Variables
-
-The App Service has no `.env` file (and must not: `.env` is never committed). The same values are set in the portal instead.
-
-1. Azure Portal → your App Service → **Settings → Environment variables** → **App settings** tab.
-2. Add each setting below with **+ Add**, then click **Apply** (the app restarts).
+The App Service has no `.env` file (and must not). Type the settings from section 3 into the portal: your App Service → **Settings → Environment variables → App settings** → **+ Add** for each, then **Apply** (the app restarts). Don't add `PORT`.
 
 ![App Service Env Vars](../images/appservice-envvars.png)
 
-| Name | Value |
-|---|---|
-| `DB_HOST` | `<server>.mysql.database.azure.com` (same as your local `.env`) |
-| `DB_USER` | database username (same as local) |
-| `DB_PASSWORD` | database password. Must be named exactly this; the code reads `process.env.DB_PASSWORD` |
-| `DB_NAME` | `authdb` (or your team's database name) |
-| `DB_PORT` | `3306` (optional; that's the default) |
-| `FRONTEND_URL` | your SWA URL, exactly: `https://<your-swa>.azurestaticapps.net` (no trailing slash) |
-| `JWT_SECRET` | a **new** long random string (don't reuse your local one) |
-| `NODE_ENV` | `production` |
+Why `NODE_ENV=production` matters. It switches on two behaviors:
 
-Do **not** add `PORT` (see 4.2).
+- **Cookie flags** (`config/cookies.js`): the frontend (`*.azurestaticapps.net`) and backend (`*.azurewebsites.net`) are **different sites**. Browsers send a cookie across sites only if it is marked `SameSite=None` and `Secure`, so in production the auth cookie is `HttpOnly; Secure; SameSite=None; Partitioned`. With the development setting (`SameSite=Lax`), login would return 200 but the browser would never send the cookie back, so every page would act logged out.
+- **`trust proxy`** (`app.js`): App Service receives HTTPS and forwards plain HTTP to the app. Trusting the proxy's headers lets Express see the original request as HTTPS (needed for `Secure` cookies) and the real client IP (needed for rate limiting).
 
-### 4.1 Why `NODE_ENV=production` matters
+The port: App Service chooses it and passes it as `PORT` (commonly 8080). `server.js` reads it with `Number(process.env.PORT) || 5175`. A hard-coded port would never be reached by App Service's health probe.
 
-It switches on two production behaviors in the backend:
+### 7.4 Database connectivity
 
-- **Cookie settings** (`config/cookies.js`): your frontend (`*.azurestaticapps.net`) and backend (`*.azurewebsites.net`) are **different sites**. Browsers only send a cookie with cross-site requests if it is marked `SameSite=None` and `Secure`, so in production the auth cookie is `HttpOnly; Secure; SameSite=None; Partitioned`. With the development setting (`SameSite=Lax`), login would return 200 but the browser would never send the cookie back, so every page would act logged out.
-- **`trust proxy`** (`app.js`): App Service receives HTTPS and forwards plain HTTP to your app. Trusting the proxy's headers lets Express see the original request as HTTPS (needed for `Secure` cookies) and see the real client IP (needed for login rate limiting).
+The server and database must already exist (section 2.1) with **Allow public access from any Azure service within Azure** ticked, so the App Service can connect. The CA certificate is part of the code, so it deploys with it. If the log stream shows `MySQL connection failed on startup` with `ETIMEDOUT`, that setting is the usual cause.
 
-`server.js` also checks the required settings at startup. If one is missing, the log stream shows `Missing required environment variables: …` and the app stops, which is much easier to diagnose than a crash later.
+### 7.5 Verify
 
-### 4.2 How the port works on App Service
-
-App Service chooses the port your app must listen on and passes it in the `PORT` environment variable (commonly 8080). The backend already reads it:
-
-```js
-const PORT = Number(process.env.PORT) || 5175;
-```
-
-Locally `PORT` is 5175 (or unset); on Azure it is whatever App Service assigns. If an app listened on a hard-coded port, App Service's health probe would never reach it and the app would never be marked as started.
-
----
-
-## 5. Database Connectivity
-
-- The MySQL server and database were created in Sprint 2. The instructor configured its networking to allow connections from Azure services such as your App Service.
-- The CA certificate (`config/DigiCertGlobalRootG2.crt.pem`) is part of your code, so it is deployed with it.
-- If the log stream shows `MySQL connection failed on startup` with `ETIMEDOUT`, tell your instructor: it's a network/firewall setting on the server.
-
-From your side, check `DB_HOST`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`.
-
----
-
-## 6. Verify the Deployment
-
-### 6.1 `/health`
-
-Visit `https://<your-backend>.azurewebsites.net/health`:
+Open `https://<your backend's default domain>/health`. Copy the address from the App Service's **Overview → Default domain** instead of typing it: a portal-created app has a random-looking suffix. You should see:
 
 ```json
 { "ok": true, "env": "production" }
@@ -204,13 +260,11 @@ Visit `https://<your-backend>.azurewebsites.net/health`:
 
 If `env` says `development`, `NODE_ENV` isn't set.
 
-> **The first request can be slow.** On the Basic plan the app goes to sleep after some idle time (about 20 minutes with no visitors), and it restarts after every deploy. The first request after either may take a minute or more while it wakes up (a *cold start*); the next answers in a fraction of a second. Turning on **Always On** (App Service → Settings → Configuration → General settings; available on Basic and above) keeps the app awake. That is normal, not a failed deployment. Wait and try again before you change anything.
-
 ![Browser Health Check](../images/browser-health-check.png)
 
-### 6.2 Log stream
+> **The first request can be slow.** On the Basic plan the app goes to sleep after about 20 minutes with no visitors, and it restarts after every deploy. The first request after either can take a minute or more (a *cold start*); the next is fast. That is normal, not a failed deployment. **Always On** (App Service → Settings → Configuration → General settings; Basic and above) keeps it awake.
 
-Azure Portal → your App Service → **Monitoring → Log stream**. Restart the app (Overview → **Restart**) and watch:
+Then watch it start: portal → your App Service → **Monitoring → Log stream**, and **Restart** from Overview:
 
 ```text
 Connecting to MySQL at <server>.mysql.database.azure.com:3306
@@ -220,48 +274,50 @@ Server is running on 8080
 Successfully connected to MySQL
 ```
 
-After that, each request is logged, e.g. `[2026-…] GET /auth/test — Origin: https://<your-swa>.azurestaticapps.net`.
+After that each request is logged, for example `[2026-…] GET /auth/test — Origin: https://<your-swa>.azurestaticapps.net`.
 
 ![App Service Logs Startup](../images/appservice-logs-startup.png)
 
-*(Screenshot from an earlier version of the backend, which logged a few extra lines such as `Loaded CA cert from:` and the signing request. The text block above shows the current output.)*
+*(Screenshot from an earlier version of the backend, which logged a few extra lines. The text block above shows the current output.)*
+
+Next, deploy the frontend: [`../frontend/README.md`](../frontend/README.md#5-deploy-to-azure-static-web-apps).
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Workflow fails: `AZURE_WEBAPP_NAME is not set` / `APP_SERVICE_PUBLISH_PROFILE is not set` | Missing GitHub variable or secret | Add it (step 2.2); names are case-sensitive |
+| `Missing required environment variables: …` on start | `.env` (or App Service setting) missing or misspelled | Local: copy `.env.example` to `.env` and fill it in. Azure: add it under Environment variables, then Apply |
+| `MySQL connection failed on startup` + `ETIMEDOUT` | Firewall: your IP (local) or "Allow Azure services" (deployed) | Add your current IP under the server's Networking; tick the Azure services box |
+| `Access denied for user` | Wrong `DB_USER` or `DB_PASSWORD` | Compare with the **Connect** page in the portal |
+| `ER_BAD_DB_ERROR: Unknown database 'authdb'` | Schema not created | Run `db/schema.sql` (section 2.1) |
+| TLS errors (`self-signed certificate`) | Wrong or missing CA file | Use `config/DigiCertGlobalRootG2.crt.pem`, downloaded from the server's Networking page |
+| Cloud Shell: `ERROR 2002 (HY000)` | Server doesn't allow Azure services | Tick **Allow public access from any Azure service within Azure** under Networking |
+| `409` on register | Username or email already exists | Choose another, or delete the row |
+| `429 Too Many Requests` | Login/register rate limit | Wait 15 minutes or restart the backend |
+| `401` from `/temperature/...` | Not logged in, or the cookie wasn't sent | Log in; the frontend must send cookies (`withCredentials: true`) |
+| `404 No temperature data is available…` | Month not in the dataset | Choose a month from 1895-01 to 2022-09 |
+| `502` and `Error fetching temperature data` in the log | Planetary Computer unreachable or slow | Retry; the log line shows the underlying error |
+| CORS error mentioning `Access-Control-Allow-Origin` | `FRONTEND_URL` doesn't match the frontend's address exactly | Copy the address; no trailing slash |
+| Login returns 200 but you are logged out at once | Cookie not sent between the two sites | `NODE_ENV=production` on Azure; see 7.3 and the [frontend guide](../frontend/README.md#55-cookies-between-two-sites) |
+| Workflow: `AZURE_WEBAPP_NAME is not set` / `APP_SERVICE_PUBLISH_PROFILE is not set` | Missing GitHub variable or secret | Add it (7.1); names are case-sensitive |
 | Workflow fails at the deploy step with an authentication error | Old or wrong publish profile | Download a fresh one and replace the secret |
-| Workflow fails at `npm test` | A test is failing (or the default npm `test` script) | Run `npm test` locally and fix it |
-| Log stream: `Missing required environment variables: …` | App setting missing or misspelled | Add it under Environment variables, then Apply |
-| Log stream: `MySQL connection failed on startup` + `ETIMEDOUT` | Server networking | Tell your instructor |
-| Log stream: `Access denied for user` | Wrong `DB_USER` / `DB_PASSWORD` | Compare with your working local `.env` |
-| `/health` shows `"env": "development"` | `NODE_ENV` not set | Add `NODE_ENV=production` |
-| Browser console: CORS error mentioning `Access-Control-Allow-Origin` | `FRONTEND_URL` doesn't match the SWA URL exactly | Copy the SWA URL from the portal; no trailing slash |
-| Login returns 200 but you're immediately logged out | Cookie not sent cross-site | `NODE_ENV=production`; see 4.1 and the [frontend guide](../frontend/README.md#6-cookies-between-two-sites) |
-| `Application Error` page / app keeps restarting | Startup crash | Read the first error in the log stream |
-| `/health` hangs or times out the first time, then works | Cold start: the app was asleep | Wait a minute and retry; don't redeploy |
-| The frontend can't find the backend (`ERR_NAME_NOT_RESOLVED`) | `VITE_BACKEND_API_URL` uses an address that was guessed | Copy the **Default domain** from the App Service Overview, then redeploy the frontend |
+| Workflow fails at `npm test` | A test fails | Run `npm test` locally and fix it |
+| Workflow shows as skipped | `DEPLOY_TO_AZURE` isn't `true` | Set the repository variable |
+| "Application Error" page, or the app keeps restarting | Startup crash | Read the first error in the log stream |
+| `/health` hangs the first time, then works | Cold start | Wait a minute and retry; don't redeploy |
+| The frontend can't find the backend (`ERR_NAME_NOT_RESOLVED`) | `VITE_BACKEND_API_URL` uses a guessed address | Copy the **Default domain**, then redeploy the frontend |
 
 ---
 
-## 8. Optional (Milestone 6): Code Quality with SonarQube
+## 9. References
 
-SonarQube Cloud reads your code and your test coverage on every push and reports bugs, security problems, and untested code. This repo already has the pieces: [`sonar-project.properties`](../sonar-project.properties), a `sonar` job in [`ci.yml`](../.github/workflows/ci.yml), and an `npm run test:coverage` script in `backend/` (and `frontend/`). The job stays off until a repository **Admin** adds the `SONAR_TOKEN` secret and sets the variable `SONAR_ENABLED` to `true`. The [SonarQube guide](https://tdevine1.github.io/xPostForecast/students/sonarqube.html) walks through creating the project, the token, and reading the results.
-
----
-
-## 9. Summary
-
-Your team has:
-
-- Connected GitHub Actions to App Service with a publish profile (secret) and app name (variable)
-- Added a workflow that tests the backend and deploys it on every push to `main` that changes `backend/`
-- Configured App Service environment variables, including production cookie behavior
-- Verified the deployment with `/health` and the log stream
-
-![Backend Success!](../images/browser-backend-success.png)
-
-Next: deploy the frontend with [`../frontend/README.md`](../frontend/README.md).
+- Express: <https://expressjs.com/>
+- mysql2: <https://sidorares.github.io/node-mysql2/docs>
+- jsonwebtoken: <https://github.com/auth0/node-jsonwebtoken>
+- bcryptjs: <https://github.com/dcodeIO/bcrypt.js>
+- express-rate-limit: <https://express-rate-limit.mintlify.app/>
+- Supertest: <https://github.com/ladjs/supertest>
+- Microsoft Planetary Computer: <https://planetarycomputer.microsoft.com/>
+- MDN CORS: <https://developer.mozilla.org/docs/Web/HTTP/Guides/CORS>
