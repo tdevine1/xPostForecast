@@ -30,7 +30,7 @@
         <li>
           <a class="active-link" aria-current="page" href="git-guide.html">Git and GitHub help</a>
           <ul class="sub">
-            <li><a href="#model">1. The mental model</a></li>
+            <li><a href="#model">1. What Git is and how repos work</a></li>
             <li><a href="#flow">2. The daily workflow</a></li>
             <li><a href="#notes">3. Notes on the workflow</a></li>
             <li><a href="#vscode">4. The same in VS Code</a></li>
@@ -77,8 +77,84 @@
       </section>
 
       <section class="section" id="model">
-        <h3>1. The mental model</h3>
-        <p>Almost every Git confusion goes away once you can picture where your work is. There are four places:</p>
+        <h3>1. What Git is and how repositories work</h3>
+
+        <h4>The problem Git solves</h4>
+        <p>
+          You have probably saved a file as <code>report_final.docx</code>, then <code>report_final_v2.docx</code>, then
+          <code>report_REALLY_final.docx</code>. Now imagine four people editing the same project at once. Who has the newest copy?
+          Whose change overwrote whose? Git exists to answer those questions. It is a <strong>version control system</strong>: a
+          program that remembers every saved version of your project, who made each change and why, and lets you go back to any
+          of them or combine several people's work.
+        </p>
+
+        <h4>Git and GitHub are different things</h4>
+        <table>
+          <thead>
+            <tr><th></th><th>Git</th><th>GitHub</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>What it is</strong></td><td>A free program installed on <em>your computer</em>.</td><td>A <em>website</em> (owned by Microsoft) that stores copies of Git projects online.</td></tr>
+            <tr><td><strong>What it does</strong></td><td>Records the history of your project, makes branches, merges work.</td><td>Gives your team a shared home for the project, plus pull requests, issues, and automation (GitHub Actions).</td></tr>
+            <tr><td><strong>Works without the other?</strong></td><td>Yes. You can use Git completely offline.</td><td>No. It stores Git repositories.</td></tr>
+            <tr><td><strong>Alternatives</strong></td><td>(Git is the standard.)</td><td>GitLab and Bitbucket do the same job. Everything in this guide works with them too.</td></tr>
+          </tbody>
+        </table>
+
+        <h4>What a repository is</h4>
+        <p>
+          A <strong>repository</strong> (or <strong>repo</strong>) is your project folder <em>plus its history</em>. The history
+          lives in a hidden folder named <code>.git</code> inside the project folder. You never edit anything in <code>.git</code> by
+          hand, and you must not delete it: delete <code>.git</code> and the folder is just ordinary files again, with the history
+          gone.
+        </p>
+<pre><code>cs330-2025-group07/        &lt;- the repository (your project folder)
+├── .git/                  &lt;- hidden: the whole history lives here
+├── .gitignore             &lt;- a list of files Git should never track
+├── README.md
+├── frontend/
+└── backend/</code></pre>
+        <ul>
+          <li>The files you see and edit are the <strong>working directory</strong>: one version of the project, the one you are working on right now.</li>
+          <li>Everything else, every earlier version, is stored compactly in <code>.git</code>.</li>
+          <li><strong>.gitignore</strong> lists things Git should leave alone: <code>node_modules/</code> (huge, and rebuilt by <code>npm install</code>), <code>.env</code> (secrets), build output. Anything not ignored can end up on GitHub.</li>
+        </ul>
+
+        <h4>Commits are snapshots</h4>
+        <p>
+          When you <strong>commit</strong>, Git saves a snapshot of your whole project at that moment, together with your name, the
+          time, and a message that says <em>why</em>. Each commit has a long unique ID (a <em>hash</em>, shown shortened, like
+          <code>a96de47</code>) and remembers which commit came before it. So your history is a chain:
+        </p>
+<pre><code>  C1 &lt;--- C2 &lt;--- C3 &lt;--- C4        each commit points back to its parent
+                      ^
+                    main              a branch is just a label on one commit</code></pre>
+        <p>Because every commit is a complete snapshot, you can look at, compare with, or return to any of them.</p>
+
+        <h4>Every copy is a full copy</h4>
+        <p>
+          Git is <strong>distributed</strong>. When you <strong>clone</strong> a repository, you don't just download the latest files:
+          you get the <em>entire history</em>. That means you can commit, branch, and read history with no internet, and every
+          teammate's computer holds a complete backup. The copy on GitHub is simply the one everyone agrees to share, called the
+          <strong>remote</strong> and nicknamed <code>origin</code>.
+        </p>
+<pre><code>        GitHub: the shared copy ("origin")
+            ^   |
+     git push   |  git fetch / git pull
+            |   v
+   +----------------+   +----------------+   +----------------+
+   |  Alice's repo  |   |   Bob's repo   |   |  Chen's repo   |
+   | (full history) |   | (full history) |   | (full history) |
+   +----------------+   +----------------+   +----------------+
+   each person edits their own working directory</code></pre>
+        <p>
+          Nothing you do on your computer reaches your teammates until you <strong>push</strong>, and nothing they do reaches you
+          until you <strong>pull</strong> (or <strong>fetch</strong>). That separation is what makes Git safe: you can experiment
+          freely, then share only when the work is ready.
+        </p>
+
+        <h4>The four places your work lives</h4>
+        <p>Almost every Git confusion goes away once you can picture where your work is:</p>
         <table>
           <thead>
             <tr><th>Place</th><th>What it is</th><th>You move work in with</th></tr>
@@ -90,9 +166,15 @@
             <tr><td><strong>Remote</strong> (<code>origin</code>)</td><td>The copy on GitHub that your team shares.</td><td><code>git push</code> up, <code>git fetch</code> / <code>git pull</code> down</td></tr>
           </tbody>
         </table>
+        <p>
+          The staging area is the part beginners find odd. It exists so that you choose <em>exactly</em> what goes into each commit,
+          instead of saving every edited file every time. That keeps commits small and focused, and keeps a half-finished file or a
+          secret out of the history.
+        </p>
+
+        <h4>Branches</h4>
         <ul>
-          <li>A <strong>commit</strong> is a snapshot of the whole project, with a message saying why you made it. Commits form a chain: each one points to the one before.</li>
-          <li>A <strong>branch</strong> is just a movable label on one commit. Making a branch is instant and free. <code>main</code> is the branch your team treats as "the working version".</li>
+          <li>A <strong>branch</strong> is a separate line of work. Making one is instant and free, because it is just a new label on a commit. <code>main</code> is the branch your team treats as "the working version".</li>
           <li><code>HEAD</code> means "where you are now": usually the branch you have checked out.</li>
           <li>Branches you create are <strong>local</strong> until you push them. Your teammates can't see them yet.</li>
           <li>A <strong>pull request (PR)</strong> is GitHub's way of saying "please review my branch and merge it into <code>main</code>".</li>
@@ -101,6 +183,28 @@
           <strong><code>main</code> or <code>master</code>?</strong> Same idea, different name. Repositories created on
           GitHub today call the default branch <code>main</code>; older ones call it <code>master</code>. This guide says
           <code>main</code>. Run <code>git branch</code> to see what yours is called, and use that name in every command.
+        </div>
+
+        <h4>Try it for two minutes: a repository of your own</h4>
+        <p>Nothing here touches GitHub or your project. Make a practice folder and watch the pieces appear:</p>
+<pre><code>git init -b main practice        # create a new repository in a folder named practice
+cd practice
+echo "# My notes" &gt; notes.md       # make a file
+git status                       # notes.md is "untracked": Git sees it but isn't recording it
+git add notes.md                 # stage it (move it onto the loading dock)
+git commit -m "Add notes"        # snapshot it (your first commit)
+echo "second line" &gt;&gt; notes.md    # change the file
+git diff                         # shows exactly which line changed
+git commit -am "Add a second line"   # stage and commit changes to tracked files in one step
+git log --oneline                # your history: two commits, newest first</code></pre>
+        <p>
+          <code>git log --oneline</code> prints one line per commit, newest first. Run <code>git status</code> after every command and
+          read what it says: it tells you what Git thinks is going on, and what to do next. When you are done, delete the
+          <code>practice</code> folder; it was only for learning.
+        </p>
+        <div class="notice">
+          <strong>First time using Git on this computer?</strong> Git needs your name and email to label your commits. Run the two
+          <code>git config --global</code> commands in the <a href="sprint-1.html#install">Sprint 1 guide</a> once.
         </div>
       </section>
 
@@ -391,16 +495,34 @@ git push</code></pre>
           cherry-pick does. Open it, choose <strong>Levels</strong>, and work through the <strong>Main</strong> tab in order, then the
           <strong>Remote</strong> tab. This table says where each group of levels matches this guide:
         </p>
+        <div class="notice">
+          <strong>Quiz 9 asks you to complete this activity.</strong> The assignment on eCampus is the official version and
+          <strong>no points are given unless you follow its directions exactly</strong>, so reread it before you submit. In
+          summary:
+          <ul>
+            <li>Complete the <strong>first 10 levels of the Main tab</strong> and the <strong>first 8 levels of the Remote tab</strong>. The tables below show which levels those are.</li>
+            <li>Take <strong>one screenshot of your final progress</strong> and paste it into a document. It must show <strong>(1)</strong> the browser's address bar with the URL, <strong>(2)</strong> the image showing your completed levels, and <strong>(3)</strong> something that identifies you, such as your operating system account or your email tab.</li>
+            <li>Each additional level you finish beyond those earns bonus credit (0.5 point each, up to 8 points), so completing all of them is worth doing.</li>
+          </ul>
+        </div>
+        <h4>Taking the screenshot</h4>
+        <ol class="step-list">
+          <li>Finish the levels. Then click <strong>Levels</strong> so the level picker shows your progress, switching between the <strong>Main</strong> and <strong>Remote</strong> tabs as needed.</li>
+          <li>Make the browser window show the <strong>address bar</strong>. Don't crop it out, and don't use a screenshot of only the page.</li>
+          <li>Make sure something that identifies you is in the picture: the account name in your taskbar, your OS user menu, or an open email tab. Show only what is needed to identify you. <strong>Never include a password or other private information.</strong></li>
+          <li>Take the screenshot (<strong>Win+Shift+S</strong> on Windows, <strong>Cmd+Shift+4</strong> on macOS), paste it into your document, and zoom in to check that the URL and your name are readable.</li>
+        </ol>
+        <p>If your screenshot needs both tabs to show everything, ask your instructor whether to submit one image or two <em>before</em> you submit, not after.</p>
         <table>
           <thead>
             <tr><th>Levels (Main tab)</th><th>You practice</th><th>In this guide</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Introduction Sequence</strong> (4): commits, branching, merging, rebase</td><td>The core: <code>git commit</code>, <code>git branch</code>, <code>git merge</code>, <code>git rebase</code></td><td>Sections 1 and 2</td></tr>
-            <tr><td><strong>Ramping Up</strong> (4): detach HEAD, relative refs <code>^</code> and <code>~</code>, reversing changes</td><td>Moving around the history, <code>reset</code> versus <code>revert</code></td><td>Sections 6 and 7</td></tr>
-            <tr><td><strong>Moving and Staging Work</strong> (4): cherry-pick, interactive rebase, the staging area, <code>git restore</code></td><td>Moving commits, choosing exactly what goes in a commit, undoing edits</td><td>Sections 1, 6, and 7</td></tr>
-            <tr><td><strong>A Mixed Bag</strong> (5): grabbing one commit, juggling commits, tags, <code>git describe</code></td><td>Tidying history, naming milestones</td><td>Section 7</td></tr>
-            <tr><td><strong>Advanced Topics</strong> (3): rebasing many branches, multiple parents, branch spaghetti</td><td>Harder history surgery</td><td>Sections 3 and 7 (optional)</td></tr>
+            <tr><td><strong>Introduction Sequence</strong> (levels 1 to 4): commits, branching, merging, rebase. <em>Required.</em></td><td>The core: <code>git commit</code>, <code>git branch</code>, <code>git merge</code>, <code>git rebase</code></td><td>Sections 1 and 2</td></tr>
+            <tr><td><strong>Ramping Up</strong> (levels 5 to 8): detach HEAD, relative refs <code>^</code> and <code>~</code>, reversing changes. <em>Required.</em></td><td>Moving around the history, <code>reset</code> versus <code>revert</code></td><td>Sections 6 and 7</td></tr>
+            <tr><td><strong>Moving and Staging Work</strong> (levels 9 to 12): cherry-pick, interactive rebase, the staging area, <code>git restore</code>. <em>Levels 9 and 10 (cherry-pick, interactive rebase) are required; 11 and 12 are bonus.</em></td><td>Moving commits, choosing exactly what goes in a commit, undoing edits</td><td>Sections 1, 6, and 7</td></tr>
+            <tr><td><strong>A Mixed Bag</strong> (levels 13 to 17): grabbing one commit, juggling commits, tags, <code>git describe</code>. <em>Bonus.</em></td><td>Tidying history, naming milestones</td><td>Section 7</td></tr>
+            <tr><td><strong>Advanced Topics</strong> (levels 18 to 20): rebasing many branches, multiple parents, branch spaghetti. <em>Bonus.</em></td><td>Harder history surgery</td><td>Sections 3 and 7 (optional)</td></tr>
           </tbody>
         </table>
         <table>
@@ -408,8 +530,8 @@ git push</code></pre>
             <tr><th>Levels (Remote tab)</th><th>You practice</th><th>In this guide</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Push &amp; Pull: Git Remotes</strong> (8): clone, remote branches, fetch, pull, faking teamwork, push, diverged history, locked main</td><td>Working with a shared copy, and why a push is rejected or blocked</td><td>Section 8</td></tr>
-            <tr><td><strong>To Origin And Beyond</strong> (8): advanced remote work, tracking, push and fetch arguments</td><td>Fine control over what goes where</td><td>Section 8 (optional)</td></tr>
+            <tr><td><strong>Push &amp; Pull: Git Remotes</strong> (levels 1 to 8): clone, remote branches, fetch, pull, faking teamwork, push, diverged history, locked main. <em>Required.</em></td><td>Working with a shared copy, and why a push is rejected or blocked</td><td>Section 8</td></tr>
+            <tr><td><strong>To Origin And Beyond</strong> (8 more levels): advanced remote work, tracking, push and fetch arguments. <em>Bonus.</em></td><td>Fine control over what goes where</td><td>Section 8 (optional)</td></tr>
           </tbody>
         </table>
         <ul>
