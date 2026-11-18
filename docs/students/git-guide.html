@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A beginner's guide to Git and GitHub for team projects: the command-line workflow, the same workflow in VS Code's Source Control, undoing mistakes, and a map to the Learn Git Branching exercises." />
+  <title>Git and GitHub Help | CS 330 Student Guide</title>
+  <link rel="stylesheet" href="../site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <img src="../WVULOGOGOLD.png" alt="West Virginia University Flying WV logo" />
+      <div>
+        <h1>Git and GitHub Help</h1>
+        <p>CS 330 student guide: work with your team without breaking main.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside class="sidebar">
+      <h2>Student Guide</h2>
+      <ul>
+        <li><a href="../index.html">All guides</a></li>
+        <li><a href="sprint-1.html">Sprint 1: Frontend and your team repo</a></li>
+        <li><a href="sprint-2.html">Sprint 2: Backend and login</a></li>
+        <li><a href="sprint-3.html">Sprint 3: Connect to an API</a></li>
+        <li><a href="sprint-4.html">Sprint 4: Deploy to the cloud</a></li>
+        <li>
+          <a class="active-link" aria-current="page" href="git-guide.html">Git and GitHub help</a>
+          <ul class="sub">
+            <li><a href="#model">1. The mental model</a></li>
+            <li><a href="#flow">2. The daily workflow</a></li>
+            <li><a href="#notes">3. Notes on the workflow</a></li>
+            <li><a href="#vscode">4. The same in VS Code</a></li>
+            <li><a href="#conflicts">5. Merge conflicts</a></li>
+            <li><a href="#undo">6. Undoing things</a></li>
+            <li><a href="#moving">7. Moving commits around</a></li>
+            <li><a href="#remotes">8. Remotes and pull requests</a></li>
+            <li><a href="#cheat">9. Cheat sheet</a></li>
+            <li><a href="#practice">10. Practice: Learn Git Branching</a></li>
+            <li><a href="#trouble">11. When something breaks</a></li>
+          </ul>
+        </li>
+        <li><a href="github-workflows.html">Writing GitHub workflows</a></li>
+        <li><a href="sonarqube.html">Testing with SonarQube Cloud</a></li>
+        <li><a href="ai-guide.html">Developing with AI</a></li>
+        <li><a href="../glossary.html">Glossary</a></li>
+      </ul>
+      <h2>Project Links</h2>
+      <ul>
+        <li><a href="https://learngitbranching.js.org/">Learn Git Branching (practice)</a></li>
+        <li><a href="https://git-scm.com/doc">Official Git documentation</a></li>
+        <li><a href="https://github.com/tdevine1/xPostForecast">Reference app on GitHub</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h2>Git is your team's safety net, if you use it the same way every time</h2>
+        <p>
+          Git remembers every version of your project and lets several people change it at once without overwriting
+          each other. It only works smoothly when everyone follows the same routine. This guide gives you that routine
+          twice: with <strong>commands in the terminal</strong>, and with <strong>VS Code's built-in Source Control</strong>
+          buttons. Both do exactly the same thing, so use whichever you like, and mix them freely.
+        </p>
+        <div class="notice">
+          <strong>Before you start:</strong> Git is installed and your name and email are set, and your team has a
+          repository you can clone. All of that is in the <a href="sprint-1.html">Sprint 1 guide</a>. New words are in
+          the <a href="../glossary.html">Glossary</a>.
+        </div>
+        <div class="notice">
+          <strong>The golden rule:</strong> never write code directly on <code>main</code>. Always work on your own
+          branch, and bring it into <code>main</code> only when it works.
+        </div>
+      </section>
+
+      <section class="section" id="model">
+        <h3>1. The mental model</h3>
+        <p>Almost every Git confusion goes away once you can picture where your work is. There are four places:</p>
+        <table>
+          <thead>
+            <tr><th>Place</th><th>What it is</th><th>You move work in with</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Working directory</strong></td><td>The files you see and edit.</td><td>Typing code</td></tr>
+            <tr><td><strong>Staging area</strong></td><td>A loading dock: the changes chosen for the <em>next</em> commit.</td><td><code>git add</code> (the <strong>+</strong> in VS Code)</td></tr>
+            <tr><td><strong>Local repository</strong></td><td>Your permanent history on your computer: commits and branches.</td><td><code>git commit</code></td></tr>
+            <tr><td><strong>Remote</strong> (<code>origin</code>)</td><td>The copy on GitHub that your team shares.</td><td><code>git push</code> up, <code>git fetch</code> / <code>git pull</code> down</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li>A <strong>commit</strong> is a snapshot of the whole project, with a message saying why you made it. Commits form a chain: each one points to the one before.</li>
+          <li>A <strong>branch</strong> is just a movable label on one commit. Making a branch is instant and free. <code>main</code> is the branch your team treats as "the working version".</li>
+          <li><code>HEAD</code> means "where you are now": usually the branch you have checked out.</li>
+          <li>Branches you create are <strong>local</strong> until you push them. Your teammates can't see them yet.</li>
+          <li>A <strong>pull request (PR)</strong> is GitHub's way of saying "please review my branch and merge it into <code>main</code>".</li>
+        </ul>
+        <div class="notice">
+          <strong><code>main</code> or <code>master</code>?</strong> Same idea, different name. Repositories created on
+          GitHub today call the default branch <code>main</code>; older ones call it <code>master</code>. This guide says
+          <code>main</code>. Run <code>git branch</code> to see what yours is called, and use that name in every command.
+        </div>
+      </section>
+
+      <section class="section" id="flow">
+        <h3>2. The daily workflow</h3>
+        <p>Follow these steps every time you start a piece of work. Run them in the VS Code terminal (<strong>Ctrl+\`</strong>) in your project folder.</p>
+
+        <h4>A. Start from an up-to-date main</h4>
+<pre><code>git checkout main        # go to the main branch (or: git switch main)
+git pull                 # get your teammates' latest work</code></pre>
+        <p>Once your local <code>main</code> is up to date, <strong>do not change it directly</strong>.</p>
+
+        <h4>B. Make your own branch and write code</h4>
+<pre><code>git checkout -b &lt;branch-name&gt;     # create the branch and switch to it (or: git switch -c &lt;branch-name&gt;)</code></pre>
+        <p>
+          Name it for the job, such as <code>feature/login-page</code> or <code>fix/map-colors</code>. Both <code>main</code> and your
+          new branch exist only on your computer so far. Now write code. Save often, and commit small, finished pieces:
+        </p>
+<pre><code>git status                         # what changed?
+git add &lt;file&gt;                      # stage a file (or: git add .  for everything)
+git commit -m "feat: add login form"   # snapshot what you staged, with a message</code></pre>
+
+        <h4>C. Keep up with your team (rebase)</h4>
+        <p>
+          Your teammates keep merging into <code>main</code> while you work. Every so often, bring their changes under
+          your work. This is called <strong>rebasing</strong>: it replays your commits on top of the newest <code>main</code>.
+        </p>
+<pre><code>git checkout main
+git pull
+git checkout &lt;branch-name&gt;
+git rebase main</code></pre>
+        <p>
+          <strong>Commit or stash first.</strong> If you have uncommitted edits, Git can refuse even the first
+          <code>git checkout main</code> (it won't overwrite your work) and will always refuse to rebase. Either commit them, or
+          <strong>stash</strong> them (set them aside) before you start, and bring them back at the end:
+        </p>
+<pre><code>git stash                  # set your uncommitted edits aside
+git checkout main
+git pull
+git checkout &lt;branch-name&gt;
+git rebase main
+git stash pop              # bring your edits back</code></pre>
+
+        <h4>D. Sanity check before you share</h4>
+        <p>When your branch is finished, make sure it contains your work and nothing else:</p>
+<pre><code>git status                        # nothing unexpected? everything committed?
+git checkout main
+git pull
+git checkout &lt;branch-name&gt;
+git rebase main                   # on top of the very latest main
+git diff main --name-only         # the ONLY files listed should be ones you meant to change</code></pre>
+        <p>If a file appears that you didn't mean to touch, stop and fix it before going on (see <a href="#undo">undoing things</a>).</p>
+
+        <h4>E. Finish: choose one of two ways</h4>
+        <div class="grid-two">
+          <div class="card">
+            <h4>Option 1: Pull request (recommended)</h4>
+<pre><code>git push -u origin &lt;branch-name&gt;</code></pre>
+            <p>Then on GitHub click <strong>Compare &amp; pull request</strong>, describe the change, and ask a teammate to review and merge. This is what the <a href="sprint-1.html#pr">Sprint 1 guide</a> practices. It keeps a second pair of eyes on <code>main</code>.</p>
+          </div>
+          <div class="card">
+            <h4>Option 2: Merge locally, then push main</h4>
+<pre><code>git checkout main
+git merge --no-ff &lt;branch-name&gt;
+git push origin main</code></pre>
+            <p>Use this only if your team or instructor says so. <code>--no-ff</code> always records a merge commit, so the history shows which commits belonged to your feature. It <strong>fails if <code>main</code> is protected</strong> (see "Locked main" in <a href="#remotes">section 8</a>); then use Option 1.</p>
+          </div>
+        </div>
+        <p>Afterwards, tidy up and start the next job from step A:</p>
+<pre><code>git checkout main
+git pull
+git branch -d &lt;branch-name&gt;                 # delete the finished local branch
+git push origin --delete &lt;branch-name&gt;      # delete it on GitHub too (if you pushed it)</code></pre>
+      </section>
+
+      <section class="section" id="notes">
+        <h3>3. Notes on the workflow</h3>
+        <p>The routine above is the one most professional teams use. These details trip people up:</p>
+        <ul>
+          <li><strong><code>git add</code> comes before <code>git commit</code>.</strong> A commit only includes what you staged. Quote the message: <code>git commit -m "your message"</code>. <code>git commit -am "message"</code> stages changes to files Git already tracks, but never new files.</li>
+          <li><strong>Commit before you rebase, and before you switch branches.</strong> A rebase needs a clean working directory, and switching branches can fail when your uncommitted edits would be overwritten. Stashing is the fallback for work you are not ready to commit.</li>
+          <li><strong>Only rebase a branch that is just yours.</strong> Rebasing rewrites your commits. If you already pushed the branch and others use it, rebasing forces everyone else to untangle it. If you must rebase a branch you pushed (for example, your own pull request), update GitHub with <code>git push --force-with-lease</code>, which refuses to overwrite work you haven't seen. When in doubt, use <code>git merge main</code> on the branch instead: it is always safe.</li>
+          <li><strong>A rebase can stop with conflicts.</strong> Git pauses, you fix the files (section 5), then <code>git add</code> them and run <code>git rebase --continue</code>. To give up and go back to how things were: <code>git rebase --abort</code>.</li>
+          <li><strong>Use <code>git pull --ff-only</code> on <code>main</code> if you like safety.</strong> It stops instead of creating an accidental merge commit when your local <code>main</code> has stray commits.</li>
+          <li><strong><code>git checkout</code> versus <code>git switch</code>.</strong> <code>checkout</code> does many jobs; newer Git splits them: <code>git switch</code> changes branches and <code>git restore</code> restores files. Use either. The two forms are interchangeable for branches.</li>
+          <li><strong>Pushing straight to <code>main</code> skips review.</strong> That is fine for a tiny solo project and risky for a team. Many teams, and GitHub itself, can <em>protect</em> <code>main</code> so only pull requests may change it.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="vscode">
+        <h3>4. The same workflow in VS Code</h3>
+        <p>
+          VS Code has Git built in; no extension is needed. Click the <strong>Source Control</strong> icon in the left bar
+          (the branch symbol), or press <strong>Ctrl+Shift+G</strong>. The <strong>branch name in the lower-left corner</strong>
+          is a button for switching and creating branches. Press <strong>Ctrl+Shift+P</strong> to open the Command Palette and
+          type <code>Git:</code> to see every Git command.
+        </p>
+        <table>
+          <thead>
+            <tr><th>You want to&hellip;</th><th>Terminal</th><th>VS Code</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>See what changed</td><td><code>git status</code></td><td>The list under <strong>Changes</strong> in Source Control. Click a file to see a side-by-side comparison.</td></tr>
+            <tr><td>Switch to <code>main</code></td><td><code>git checkout main</code></td><td>Click the branch name (lower-left) &rarr; choose <code>main</code>.</td></tr>
+            <tr><td>Get teammates' work</td><td><code>git pull</code></td><td>Source Control <strong>&hellip;</strong> menu &rarr; <strong>Pull</strong> (or <strong>Sync Changes</strong>, which pulls and pushes).</td></tr>
+            <tr><td>Create a branch</td><td><code>git checkout -b feature/x</code></td><td>Click the branch name &rarr; <strong>Create new branch&hellip;</strong>, type the name, Enter.</td></tr>
+            <tr><td>Stage a file</td><td><code>git add file</code></td><td>Click the <strong>+</strong> next to the file. The <strong>+</strong> next to <em>Changes</em> stages everything.</td></tr>
+            <tr><td>Unstage a file</td><td><code>git restore --staged file</code></td><td>Click the <strong>&minus;</strong> next to the file under <em>Staged Changes</em>.</td></tr>
+            <tr><td>Commit</td><td><code>git commit -m "msg"</code></td><td>Type the message in the box and click <strong>Commit</strong> (or press <strong>Ctrl+Enter</strong>).</td></tr>
+            <tr><td>Push a new branch</td><td><code>git push -u origin feature/x</code></td><td>Click <strong>Publish Branch</strong>. Later pushes: <strong>Sync Changes</strong> or <strong>Push</strong>.</td></tr>
+            <tr><td>Rebase onto <code>main</code></td><td><code>git rebase main</code></td><td>Command Palette &rarr; <strong>Git: Rebase Branch&hellip;</strong> &rarr; choose <code>main</code>.</td></tr>
+            <tr><td>Merge a branch</td><td><code>git merge --no-ff feature/x</code></td><td>Switch to <code>main</code>, then Command Palette &rarr; <strong>Git: Merge Branch&hellip;</strong> &rarr; choose the branch. (This button does a normal merge; use the terminal if you want <code>--no-ff</code> every time.)</td></tr>
+            <tr><td>Stash / bring back</td><td><code>git stash</code> / <code>git stash pop</code></td><td>Command Palette &rarr; <strong>Git: Stash</strong> / <strong>Git: Pop Stash&hellip;</strong></td></tr>
+            <tr><td>Discard a file's edits</td><td><code>git restore file</code></td><td>Click the curved-arrow <strong>Discard Changes</strong> icon next to the file. <strong>This cannot be undone.</strong></td></tr>
+            <tr><td>Undo the last commit (keep the work)</td><td><code>git reset --soft HEAD~1</code></td><td>Command Palette &rarr; <strong>Git: Undo Last Commit</strong>.</td></tr>
+            <tr><td>Delete a finished branch</td><td><code>git branch -d feature/x</code></td><td>Command Palette &rarr; <strong>Git: Delete Branch&hellip;</strong></td></tr>
+            <tr><td>See the history</td><td><code>git log --oneline --graph</code></td><td>Source Control &rarr; the <strong>Graph</strong> section, or the <strong>Timeline</strong> panel in the Explorer for one file.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <strong>Opening the pull request.</strong> After you <em>Publish Branch</em>, VS Code often shows a link to create
+          one; if not, open your repository on GitHub, where a yellow banner offers <strong>Compare &amp; pull request</strong>.
+          (The optional <em>GitHub Pull Requests</em> extension can do this inside VS Code, but you don't need it.)
+        </p>
+        <div class="notice">
+          <strong>Which should you use?</strong> The buttons are easiest for the everyday loop (stage, commit, sync). The
+          terminal is clearer for anything unusual (rebase, stash, undo) because you can see exactly what Git says. Whatever you
+          click, VS Code runs the same Git commands, and you can see them in <strong>Output &rarr; Git</strong>. Beginners
+          often learn fastest by doing the same thing both ways once.
+        </div>
+        <div class="danger-note">
+          <strong>"Sync Changes" is a pull <em>and</em> a push.</strong> It is handy, but on <code>main</code> it will also try to push your
+          local commits, and by default it merges rather than rebases. Switch to your own branch first, and read the
+          message before you confirm.
+        </div>
+      </section>
+
+      <section class="section" id="conflicts">
+        <h3>5. Merge conflicts</h3>
+        <p>
+          A <strong>conflict</strong> happens when you and a teammate changed the same lines. Git can't guess whose version
+          wins, so it stops and asks you. It is normal, not a disaster. Git marks the file like this:
+        </p>
+<pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+const title = 'Weather Map';          // the version on the branch you are on
+=======
+const title = 'Temperature Map';      // the version coming in
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/rename</code></pre>
+        <ol class="step-list">
+          <li><strong>Find the conflicted files:</strong> <code>git status</code> lists them as <em>both modified</em>. In VS Code they show a <strong>!</strong> and sit under <strong>Merge Changes</strong>.</li>
+          <li><strong>Decide what the final text should be.</strong> Keep one side, the other, or a mix. Talk to your teammate if you are unsure.</li>
+          <li><strong>Edit the file</strong> so no <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, or <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> lines remain. In VS Code, click <strong>Accept Current Change</strong>, <strong>Accept Incoming Change</strong>, or <strong>Accept Both Changes</strong> above the conflict, or use the <strong>Resolve in Merge Editor</strong> button for a three-pane view, then <strong>Complete Merge</strong>.</li>
+          <li><strong>Test it.</strong> Run the app and <code>npm test</code>. A conflict resolved wrongly still compiles sometimes.</li>
+          <li><strong>Tell Git it is resolved:</strong>
+<pre><code>git add &lt;file&gt;
+git rebase --continue      # if you were rebasing
+# or: git commit           # if you were merging</code></pre>
+          </li>
+        </ol>
+        <p>Changed your mind halfway? <code>git rebase --abort</code> or <code>git merge --abort</code> puts everything back as it was. To have fewer conflicts: commit small, pull often, and tell teammates which files you are editing.</p>
+      </section>
+
+      <section class="section" id="undo">
+        <h3>6. Undoing things</h3>
+        <p>Git makes it hard to lose committed work, so most mistakes are fixable. Match your situation:</p>
+        <table>
+          <thead>
+            <tr><th>Situation</th><th>Command</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Staged the wrong file (not committed)</td><td><code>git restore --staged &lt;file&gt;</code></td><td>Moves it back out of the staging area. Your edits stay.</td></tr>
+            <tr><td>Want to throw away edits to a file</td><td><code>git restore &lt;file&gt;</code></td><td>Resets the file to the last commit. <strong>The edits are gone for good.</strong></td></tr>
+            <tr><td>Typo in the last commit message, or forgot a file</td><td><code>git commit --amend</code></td><td>Rewrites the last commit. Only before you push it.</td></tr>
+            <tr><td>Undo the last commit but keep the work</td><td><code>git reset --soft HEAD~1</code></td><td>Removes the commit; the changes stay staged. Only before you push it.</td></tr>
+            <tr><td>Undo a commit that is already pushed</td><td><code>git revert &lt;commit&gt;</code></td><td>Adds a <em>new</em> commit that cancels the old one. Safe for shared history.</td></tr>
+            <tr><td>Set unfinished work aside</td><td><code>git stash</code> and <code>git stash pop</code></td><td>Saves your edits, gives a clean directory, restores them later.</td></tr>
+            <tr><td>Committed on <code>main</code> by mistake (not pushed)</td><td><code>git branch &lt;new-branch&gt;</code>, then <code>git reset --hard origin/main</code></td><td>Saves the commits on a new branch, then puts <code>main</code> back. Check <code>git status</code> first.</td></tr>
+            <tr><td>"I lost a commit!"</td><td><code>git reflog</code></td><td>A log of everywhere <code>HEAD</code> has been. Find the commit and <code>git switch -c rescue &lt;hash&gt;</code>.</td></tr>
+          </tbody>
+        </table>
+        <div class="danger-note">
+          <strong>Two commands to treat with respect.</strong> <code>git reset --hard</code> and <code>git restore &lt;file&gt;</code> discard
+          uncommitted work with no undo. And <strong>never rewrite history that others have already pulled</strong>
+          (<code>--amend</code>, <code>reset</code>, <code>rebase</code> on a shared branch): use <code>git revert</code> instead.
+        </div>
+        <p>
+          <strong>Committed a secret (a password, key, or <code>.env</code>)?</strong> Deleting it in a later commit does
+          not remove it from history. Treat the secret as public: change it at its source first, then ask your instructor
+          how to clean the repository. Prevent it with a correct <code>.gitignore</code> and by checking
+          <code>git status</code> before every <code>git add</code> (see the <a href="sprint-1.html#env">Sprint 1 guide</a>).
+        </p>
+      </section>
+
+      <section class="section" id="moving">
+        <h3>7. Moving commits around</h3>
+        <p>You won't need these every day, but they appear in real projects and in the practice exercises (section 10).</p>
+        <table>
+          <thead>
+            <tr><th>Idea</th><th>Command</th><th>When it helps</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Relative references</strong></td><td><code>HEAD~1</code> (one commit back), <code>HEAD~3</code>, <code>main^</code> (parent of main)</td><td>Name a commit by its position instead of its long ID. <code>git log --oneline</code> shows the IDs.</td></tr>
+            <tr><td><strong>Detached HEAD</strong></td><td><code>git checkout &lt;commit&gt;</code></td><td>Look around at an old version. You are on no branch, so new commits can get lost. Get back with <code>git switch main</code>, or keep your work with <code>git switch -c new-branch</code>.</td></tr>
+            <tr><td><strong>Move a branch label</strong></td><td><code>git branch -f main HEAD~3</code></td><td>Point a branch at a different commit.</td></tr>
+            <tr><td><strong>Cherry-pick</strong></td><td><code>git cherry-pick &lt;commit&gt;</code></td><td>Copy one commit from another branch onto yours, without merging the whole branch.</td></tr>
+            <tr><td><strong>Interactive rebase</strong></td><td><code>git rebase -i HEAD~4</code></td><td>Clean up your <em>unpushed</em> commits before sharing: reorder, <code>reword</code>, <code>squash</code> several into one, or <code>drop</code> one.</td></tr>
+            <tr><td><strong>Tags</strong></td><td><code>git tag v1.0 &lt;commit&gt;</code>, <code>git describe</code></td><td>A permanent, readable name for a milestone (such as the version you hand in). A tag never moves, unlike a branch.</td></tr>
+            <tr><td><strong>Merge vs rebase</strong></td><td><code>git merge</code> / <code>git rebase</code></td><td>Merge keeps history as it happened and adds a merge commit. Rebase replays your commits for a straight line. Both combine work; choose by your team's rule.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="remotes">
+        <h3>8. Remotes and pull requests</h3>
+        <p>
+          A <strong>remote</strong> is another copy of the repository, almost always the one on GitHub, nicknamed
+          <code>origin</code>. Your computer also keeps a read-only note of where each remote's branches were the last time you
+          looked, named <code>origin/main</code> (a <em>remote-tracking branch</em>).
+        </p>
+        <table>
+          <thead>
+            <tr><th>Command</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>git clone &lt;url&gt;</code></td><td>Copies a repository from GitHub to your computer and sets <code>origin</code>.</td></tr>
+            <tr><td><code>git remote -v</code></td><td>Shows which address <code>origin</code> points to.</td></tr>
+            <tr><td><code>git fetch</code></td><td>Downloads new commits and updates <code>origin/main</code>, but <strong>does not change your branches or files</strong>. Always safe.</td></tr>
+            <tr><td><code>git pull</code></td><td>A fetch followed by a merge into your current branch. <code>git pull --rebase</code> rebases instead.</td></tr>
+            <tr><td><code>git push</code></td><td>Uploads your branch's commits. The first time use <code>git push -u origin &lt;branch&gt;</code>, which also remembers the link.</td></tr>
+            <tr><td><code>git branch -vv</code></td><td>Shows each local branch, the remote branch it tracks, and whether you are ahead or behind.</td></tr>
+          </tbody>
+        </table>
+        <h4>"Diverged history" and rejected pushes</h4>
+        <p>
+          If a teammate pushed while you were working, <code>git push</code> is rejected (<em>fetch first</em>, <em>non-fast-forward</em>, or <em>failed
+          to push some refs</em>). Git is protecting their work. Fix it by bringing their commits in, then pushing again:
+        </p>
+<pre><code>git fetch
+git rebase origin/main     # or: git pull --rebase   (on your own branch)
+git push</code></pre>
+        <h4>"Locked main": why you can't push to it</h4>
+        <p>
+          A repository admin can <strong>protect</strong> <code>main</code> so that nobody pushes to it directly, and every
+          change must arrive through a reviewed pull request. If <code>git push origin main</code> says the branch is protected, that is working as
+          intended. Push your branch, open a pull request, and let a teammate review and merge it. This is also why only one
+          teammate should be <strong>Admin</strong> and the rest have <strong>Write</strong> access (see the
+          <a href="sprint-1.html#repo">Sprint 1 guide</a>).
+        </p>
+        <h4>A good pull request</h4>
+        <ul class="checklist">
+          <li>One purpose, small enough to review in a few minutes.</li>
+          <li>A title and short description that say <em>what</em> and <em>why</em>.</li>
+          <li>Your branch is rebased or merged up to date with <code>main</code>, and tests pass (the CI check turns green).</li>
+          <li>You re-read your own diff first, looking for debugging leftovers and anything secret.</li>
+          <li>The reviewer is a different teammate. Fix their comments with more commits on the same branch.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="cheat">
+        <h3>9. Cheat sheet</h3>
+        <table>
+          <thead>
+            <tr><th>Do this</th><th>Command</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Where am I, and what changed?</td><td><code>git status</code></td></tr>
+            <tr><td>Show the history as a picture</td><td><code>git log --oneline --graph --decorate --all</code></td></tr>
+            <tr><td>List branches (local, with tracking)</td><td><code>git branch -vv</code></td></tr>
+            <tr><td>What did I change, line by line?</td><td><code>git diff</code> (unstaged), <code>git diff --staged</code> (staged)</td></tr>
+            <tr><td>Which files differ from main?</td><td><code>git diff main --name-only</code></td></tr>
+            <tr><td>Start work</td><td><code>git checkout main</code> &rarr; <code>git pull</code> &rarr; <code>git checkout -b feature/x</code></td></tr>
+            <tr><td>Save work</td><td><code>git add &lt;files&gt;</code> &rarr; <code>git commit -m "msg"</code></td></tr>
+            <tr><td>Catch up with main</td><td><code>git checkout main</code> &rarr; <code>git pull</code> &rarr; <code>git checkout feature/x</code> &rarr; <code>git rebase main</code></td></tr>
+            <tr><td>Share a branch</td><td><code>git push -u origin feature/x</code>, then open a pull request</td></tr>
+            <tr><td>Finish locally (if allowed)</td><td><code>git checkout main</code> &rarr; <code>git merge --no-ff feature/x</code> &rarr; <code>git push origin main</code></td></tr>
+            <tr><td>Set work aside / bring it back</td><td><code>git stash</code> / <code>git stash pop</code></td></tr>
+            <tr><td>Abort a bad rebase or merge</td><td><code>git rebase --abort</code> / <code>git merge --abort</code></td></tr>
+            <tr><td>Clean up a finished branch</td><td><code>git branch -d feature/x</code>, <code>git push origin --delete feature/x</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="practice">
+        <h3>10. Practice: Learn Git Branching</h3>
+        <p>
+          Reading about Git only goes so far. <a href="https://learngitbranching.js.org/">Learn Git Branching</a> is a free, visual,
+          interactive site that draws the commit graph as you type real Git commands, so you can <em>see</em> what a rebase or a
+          cherry-pick does. Open it, choose <strong>Levels</strong>, and work through the <strong>Main</strong> tab in order, then the
+          <strong>Remote</strong> tab. This table says where each group of levels matches this guide:
+        </p>
+        <table>
+          <thead>
+            <tr><th>Levels (Main tab)</th><th>You practice</th><th>In this guide</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Introduction Sequence</strong> (4): commits, branching, merging, rebase</td><td>The core: <code>git commit</code>, <code>git branch</code>, <code>git merge</code>, <code>git rebase</code></td><td>Sections 1 and 2</td></tr>
+            <tr><td><strong>Ramping Up</strong> (4): detach HEAD, relative refs <code>^</code> and <code>~</code>, reversing changes</td><td>Moving around the history, <code>reset</code> versus <code>revert</code></td><td>Sections 6 and 7</td></tr>
+            <tr><td><strong>Moving and Staging Work</strong> (4): cherry-pick, interactive rebase, the staging area, <code>git restore</code></td><td>Moving commits, choosing exactly what goes in a commit, undoing edits</td><td>Sections 1, 6, and 7</td></tr>
+            <tr><td><strong>A Mixed Bag</strong> (5): grabbing one commit, juggling commits, tags, <code>git describe</code></td><td>Tidying history, naming milestones</td><td>Section 7</td></tr>
+            <tr><td><strong>Advanced Topics</strong> (3): rebasing many branches, multiple parents, branch spaghetti</td><td>Harder history surgery</td><td>Sections 3 and 7 (optional)</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <thead>
+            <tr><th>Levels (Remote tab)</th><th>You practice</th><th>In this guide</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Push &amp; Pull: Git Remotes</strong> (8): clone, remote branches, fetch, pull, faking teamwork, push, diverged history, locked main</td><td>Working with a shared copy, and why a push is rejected or blocked</td><td>Section 8</td></tr>
+            <tr><td><strong>To Origin And Beyond</strong> (8): advanced remote work, tracking, push and fetch arguments</td><td>Fine control over what goes where</td><td>Section 8 (optional)</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li>The game's text and commands match what you type in a real terminal, but it is a <strong>sandbox</strong>: nothing you do there can harm a real repository. Experiment freely and use <strong>Undo</strong> and <strong>Reset</strong>.</li>
+          <li>Type <code>show solution</code> if you are stuck, then try the level again without it.</li>
+          <li>When a level works, try the same idea in a throwaway folder on your own computer: <code>git init practice</code>, make a few commits, and branch, rebase, and cherry-pick for real.</li>
+          <li><strong>Export progress</strong> (the button on the site) saves where you are, in case you switch computers.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="trouble">
+        <h3>11. When something breaks</h3>
+        <table>
+          <thead>
+            <tr><th>What you see</th><th>Likely cause</th><th>What to do</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>fatal: not a git repository</code></td><td>The terminal is in the wrong folder</td><td><code>cd</code> into your project folder (the one that contains <code>.git</code>).</td></tr>
+            <tr><td><code>Please tell me who you are</code></td><td>Git has no name and email yet</td><td>Run the two <code>git config --global</code> commands in the <a href="sprint-1.html#install">Sprint 1 guide</a>.</td></tr>
+            <tr><td><code>error: Your local changes ... would be overwritten by checkout</code>, or <em>cannot rebase: You have unstaged changes</em></td><td>Uncommitted edits are in the way</td><td>Commit them, or <code>git stash</code>, then retry and <code>git stash pop</code> afterwards.</td></tr>
+            <tr><td><code>! [rejected] main -&gt; main (fetch first)</code>, <code>non-fast-forward</code>, or <code>failed to push some refs</code></td><td>A teammate pushed first</td><td><code>git fetch</code>, then <code>git rebase origin/main</code> (or <code>git pull --rebase</code>), then push again.</td></tr>
+            <tr><td><code>protected branch hook declined</code> or <em>changes must be made through a pull request</em></td><td><code>main</code> is protected</td><td>Push your branch and open a pull request.</td></tr>
+            <tr><td><code>You are in 'detached HEAD' state</code></td><td>You checked out a commit, not a branch</td><td>To keep new work: <code>git switch -c new-branch</code>. To leave: <code>git switch main</code>.</td></tr>
+            <tr><td><code>CONFLICT (content): Merge conflict in ...</code></td><td>The same lines changed on both sides</td><td>Section 5. <code>git status</code> shows what is left to fix.</td></tr>
+            <tr><td>You committed on <code>main</code> instead of a branch</td><td>Forgot to branch first</td><td>See "Committed on main by mistake" in section 6.</td></tr>
+            <tr><td>Files you never edited show up in <code>git status</code>, or <em>LF will be replaced by CRLF</em></td><td>Windows and Linux line endings differ</td><td>The warning is harmless. If whole files show as changed, ask for help before committing them.</td></tr>
+            <tr><td><code>.env</code> or <code>node_modules</code> appears under Changes</td><td><code>.gitignore</code> is missing or wrong</td><td>Do not commit. Fix <code>.gitignore</code> first (<a href="sprint-1.html#env">Sprint 1 guide</a>).</td></tr>
+            <tr><td>The push asks for a username and password</td><td>Not signed in to GitHub from this computer</td><td>Sign in through VS Code when it prompts (it opens your browser). GitHub no longer accepts account passwords on the command line.</td></tr>
+            <tr><td>Everything looks wrong and you are scared</td><td>Normal</td><td>Stop. Don't run more commands. <code>git status</code> and <code>git log --oneline --graph --all</code> show where you are, and <code>git reflog</code> remembers everything. Then ask a teammate or your instructor with that output.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Still stuck? Copy the exact message and the output of <code>git status</code>, say what you were trying to do, and ask your team, then your instructor. The
+          <a href="ai-guide.html">AI guide</a> shows how to ask an AI tool for help without pasting secrets.
+        </p>
+        <div class="button-row">
+          <a class="button gold" href="https://learngitbranching.js.org/">Open Learn Git Branching</a>
+          <a class="button" href="sprint-1.html">Sprint 1 guide</a>
+          <a class="button" href="../glossary.html">Glossary</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>West Virginia University · CS 330</p>
+    </div>
+  </footer>
+</body>
+</html>

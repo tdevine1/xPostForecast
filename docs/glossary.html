@@ -38,6 +38,7 @@
         <li><a href="students/sprint-2.html">Sprint 2: Backend and login</a></li>
         <li><a href="students/sprint-3.html">Sprint 3: Connect to an API</a></li>
         <li><a href="students/sprint-4.html">Sprint 4: Deploy to the cloud</a></li>
+        <li><a href="students/git-guide.html">Git and GitHub help</a></li>
         <li><a href="students/ai-guide.html">Developing with AI</a></li>
         <li><a href="students/sonarqube.html">Testing with SonarQube Cloud</a></li>
         <li><a href="students/github-workflows.html">Writing GitHub workflows</a></li>
@@ -106,6 +107,11 @@
           </thead>
           <tbody>
             <tr id="repository"><td><strong>Repository (repo)</strong></td><td>A project folder whose history GitHub remembers.</td><td>Your team's repo.</td></tr>
+            <tr id="commit"><td><strong>Commit</strong></td><td>A saved snapshot of your whole project with a message saying why. Commits form the history that Git can go back to.</td><td><code>git commit -m "msg"</code></td></tr>
+            <tr id="pull-request"><td><strong>Pull request</strong></td><td>A GitHub page that asks teammates to review a branch and merge it into <code>main</code>. It keeps unreviewed code out of <code>main</code>.</td><td><a href="students/git-guide.html#remotes">Git guide</a></td></tr>
+            <tr id="rebase"><td><strong>Rebase</strong></td><td>Replays your commits on top of the newest <code>main</code>, so your branch includes your teammates' latest work. Only do it on a branch that is just yours.</td><td><code>git rebase main</code></td></tr>
+            <tr id="merge-conflict"><td><strong>Merge conflict</strong></td><td>Two people changed the same lines, so Git asks you to choose what the final text should be. Normal, and fixable.</td><td><a href="students/git-guide.html#conflicts">Git guide</a></td></tr>
+            <tr id="stash"><td><strong>Stash</strong></td><td>A shelf for unfinished edits: <code>git stash</code> sets them aside for a clean working folder, and <code>git stash pop</code> brings them back.</td><td><code>git stash</code></td></tr>
             <tr id="branch"><td><strong>Branch</strong></td><td>A separate line of work in a repo. <code>main</code> is the main one; deployments here run from it.</td><td><code>main</code>, <code>sprint-1</code>.</td></tr>
             <tr id="github-actions"><td><strong>GitHub Actions</strong></td><td>GitHub's built-in robot. It runs tasks you describe whenever something happens in the repo, such as a push.</td><td>The <strong>Actions</strong> tab.</td></tr>
             <tr id="workflow"><td><strong>Workflow</strong></td><td>One automated recipe, written as a file in <code>.github/workflows/</code>. A repo can have several.</td><td><code>ci.yml</code>, <code>deploy-backend.yml</code></td></tr>
