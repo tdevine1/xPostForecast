@@ -116,6 +116,7 @@
       <section class="section" id="hello">
         <h3>3. Your first workflow</h3>
         <p>Start tiny so you can see the pieces work. Create <code>.github/workflows/hello.yml</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>.github/workflows/hello.yml</code></p>
 <pre><code>name: Hello                  # the name shown in the Actions tab
 
 on: push                     # run every time someone pushes
@@ -141,6 +142,7 @@ jobs:
           will lint (proofread), test, and build both halves of the app, so you find a mistake in seconds instead of after
           a failed deployment. Create <code>.github/workflows/ci.yml</code>:
         </p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>.github/workflows/ci.yml</code></p>
 <pre><code>name: CI
 
 on:
@@ -242,6 +244,7 @@ jobs:
           This workflow uploads your <code>backend/</code> folder to your Azure App Service whenever backend code changes
           on <code>main</code>. Create <code>.github/workflows/deploy-backend.yml</code>:
         </p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>.github/workflows/deploy-backend.yml</code></p>
 <pre><code>name: Deploy backend (App Service)
 
 on:
@@ -317,6 +320,7 @@ jobs:
           The frontend is built <em>in the workflow</em> and the finished site is uploaded to your Static Web App.
           Create <code>.github/workflows/deploy-frontend.yml</code>:
         </p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>.github/workflows/deploy-frontend.yml</code></p>
 <pre><code>name: Deploy frontend (Static Web Apps)
 
 on:

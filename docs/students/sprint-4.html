@@ -92,6 +92,7 @@
             <tr><td><strong>Database</strong> (MySQL)</td><td>Azure Database for MySQL</td><td>The same database you set up in Sprint 2.</td></tr>
           </tbody>
         </table>
+<p class="code-file"><span class="code-kind">Diagram</span> <span class="code-note">how the pieces connect</span></p>
 <pre><code>  you push to main
         |
         v
@@ -147,6 +148,7 @@
             <strong>Read the port from the environment.</strong> Azure picks the port your server must use and passes it
             in a setting called <code>PORT</code>. A server that always uses one fixed port is never found, and Azure
             reports it as failed to start.
+<p class="code-file"><span class="code-kind">Check or add in</span> <code>backend/server.js</code> <span class="code-note">it may already be there from Sprint 2</span></p>
 <pre><code>const PORT = Number(process.env.PORT) || 5175;   // Azure's port in the cloud, 5175 on your laptop
 app.listen(PORT, () =&gt; console.log(`Server is running on ${PORT}`));</code></pre>
           </li>
@@ -154,6 +156,7 @@ app.listen(PORT, () =&gt; console.log(`Server is running on ${PORT}`));</code></
             <strong>Read every setting from <code>process.env</code>, and fail loudly when one is missing.</strong>
             Your <code>.env</code> file never goes to GitHub or Azure, so the same values are typed into Azure instead
             (section 4). Checking at startup turns a mystery crash into a clear message in the log:
+<p class="code-file"><span class="code-kind">Check or add in</span> <code>backend/server.js</code> <span class="code-note">it may already be there from Sprint 2</span></p>
 <pre><code>const required = ['FRONTEND_URL', 'JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
 const missing = required.filter((name) =&gt; !process.env[name]);
 if (missing.length &gt; 0) {
@@ -164,6 +167,7 @@ if (missing.length &gt; 0) {
           <li>
             <strong>Allow exactly your website, with cookies.</strong> This is CORS. The browser refuses to let one
             address talk to another unless the server says it is allowed.
+<p class="code-file"><span class="code-kind">Check or add in</span> <code>backend/app.js</code> <span class="code-note">it may already be there from Sprint 2</span></p>
 <pre><code>app.use(cors({
   origin: process.env.FRONTEND_URL,   // your Static Web App address, exactly
   credentials: true,                  // allow the login cookie to travel with requests
@@ -173,6 +177,7 @@ if (missing.length &gt; 0) {
             <strong>Make the login cookie work between two addresses.</strong> Browsers only send a cookie from one site
             to another if it is marked <code>SameSite=None</code> and <code>Secure</code>. Keep the relaxed setting for
             your laptop and switch when <code>NODE_ENV</code> is <code>production</code>:
+<p class="code-file"><span class="code-kind">Check or add in</span> <code>backend/config/cookies.js</code> <span class="code-note">it may already be there from Sprint 2</span></p>
 <pre><code>export function authCookieOptions() {
   if (process.env.NODE_ENV === 'production') {
     return { httpOnly: true, secure: true, sameSite: 'none', partitioned: true };
@@ -180,6 +185,7 @@ if (missing.length &gt; 0) {
   return { httpOnly: true, secure: false, sameSite: 'lax' };
 }</code></pre>
             Also tell Express it sits behind Azure's front door, so it knows the request really was HTTPS:
+<p class="code-file"><span class="code-kind">Check or add in</span> <code>backend/app.js</code> <span class="code-note">it may already be there from Sprint 2</span></p>
 <pre><code>if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }</code></pre>
@@ -187,6 +193,7 @@ if (missing.length &gt; 0) {
           <li>
             <strong>Add a health check.</strong> A page that answers without touching the database, so you can ask "is
             the server alive?" and separate that from "is the database working?":
+<p class="code-file"><span class="code-kind">Check or add in</span> <code>backend/app.js</code> <span class="code-note">it may already be there from Sprint 2</span></p>
 <pre><code>app.get('/health', (_req, res) =&gt; {
   res.json({ ok: true, env: process.env.NODE_ENV || 'development' });
 });</code></pre>
@@ -202,6 +209,7 @@ if (missing.length &gt; 0) {
           <li>
             <strong>Take the server's address from a build setting, not from typed-in text.</strong> Vite copies any
             variable starting with <code>VITE_</code> into the finished website while it builds:
+<p class="code-file"><span class="code-kind">Check or add in</span> <code>frontend/src/api.js</code> <span class="code-note">or wherever your frontend creates its axios client</span></p>
 <pre><code>const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_API_URL,
   withCredentials: true,     // send the login cookie with every request
@@ -216,6 +224,7 @@ if (missing.length &gt; 0) {
             looks for a file named <code>map</code>, finds none, and shows a 404, even though React Router knows the page.
             Add <code>frontend/public/staticwebapp.config.json</code> (Vite copies <code>public/</code> into the
             build):
+<p class="code-file"><span class="code-kind">Create file</span> <code>frontend/public/staticwebapp.config.json</code></p>
 <pre><code>{
   "navigationFallback": {
     "rewrite": "/index.html",

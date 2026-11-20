@@ -189,21 +189,25 @@
           SonarQube can't measure coverage itself; it reads a report your test tool produces. In <em>each</em> of
           <code>frontend/</code> and <code>backend/</code>, install the coverage plugin at the <strong>same version as your Vitest</strong>:
         </p>
-        <pre><code>npm ls vitest                              # note the version, for example 5.0.3
+        <p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in frontend/, then again in backend/</span></p>
+<pre><code>npm ls vitest                              # note the version, for example 5.0.3
 npm install --save-dev @vitest/coverage-v8@5.0.3</code></pre>
         <p>Add a script to that folder's <code>package.json</code>:</p>
-        <pre><code>"test:coverage": "vitest run --coverage"</code></pre>
+        <p class="code-file"><span class="code-kind">Add to the "scripts" part of</span> <code>frontend/package.json</code> and <code>backend/package.json</code></p>
+<pre><code>"test:coverage": "vitest run --coverage"</code></pre>
         <p>
           Then tell Vitest what to report on. In <code>frontend/vite.config.js</code>, inside the existing <code>test</code> block:
         </p>
-        <pre><code>coverage: {
+        <p class="code-file"><span class="code-kind">Edit file</span> <code>frontend/vite.config.js</code> <span class="code-note">inside the existing test block</span></p>
+<pre><code>coverage: {
   provider: 'v8',
   reporter: ['text', 'lcov'],
   include: ['src/**/*.{js,jsx}'],
   exclude: ['src/**/*.test.{js,jsx}', 'src/main.jsx'],
 },</code></pre>
         <p>For the backend, create <code>backend/vitest.config.js</code>:</p>
-        <pre><code>import { defineConfig } from 'vitest/config'
+        <p class="code-file"><span class="code-kind">Create file</span> <code>backend/vitest.config.js</code></p>
+<pre><code>import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
@@ -223,7 +227,8 @@ export default defineConfig({
 
         <h4>b. <code>sonar-project.properties</code></h4>
         <p>Create this file at the <strong>top level</strong> of the repository, using the organization key and project key from sections 4 and 5:</p>
-        <pre><code>sonar.organization=your-organization-key
+        <p class="code-file"><span class="code-kind">Create file</span> <code>sonar-project.properties</code> <span class="code-note">at the top level of your repository</span></p>
+<pre><code>sonar.organization=your-organization-key
 sonar.projectKey=your-organization-key_your-repository
 
 sonar.sources=frontend/src,backend
@@ -238,7 +243,8 @@ sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/l
 
         <h4>c. The workflow job</h4>
         <p>Add a <code>sonar</code> job to your existing <code>.github/workflows/ci.yml</code>, alongside your test jobs. Each line follows the same ideas as the CI jobs in <a href="github-workflows.html#ci">Writing GitHub workflows</a>:</p>
-        <pre><code>  sonar:
+        <p class="code-file"><span class="code-kind">Add to the jobs: part of</span> <code>.github/workflows/ci.yml</code> <span class="code-note">next to your test jobs</span></p>
+<pre><code>  sonar:
     if: ${{ vars.SONAR_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     steps:

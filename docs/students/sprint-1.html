@@ -101,6 +101,7 @@
         </p>
         <h4>Tell Git who you are (every teammate)</h4>
         <p>Set your name and WVU email so your commits show your name:</p>
+<p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in any folder</span></p>
 <pre><code>git config --global user.name "First Last"
 git config --global user.email "abc123@mix.wvu.edu"</code></pre>
         <p>Check with <code>git config --global --list</code>.</p>
@@ -188,6 +189,7 @@ git config --global user.email "abc123@mix.wvu.edu"</code></pre>
         <p>You start with a lightweight setup so later sprints can focus on logic, login, and data instead of setup trouble.</p>
         <h4>Create the project</h4>
         <p>In the VS Code terminal, in the <strong>top-level folder of your repository</strong> (the folder that contains <code>README.md</code>):</p>
+<p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in the top-level folder of your repository</span></p>
 <pre><code>npm create vite@latest frontend -- --template react
 cd frontend
 npm install
@@ -204,6 +206,7 @@ npm install react-router-dom axios</code></pre>
         </p>
         <h4>Add a starter page to test the setup</h4>
         <p>Replace the <code>frontend/src/App.jsx</code> that Vite created with this simple page:</p>
+<p class="code-file"><span class="code-kind">Replace the whole file</span> <code>frontend/src/App.jsx</code></p>
 <pre><code>import React from 'react';
 
 function App() {
@@ -261,6 +264,7 @@ export default App;</code></pre>
           <li>In VS Code open the <code>frontend</code> folder.</li>
           <li>In the Explorer click the <strong>New File</strong> icon and name the file <code>.env</code>.</li>
           <li>Add this line, which is the address your backend will use starting in Sprint 2, and save:
+<p class="code-file"><span class="code-kind">Create file</span> <code>frontend/.env</code></p>
 <pre><code>VITE_BACKEND_API_URL=http://localhost:5175</code></pre>
           </li>
           <li>
@@ -274,6 +278,7 @@ export default App;</code></pre>
           The Project Lead also creates and commits <code>frontend/.env.example</code>, with the same New File steps and
           this content. It tells teammates which values they need, without any secrets:
         </p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>frontend/.env.example</code></p>
 <pre><code># Example environment configuration
 VITE_BACKEND_API_URL=http://localhost:5175</code></pre>
         <p>Each teammate has their own local <code>.env</code>, and <code>.env.example</code> is committed.</p>
@@ -290,6 +295,7 @@ VITE_BACKEND_API_URL=http://localhost:5175</code></pre>
           <li>If you create a SQLTools connection in Sprint 2, set Password mode to <strong>SQLTools Driver Credentials</strong> (the default, which keeps the password in VS Code's secure storage) or <strong>Ask on connect</strong>. <strong>Never</strong> choose "Save as plaintext in settings".</li>
           <li>The Project Lead opens <code>.gitignore</code> at the top of the repository, adds these lines at the end, and commits:</li>
         </ul>
+<p class="code-file"><span class="code-kind">Add to the end of</span> <code>.gitignore</code> <span class="code-note">at the top level of your repository</span></p>
 <pre><code>.vscode/*
 !.vscode/extensions.json
 *.PublishSettings</code></pre>
@@ -307,6 +313,7 @@ VITE_BACKEND_API_URL=http://localhost:5175</code></pre>
       <section class="section" id="run">
         <h3>9. Run the app (every teammate)</h3>
         <p>From the <code>frontend</code> folder:</p>
+<p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in frontend/</span></p>
 <pre><code>npm install
 npm run dev</code></pre>
         <p>Open the address it prints (usually <a href="http://localhost:5173">http://localhost:5173</a>) to see your app. Stop it any time with <strong>Ctrl+C</strong>.</p>

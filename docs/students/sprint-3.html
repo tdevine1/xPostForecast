@@ -84,6 +84,7 @@
       <section class="section" id="goal">
         <h3>1. What you are building</h3>
         <p>By the end of Sprint 3 your project does this:</p>
+<p class="code-file"><span class="code-kind">Diagram</span> <span class="code-note">what you are building</span></p>
 <pre><code>  Browser (React)  --1. user clicks a button-->  Your backend (Express)
                                                     |
                          2. checks the user is logged in
@@ -181,6 +182,7 @@
           like JavaScript objects and arrays, which makes it easy to use in your code. Here is a real answer from the
           free <a href="https://open-meteo.com/">Open-Meteo</a> weather API:
         </p>
+<p class="code-file"><span class="code-kind">Example</span> <span class="code-note">an API answer in JSON, not a file in your project</span></p>
 <pre><code>{
   "latitude": 39.641438,
   "longitude": -79.95688,
@@ -204,6 +206,7 @@
           </tbody>
         </table>
         <h4>Using JSON in JavaScript</h4>
+<p class="code-file"><span class="code-kind">Example</span> <span class="code-note">JavaScript to try in a scratch file or the browser console</span></p>
 <pre><code>const text = '{"current":{"temperature_2m":38.6}}';  // JSON is just text
 const data = JSON.parse(text);                       // text -&gt; JavaScript object
 console.log(data.current.temperature_2m);            // 38.6
@@ -342,6 +345,7 @@ const warm = points.filter((p) =&gt; p.tavg &gt; 55);   // [{ lat: 39.0, ... }]
           <li>
             <strong>Call it from a terminal with <code>curl</code></strong>, which also shows headers and works for
             <code>POST</code>. The <code>-i</code> flag prints the status line and headers:
+<p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in any folder</span></p>
 <pre><code>curl -i "https://api.open-meteo.com/v1/forecast?latitude=39.63&amp;longitude=-79.96&amp;current=temperature_2m"
 
 # A POST with a JSON body (this is the kind of call the reference app makes)
@@ -381,6 +385,7 @@ curl -X POST https://planetarycomputer.microsoft.com/api/stac/v1/search \
         </ol>
         <h4>A small, complete example</h4>
         <p>This route returns the current temperature for a point, using Open-Meteo. Adapt the shape, not the details:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/routes/weather.js</code> <span class="code-note">an example route: adapt it to your own API</span></p>
 <pre><code>// routes/weather.js
 import express from 'express';
 const router = express.Router();
@@ -428,7 +433,12 @@ router.get('/current', async (req, res) =&gt; {
 export default router;
 </code></pre>
         <p>Then mount it <em>behind your login check</em> in <code>app.js</code>, exactly as Sprint 3 does for temperatures:</p>
-<pre><code>app.use('/weather', authMiddleware, weatherRoutes);   // logged-in users only</code></pre>
+<p class="code-file"><span class="code-kind">Edit file</span> <code>backend/app.js</code> <span class="code-note">add the first two lines with your other imports, and the last line after app.use('/auth', authRoutes)</span></p>
+<pre><code>import weatherRoutes from './routes/weather.js';
+import authMiddleware from './middleware/authMiddleware.js';   // from Sprint 2: skip this line if app.js already imports it
+
+// ...after app.use('/auth', authRoutes):
+app.use('/weather', authMiddleware, weatherRoutes);   // logged-in users only</code></pre>
         <p>
           Why behind login? An open route lets anyone on the internet spend <em>your</em> API quota. Requiring a login
           means only your users can.
@@ -449,12 +459,21 @@ export default router;
 
       <section class="section" id="frontend">
         <h3>10. Show it in your frontend</h3>
-        <p>The browser now only ever talks to <em>your</em> backend, using the shared client from Sprint 2:</p>
-<pre><code>// src/api.js: one axios instance for every call
+        <p>The browser now only ever talks to <em>your</em> backend. Give your frontend one shared axios client, so the backend's address and the cookie setting live in exactly one place:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>frontend/src/api.js</code></p>
+<pre><code>import axios from 'axios';
+
+// One axios instance for every call to your backend
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_API_URL,
   withCredentials: true,       // send the login cookie
-});</code></pre>
+});
+
+export default api;</code></pre>
+        <p>
+          Then change the calls in your pages from <code>axios.post(`${API_URL}/auth/login`, body, { withCredentials: true })</code>
+          to <code>api.post('/auth/login', body)</code>: import <code>api</code> from <code>'../api'</code> and pass only the path.
+        </p>
         <p>A page that loads data needs to handle <strong>four states</strong>, not one. Beginners often build only the happy path:</p>
         <table>
           <thead>
@@ -467,7 +486,11 @@ const api = axios.create({
             <tr><td><strong>Error</strong></td><td>A clear message that says what to do next, and the old data cleared so it isn't mistaken for new data.</td></tr>
           </tbody>
         </table>
-<pre><code>const [data, setData] = useState(null);
+<p class="code-file"><span class="code-kind">Example</span> <span class="code-note">a page in frontend/src/pages/, such as HomePage.jsx: adapt it to your own page</span></p>
+<pre><code>import { useState } from 'react';
+import api from '../api';
+
+const [data, setData] = useState(null);
 const [isLoading, setIsLoading] = useState(false);
 const [error, setError] = useState('');
 
@@ -501,6 +524,7 @@ const load = async () =&gt; {
           answer were ever tampered with, the server could be tricked into requesting internal addresses. The fix was a
           short check before the download:
         </p>
+<p class="code-file"><span class="code-kind">From the reference app</span> <code>backend/sign/sign.js</code> <span class="code-note">the idea, not code to copy</span></p>
 <pre><code>export function assertTrustedAssetUrl(href) {
   const url = new URL(href);                      // throws if it isn't a URL at all
   if (url.protocol !== 'https:' || !url.hostname.endsWith('.blob.core.windows.net')) {
@@ -526,6 +550,7 @@ const load = async () =&gt; {
           Tests must not depend on someone else's server being up, fast, or free. Replace <code>fetch</code> with a
           fake that returns the example response you saved in section 8. Vitest makes this easy:
         </p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/tests/weather.test.js</code></p>
 <pre><code>import { afterEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';

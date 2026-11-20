@@ -119,6 +119,7 @@
       <section class="section" id="project">
         <h3>2. Create the backend project (Backend Lead)</h3>
         <p>In the VS Code terminal, in the top-level folder of your repository (the one with <code>README.md</code> and <code>frontend</code>):</p>
+<p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in the top-level folder of your repository</span></p>
 <pre><code>mkdir backend
 cd backend
 npm init -y
@@ -143,6 +144,7 @@ npm install express cors cookie-parser mysql2 bcryptjs jsonwebtoken express-rate
           <li>Change <code>"type"</code> from <code>"commonjs"</code> to <code>"module"</code>, so you can use <code>import</code> and <code>export</code>.</li>
           <li>Replace <code>"scripts"</code> with a start script and a dev script.</li>
         </ul>
+<p class="code-file"><span class="code-kind">Edit file</span> <code>backend/package.json</code> <span class="code-note">change these lines and keep the rest</span></p>
 <pre><code>"main": "server.js",
 "scripts": {
   "start": "node server.js",
@@ -151,6 +153,7 @@ npm install express cors cookie-parser mysql2 bcryptjs jsonwebtoken express-rate
 "type": "module",</code></pre>
         <p><code>npm start</code> runs the server once, the way Azure will in Sprint 4. <code>npm run dev</code> restarts it whenever you save a file, which is what you use while developing.</p>
         <p>By the end of this guide the backend folder looks like this. Create folders with the Explorer's <strong>New Folder</strong> icon and files with <strong>New File</strong>.</p>
+<p class="code-file"><span class="code-kind">Folder layout</span> <span class="code-note">backend/ when you finish</span></p>
 <pre><code>backend/
 ├── config/
 │   ├── cookies.js                    # settings for the login cookie
@@ -173,6 +176,7 @@ npm install express cors cookie-parser mysql2 bcryptjs jsonwebtoken express-rate
       <section class="section" id="envvars">
         <h3>3. Environment variables (Backend Lead)</h3>
         <p>Like the frontend, the backend keeps settings and secrets in a <code>.env</code> file that is never committed. Create <code>backend/.env.example</code>, which <em>is</em> committed so teammates know what to fill in:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/.env.example</code></p>
 <pre><code># Copy this file to .env and fill in your values. Never commit .env.
 
 # Server. Locally the backend listens on 5175.
@@ -196,6 +200,7 @@ DB_PORT=3306</code></pre>
           <li><code>DB_HOST</code>, <code>DB_USER</code>, <code>DB_PASSWORD</code>: your server's name, admin username, and password from your instructor.</li>
           <li><code>JWT_SECRET</code>: a long random string the backend uses to sign login tokens. Generate one with this command and paste its output after <code>JWT_SECRET=</code>:</li>
         </ul>
+<p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in any folder</span></p>
 <pre><code>node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code></pre>
         <ul>
           <li>Keep <code>DB_NAME=authdb</code>: step 5 creates a database with that name.</li>
@@ -206,6 +211,7 @@ DB_PORT=3306</code></pre>
           <code>.gitignore</code> before you commit anything.
         </div>
         <p>Now create <code>backend/config/env.js</code>, which loads <code>.env</code> when the server starts:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/config/env.js</code></p>
 <pre><code>/**
  * config/env.js
  *
@@ -237,6 +243,7 @@ try {
       <section class="section" id="schema">
         <h3>5. Create the database and the users table (Backend Lead)</h3>
         <p>Create <code>backend/db/schema.sql</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/db/schema.sql</code></p>
 <pre><code>-- Database schema for xPostForecast (Sprint 2 onward).
 -- Run once against your Azure Database for MySQL server. Easiest: Azure Portal -&gt; your server -&gt;
 -- Connect -&gt; Cloud Shell, run the mysql command it shows, and paste this whole file at the mysql&gt; prompt.
@@ -261,6 +268,7 @@ CREATE TABLE IF NOT EXISTS users (
           <li>Run the <code>mysql</code> command the Connect page shows (your server name and admin user are already filled in) and type the password when it asks. You are connected when you see the <code>mysql&gt;</code> prompt.</li>
           <li>Copy all of <code>schema.sql</code> from VS Code and paste it at the <code>mysql&gt;</code> prompt (right-click &rarr; <strong>Paste</strong>, or <strong>Shift+Insert</strong>). Each statement prints <code>Query OK</code>.</li>
           <li>Check the result, then leave:
+<p class="code-file"><span class="code-kind">Cloud Shell</span> <span class="code-note">type these at the mysql&gt; prompt</span></p>
 <pre><code>SHOW TABLES FROM authdb;
 DESCRIBE authdb.users;
 exit</code></pre>
@@ -281,6 +289,7 @@ exit</code></pre>
       <section class="section" id="database">
         <h3>6. Connect to the database (Backend Lead)</h3>
         <p>Create <code>backend/config/database.js</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/config/database.js</code></p>
 <pre><code>/**
  * config/database.js
  *
@@ -337,6 +346,7 @@ export default pool;</code></pre>
         <h3>7. Add the login routes (Backend Lead)</h3>
         <h4>Cookie settings</h4>
         <p>Create <code>backend/config/cookies.js</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/config/cookies.js</code></p>
 <pre><code>/**
  * config/cookies.js
  *
@@ -361,6 +371,7 @@ export function authCookieOptions() {
         <p>Locally, <code>localhost:5173</code> and <code>localhost:5175</code> count as the same site (ports don't count), so a <code>SameSite=Lax</code> cookie works. In Sprint 4 the frontend and backend are on different sites, so production needs <code>SameSite=None</code> and <code>Secure</code>. Login and logout both call this function, because clearing a cookie only works with the same options that set it.</p>
         <h4>Auth middleware</h4>
         <p>Create <code>backend/middleware/authMiddleware.js</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/middleware/authMiddleware.js</code></p>
 <pre><code>/**
  * middleware/authMiddleware.js
  *
@@ -392,6 +403,7 @@ export default authMiddleware;</code></pre>
         <p>Middleware runs <em>before</em> a route. This one lets a request through only if its cookie holds a JWT signed with your <code>JWT_SECRET</code> that hasn't expired, and it attaches the user to <code>req.user</code>. Put it in front of every route that needs a login: <code>/auth/test</code> now, and your own data routes in <a href="sprint-3.html">Sprint 3</a>.</p>
         <h4>Auth routes</h4>
         <p>Create <code>backend/routes/auth.js</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/routes/auth.js</code></p>
 <pre><code>/**
  * routes/auth.js
  *
@@ -542,6 +554,7 @@ export default router;</code></pre>
       <section class="section" id="server">
         <h3>8. Build and start the server (Backend Lead)</h3>
         <p>Create <code>backend/app.js</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/app.js</code></p>
 <pre><code>/**
  * app.js
  *
@@ -610,6 +623,7 @@ export default app;</code></pre>
           <li><code>app.js</code> doesn't start the server, so automated tests can import it. The reference repo's <code>backend/tests</code> folder shows how.</li>
         </ul>
         <p>Create <code>backend/server.js</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>backend/server.js</code></p>
 <pre><code>/**
  * server.js
  *
@@ -638,8 +652,10 @@ app.listen(PORT, () =&gt; {
   console.log(`Server is running on ${PORT}`);
 });</code></pre>
         <p>It loads <code>.env</code> first, refuses to start if a setting is missing, and listens on <code>PORT</code> (which Azure sets for you in Sprint 4). Start it from the <code>backend</code> folder:</p>
+<p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in backend/</span></p>
 <pre><code>npm run dev</code></pre>
         <p>You should see:</p>
+<p class="code-file"><span class="code-kind">Output</span> <span class="code-note">what the terminal should show</span></p>
 <pre><code>Connecting to MySQL at &lt;your-server&gt;.mysql.database.azure.com:3306
 Configured FRONTEND_URL = http://localhost:5173
 NODE_ENV = development
@@ -662,6 +678,7 @@ Successfully connected to MySQL</code></pre>
         </p>
         <h4>Login page</h4>
         <p>Create <code>frontend/src/pages/Login.jsx</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>frontend/src/pages/Login.jsx</code></p>
 <pre><code>/**
  * Login.jsx
  *
@@ -751,6 +768,7 @@ export default Login;</code></pre>
         <p><code>withCredentials: true</code> lets the browser store the cookie the backend sends. <code>setAuthenticated(true)</code> tells <code>App.jsx</code> you are now logged in.</p>
         <h4>Register page</h4>
         <p>Create <code>frontend/src/pages/Register.jsx</code>:</p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>frontend/src/pages/Register.jsx</code></p>
 <pre><code>/**
  * Register.jsx
  *
@@ -844,6 +862,7 @@ export default Register;</code></pre>
           and move your Sprint 1 page's content into it where the comment says. If your page is already its own
           component, import it and render it there instead. The Logout button asks the backend to clear the cookie.
         </p>
+<p class="code-file"><span class="code-kind">Create file</span> <code>frontend/src/pages/HomePage.jsx</code></p>
 <pre><code>/**
  * HomePage.jsx
  *
@@ -896,6 +915,7 @@ function HomePage({ setAuthenticated }) {
 export default HomePage;</code></pre>
         <h4>Routes and the login check</h4>
         <p>Replace <code>frontend/src/App.jsx</code> with:</p>
+<p class="code-file"><span class="code-kind">Replace the whole file</span> <code>frontend/src/App.jsx</code></p>
 <pre><code>/**
  * App.jsx
  *
@@ -985,6 +1005,7 @@ export default App;</code></pre>
       <section class="section" id="test">
         <h3>10. Test everything and open a pull request (Backend Lead)</h3>
         <p>With the backend still running, open a second terminal (the <strong>+</strong> in the terminal panel) and start the frontend:</p>
+<p class="code-file"><span class="code-kind">Terminal</span> <span class="code-note">run in the top-level folder of your repository, in a second terminal</span></p>
 <pre><code>cd frontend
 npm run dev</code></pre>
         <p>Open <a href="http://localhost:5173">http://localhost:5173</a> and check each of these:</p>
@@ -998,6 +1019,7 @@ npm run dev</code></pre>
           <li>Logout takes you back to <code>/login</code>, and going to <code>http://localhost:5173/home</code> sends you to <code>/login</code> again.</li>
         </ul>
         <p>To see the stored account, open the Connect page's Cloud Shell again (step 5) and run:</p>
+<p class="code-file"><span class="code-kind">Cloud Shell</span> <span class="code-note">type this at the mysql&gt; prompt</span></p>
 <pre><code>SELECT id, email, username, password_hash, created_at FROM authdb.users;</code></pre>
         <p>The <code>password_hash</code> column holds a bcrypt hash that starts with <code>$2b$10$</code>, not the password.</p>
         <p>If something fails, open the browser's developer tools (<strong>F12</strong>). The <strong>Console</strong> tab shows errors, and the <strong>Network</strong> tab shows each request to the backend with its status code. The <a href="#trouble">troubleshooting table</a> lists the common problems.</p>

@@ -485,3 +485,40 @@ button.button {
     overflow-wrap: anywhere;
   }
 }
+
+/* "Which file is this?" caption above a code block */
+.code-file {
+  margin: 1rem 0 0;
+  padding: 0.35rem 1rem;
+  background: #243445;
+  color: #f5f7fa;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.code-file + pre {
+  margin-top: 0;
+  border-radius: 0 0 8px 8px;
+}
+
+.code-file .code-kind {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.05rem 0.5rem;
+  background: var(--wvu-gold);
+  color: var(--wvu-blue);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.code-file code {
+  color: #ffd98a;
+}
+
+.code-file .code-note {
+  color: #c9d3de;
+  font-size: 0.85rem;
+}
